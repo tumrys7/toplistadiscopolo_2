@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Disco Polo - Music Chart</string>
+
+    <!-- zakladki -->
+    <string name="tab_lista">Chart</string>
+    <string name="tab_poczekalnia">Propositions</string>
+    <string name="tab_wykonawcy">Artists</string>
+    <string name="tab_2012">Hit of the month</string>
+
+    <string name="tab_wykonawcy_filtruj">Search artist...</string>
+
+    <!-- menu -->
+    <string name="menu_odswiez">Refresh</string>
+    <string name="menu_kontakt">Contact</string>
+    <string name="menu_policy">Policy</string>
+    <string name="menu_oprogramie">About program</string>
+    <string name="menu_jezyk">Language</string>
+    <string name="menu_ustawienia">Settings</string>
+
+    <!-- menu jezyki -->
+    <string name="jezyk_angielski">English</string>
+    <string name="jezyk_polski">Polski</string>
+
+    <!-- menu piosenki -->
+    <string name="zaglosuj">Vote</string>
+    <string name="liczba_glosow">Show votes (Watch Ad Video)</string>
+    <string name="teledysk">Video</string>
+    <string name="utwory_wykonawcy">Artist\'s songs</string>
+    <!--  <string name="zobacz_slowa">Lyrics (teksty.org)</string> -->
+
+    <!-- komunikaty -->
+    <string name="text_refresh_list">Please wait while retrieving current chart...</string>
+    <string name="text_auth_refresh_list">Please wait while retrieving artist\'s song...</string>
+    <string name="text_voting">Voting...</string>
+    <string name="text_voting_error">Vote was not submitted</string>
+    <string name="text_connection_error">No active internet connection! Turn on internet connection and choose Refresh from menu.</string>
+    <string name="text_connection_error_title">Connection error!</string>
+    <string name="text_exit_app">Press Back again to exit</string>
+    <string name="text_too_many_votes">You have recently voted on this song. You can vote for each song only once per VOTES_INTERVAL minutes.</string>
+    <string name="text_zmiana_jezyka">Changes will be visible after application restart</string>
+
+    <string name="text_awans">Up</string>
+    <string name="text_spadek">Down</string>
+    <string name="text_glosow">Votes:</string>
+    <string name="text_na_liscie_od">Added:</string>
+
+    <string name="title_activity_utwory_wykonawcy">Artist\'s songs</string>
+
+    <string name="email_subject">Android: DiscoPoloMusicChart</string>
+
+    <string name="title_activity_oprogramie">About program</string>
+    <string name="wersja_programu">Version</string>
+    <string name="company_name">Grand Line</string>
+    <string name="programmer1">Jacek Rodak</string>
+    <string name="programmer2">Jarosław Wołoszyn</string>
+    <string name="create_date">2019</string>
+    <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
+    <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
+    <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
+    <string name="facebook_app_id">425101674284807</string>
+
+    <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
+    <string name="loading">Please wait...</string>
+
+</resources>

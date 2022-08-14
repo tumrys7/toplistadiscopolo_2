@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Disco Polo - Lista Przebojów</string>
+    
+    <!-- zakladki -->
+    <string name="tab_lista">Lista</string>
+    <string name="tab_poczekalnia">Poczekalnia</string>
+    <string name="tab_wykonawcy">Wykonawcy</string>
+    <string name="tab_2012">Hit miesiąca</string>
+    
+    <string name="tab_wykonawcy_filtruj">Wyszukaj wykonawcę...</string>
+    
+    <!-- menu -->
+    <string name="menu_odswiez">Odśwież</string>
+    <string name="menu_kontakt">Kontakt</string>
+    <string name="menu_policy">Polityki</string>
+    <string name="menu_oprogramie">O programie</string>
+    <string name="menu_jezyk">Język</string>
+    <string name="menu_ustawienia">Ustawienia</string>
+    <!-- menu jezyki -->
+    <string name="jezyk_angielski">English</string>
+    <string name="jezyk_polski">Polski</string>    
+    
+    <!-- menu piosenki -->
+    <string name="zaglosuj">Zagłosuj</string>
+    <string name="liczba_glosow">Liczba Głosów (Obejrz reklamę)</string>
+    <string name="teledysk">Teledysk</string>    
+    <string name="utwory_wykonawcy">Utwory wykonawcy</string>  
+   <!-- <string name="zobacz_slowa">Zobacz słowa (teksty.org)</string> -->
+    
+    <!-- komunikaty -->
+    <string name="text_refresh_list">Trwa pobieranie aktualnego notowania...</string>
+    <string name="text_auth_refresh_list">Trwa pobieranie utworów wykonawcy...</string>
+    <string name="text_voting">Głosowanie...</string>
+    <string name="text_voting_error">Nie udało się zatwierdzić głosu</string>
+    <string name="text_connection_error">Brak aktywnego połączenia internetowego! Włącz dostęp do internetu i wybierz Odśwież w menu.</string>
+    <string name="text_connection_error_title">Błąd połączenia!</string>
+    <string name="text_exit_app">Aby wyjść z aplikacji naciśnij ponownie Wstecz</string>
+    <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Na każdy utwór można głosować tylko raz na VOTES_INTERVAL minut.</string>
+    <string name="text_zmiana_jezyka">Zmiany będą widoczne po restarcie aplikacji</string>
+        
+    <string name="text_awans">Awans</string>
+    <string name="text_spadek">Spadek</string>
+    <string name="text_glosow">Głosów:</string>
+    <string name="text_na_liscie_od">Na liście od:</string>
+
+    <string name="title_activity_utwory_wykonawcy">Utwory wykonawcy</string>
+    
+    <string name="email_subject">Android: DiscoPoloMuzycznaToplista</string>
+    
+    <string name="title_activity_oprogramie">O programie</string>
+    <string name="wersja_programu">Wersja</string>
+    <string name="company_name">Grand Line</string>
+    <string name="programmer1">Jacek Rodak</string>
+    <string name="programmer2">Jarosław Wołoszyn</string>
+    <string name="create_date">2019</string>
+    <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
+    <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
+    <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
+    <string name="facebook_app_id">425101674284807</string>
+
+    <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
+    <string name="loading">Proszę czekać...</string>
+</resources>

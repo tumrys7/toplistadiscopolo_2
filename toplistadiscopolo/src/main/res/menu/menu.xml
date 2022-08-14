@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/odswiez" android:title="@string/menu_odswiez" android:enabled="true" android:visible="true"></item>
+    <item android:id="@+id/policy" android:enabled="true" android:visible="true" android:title="@string/menu_policy" ></item>
+    <item android:id="@+id/kontakt" android:visible="true" android:title="@string/menu_kontakt" android:enabled="true" ></item>
+    <item android:id="@+id/jezyk" android:title="@string/menu_jezyk" android:enabled="true" android:visible="false" ></item>
+    <item android:id="@+id/facebook" android:title="Facebook" android:visible="true" android:enabled="true" ></item>
+    <item android:id="@+id/ustawienia" android:title="@string/menu_ustawienia" android:visible="true" android:enabled="true" ></item>
+    <item android:id="@+id/oProgramie" android:title="@string/menu_oprogramie"  android:visible="true" android:enabled="true"></item>
+    
+</menu>

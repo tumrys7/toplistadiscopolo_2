@@ -1,0 +1,43 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 31 //23
+
+    defaultConfig {
+        applicationId "com.grandline.toplistadiscopolo"
+        minSdkVersion 19
+        targetSdkVersion 31   //23
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+            useLibrary 'org.apache.http.legacy'
+            multiDexEnabled true
+        }
+
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-core:20.0.2'
+    implementation 'com.facebook.android:facebook-android-sdk:12.2.0'
+    implementation 'androidx.appcompat:appcompat-resources:1.4.0'
+    implementation 'com.google.android.ads:mediation-test-suite:2.0.0'
+    implementation 'com.google.android.gms:play-services-ads:20.5.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
+
+apply plugin: 'com.google.gms.google-services'

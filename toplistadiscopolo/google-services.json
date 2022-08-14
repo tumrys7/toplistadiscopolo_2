@@ -1,0 +1,50 @@
+{
+  "project_info": {
+    "project_number": "250615132285",
+    "firebase_url": "https://disco-polo-lista-przebojow.firebaseio.com",
+    "project_id": "disco-polo-lista-przebojow",
+    "storage_bucket": "disco-polo-lista-przebojow.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:250615132285:android:d7e2329a572e0b2a",
+        "android_client_info": {
+          "package_name": "com.grandline.toplistadiscopolo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "250615132285-b97oafbukp3sip6thaje7ljjrjtj7uak.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.grandline.toplistadiscopolo",
+            "certificate_hash": "eb9426b8b5b69e54f8c77400981a67ebe0da2fbe"
+          }
+        },
+        {
+          "client_id": "250615132285-namnbp4n8av6tlp93ff7kn69bn5d27nr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzldVoKVhkeYn9l56KuOSlHcrp_Fs_gK4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

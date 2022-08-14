@@ -1,0 +1,13 @@
+<resources>
+
+    <string name="title_activity_preferences">Ustawienia</string>
+
+    <!-- Strings related to Settings -->
+
+
+    <!-- General settings -->
+    <string name="pref_header_general">Podstawowe</string>
+    <string name="pref_title_social_recommendations">Odświeżaj listę po głosowaniu</string>
+    <string name="pref_description_social_recommendations">Czy lista powinna być odświeżana po każdym głosowaniu</string>
+
+</resources>

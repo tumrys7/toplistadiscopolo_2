@@ -1,0 +1,13 @@
+<resources>
+
+    <string name="title_activity_preferences">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+
+    <!-- General settings -->
+    <string name="pref_header_general">General</string>
+    <string name="pref_title_social_recommendations">Refresh list after voting</string>
+    <string name="pref_description_social_recommendations">Do you want to refresh chart after every voting</string>
+
+</resources>
