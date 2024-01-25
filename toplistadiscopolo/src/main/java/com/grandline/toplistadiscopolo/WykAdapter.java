@@ -1,10 +1,5 @@
 package com.grandline.toplistadiscopolo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import com.grandline.toplistadiscopolo.R;
-
 import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -13,9 +8,11 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class WykAdapter extends BaseAdapter {
-    
-    private final Activity activity;
+
     private final ArrayList<HashMap<String, String>> data;
     private static LayoutInflater inflater=null;
     public ImageLoader imageLoader;
@@ -23,10 +20,9 @@ public class WykAdapter extends BaseAdapter {
     
     public WykAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
 
-        activity = a;
         data=d;
-        inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        imageLoader=new ImageLoader(activity.getApplicationContext());
+        inflater = (LayoutInflater) a.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        imageLoader=new ImageLoader(a.getApplicationContext());
     }
 
     public int getCount() {
@@ -50,7 +46,7 @@ public class WykAdapter extends BaseAdapter {
         TextView artist = vi.findViewById(R.id.artist); // artist name
 
 
-        HashMap<String, String> wyk = new HashMap<String, String>();
+        HashMap<String, String> wyk;
         wyk = data.get(position);
         
         // Setting all values in listview

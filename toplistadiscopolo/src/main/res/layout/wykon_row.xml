@@ -13,22 +13,20 @@
         android:layout_height="wrap_content"
         android:text="000000"
         android:textColor="#343434"
-        android:textSize="10dip"
+        android:textSize="10sp"
         android:visibility="invisible" />
 
     <TextView
         android:id="@+id/artist"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:text="Just gona stand there and ..."
         android:textColor="#040404"
-        android:textSize="20dip"
+        android:textSize="20sp"
         android:fontFamily="@font/roboto_light"
         android:textStyle="bold"
   		android:padding="10dip" />
-    
-
 
 </RelativeLayout>

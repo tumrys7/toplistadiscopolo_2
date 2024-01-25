@@ -6,7 +6,6 @@
     android:background="#ffffff"
     >
 
-
     <TextView
         android:id="@+id/textViewAd"
         android:layout_width="match_parent"
@@ -16,7 +15,5 @@
         android:textSize="30sp"
         android:textStyle="bold"
         tools:context=".Loading" />
-
-
 
 </LinearLayout>

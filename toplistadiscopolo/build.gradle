@@ -1,12 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31 //23
+    compileSdk 33
+//23
 
     defaultConfig {
         applicationId "com.grandline.toplistadiscopolo"
-        minSdkVersion 19
-        targetSdkVersion 31   //23
+        minSdk 19
+        targetSdkVersion 33
+        //23
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_8
             targetCompatibility JavaVersion.VERSION_1_8
@@ -28,14 +30,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    namespace 'com.grandline.toplistadiscopolo'
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-core:20.0.2'
-    implementation 'com.facebook.android:facebook-android-sdk:12.2.0'
-    implementation 'androidx.appcompat:appcompat-resources:1.4.0'
-    implementation 'com.google.android.ads:mediation-test-suite:2.0.0'
-    implementation 'com.google.android.gms:play-services-ads:20.5.0'
+    implementation 'com.google.firebase:firebase-core:21.1.1'
+    implementation 'androidx.appcompat:appcompat-resources:1.6.1'
+    implementation 'com.google.android.ads:mediation-test-suite:3.0.0'
+    implementation 'com.google.android.gms:play-services-ads:22.6.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
 }

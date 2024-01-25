@@ -19,7 +19,7 @@ public class OProgramie extends Activity {
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         // [END shared_app_measurement]
-        String versionName = "";
+        String versionName;
         try {
 			versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
 		} catch (NameNotFoundException e) {

@@ -7,5 +7,4 @@
     <item android:id="@+id/facebook" android:title="Facebook" android:visible="true" android:enabled="true" ></item>
     <item android:id="@+id/ustawienia" android:title="@string/menu_ustawienia" android:visible="true" android:enabled="true" ></item>
     <item android:id="@+id/oProgramie" android:title="@string/menu_oprogramie"  android:visible="true" android:enabled="true"></item>
-    
 </menu>

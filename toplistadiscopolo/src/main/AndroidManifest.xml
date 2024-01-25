@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.grandline.toplistadiscopolo"
-    android:versionCode="16"
-    android:versionName="1.10">
+    android:versionCode="18"
+    android:versionName="1.12">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="READ_MEDIA_IMAGES" />
+    <uses-permission android:name="READ_MEDIA_VIDEO" />
+    <uses-permission android:name="READ_MEDIA_AUDIO" />
 
     <application
         android:allowBackup="true"
         android:allowClearUserData="false"
-        android:fullBackupContent="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
@@ -29,12 +30,10 @@
         <activity
             android:name=".ListaPrzebojowDiscoPolo"
             android:configChanges="locale"
-            android:label="@string/app_name"
             android:theme="@style/AppCustomTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

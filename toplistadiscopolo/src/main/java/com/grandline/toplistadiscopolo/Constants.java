@@ -44,7 +44,7 @@ public interface Constants {
 	String KEY_FULLAD_UNIT_ID = "ca-app-pub-9534304538332188/4908744158";
 //	String KEY_NATIVEAD_UNIT_ID = "ca-app-pub-9534304538332188/1117672957";
 	String KEY_VIDEO_UNIT_ID ="ca-app-pub-9534304538332188/8329857998";
-	String KEY_ADMOB_APP_ID = "ca-app-pub-9534304538332188~6762519752";
+//	String KEY_ADMOB_APP_ID = "ca-app-pub-9534304538332188~6762519752";
 	String KEY_WYKONAWCY = "wykonawcy";
 	String KEY_WYKON = "recw"; // parent node for wykonawcy
 	String KEY_ID_WYKON = "id_wykonawcy";

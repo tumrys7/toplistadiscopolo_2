@@ -12,7 +12,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:text="@string/programmer1"
-        android:textSize="25dp"
+        android:textSize="25sp"
         tools:context=".OProgramie" />
 
     <TextView
@@ -22,7 +22,7 @@
         android:layout_below="@+id/textView1"
         android:layout_centerHorizontal="true"
         android:text="@string/programmer2"
-        android:textSize="25dp"
+        android:textSize="25sp"
         tools:context=".OProgramie" />
 
     <TextView
@@ -43,7 +43,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="37dp"
         android:text="@string/company_name"
-        android:textSize="30dp"
+        android:textSize="30sp"
         android:textStyle="bold"
         tools:context=".OProgramie" />
 
@@ -53,10 +53,12 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/textView3"
         android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
         android:layout_marginBottom="35dp"
         android:text="@string/app_name"
-        android:textSize="35dp"
+        android:textSize="35sp"
         android:textStyle="bold"
+        android:textAlignment="center"
         tools:context=".OProgramie" />
 
     <TextView
@@ -66,7 +68,7 @@
         android:layout_below="@+id/textView2"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="28dp"
-        android:text="Wersja 0.0"
+        android:text="@string/wersja_programu"
         tools:context=".OProgramie" />
 
 </RelativeLayout>

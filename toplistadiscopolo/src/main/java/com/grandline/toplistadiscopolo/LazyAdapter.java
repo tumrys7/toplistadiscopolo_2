@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class LazyAdapter extends BaseAdapter {
 
@@ -53,7 +54,7 @@ public class LazyAdapter extends BaseAdapter {
         TextView placeChange = vi.findViewById(R.id.zmiana); // title
         ProgressBar votesProgress = vi.findViewById(R.id.votesProgress); // title
         
-        HashMap<String, String> song = new HashMap<String, String>();
+        HashMap<String, String> song;
         song = data.get(position);
         
         // Setting all values in listview
@@ -64,21 +65,21 @@ public class LazyAdapter extends BaseAdapter {
         listPosition.setText(song.get(Constants.KEY_POSITION));
         createDate.setText(song.get(Constants.KEY_CREATE_DATE));
         imageLoader.DisplayImage(song.get(Constants.KEY_THUMB_URL), thumb_image);
-        if (song.get(Constants.KEY_ARROW_TYPE)==Constants.KEY_ARROW_UP) {
+        if (Objects.equals(song.get(Constants.KEY_ARROW_TYPE), Constants.KEY_ARROW_UP)) {
         	arrow_image.setImageResource(R.drawable.arrow_up);
-        } else if (song.get(Constants.KEY_ARROW_TYPE)==Constants.KEY_ARROW_DOWN) {
+        } else if (Objects.equals(song.get(Constants.KEY_ARROW_TYPE), Constants.KEY_ARROW_DOWN)) {
         	arrow_image.setImageResource(R.drawable.arrow_down);
-        } else if (song.get(Constants.KEY_ARROW_TYPE)==Constants.KEY_ARROW_NO_CHANGE) {
+        } else if (Objects.equals(song.get(Constants.KEY_ARROW_TYPE), Constants.KEY_ARROW_NO_CHANGE)) {
         	arrow_image.setImageResource(R.drawable.arrow_no_change);
         } else {
         	arrow_image.setImageResource(R.drawable.arrow);
         }
         placeChange.setText(song.get(Constants.KEY_PLACE_CHANGE));
-        if (song.get(Constants.KEY_SHOW_VOTES_PROGRESS).equals("TRUE")){
+        if (Objects.equals(song.get(Constants.KEY_SHOW_VOTES_PROGRESS), "TRUE")){
         	votesProgress.setVisibility(View.VISIBLE);//visible setVisibility(0)
         	//votesProgress.setProgressDrawable((R.drawable.gradient_bg_hover));
 	        if (song.get(Constants.KEY_VOTES_PROGRESS) != null){
-	        	votesProgress.setProgress(Integer.parseInt(song.get(Constants.KEY_VOTES_PROGRESS)));
+	        	votesProgress.setProgress(Integer.parseInt(Objects.requireNonNull(song.get(Constants.KEY_VOTES_PROGRESS))));
 	        }
         } else {
         	votesProgress.setVisibility(View.INVISIBLE);//invisible

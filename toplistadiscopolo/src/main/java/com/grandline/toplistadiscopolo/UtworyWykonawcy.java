@@ -3,21 +3,15 @@ package com.grandline.toplistadiscopolo;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.facebook.appevents.AppEventsConstants;
-import com.facebook.appevents.AppEventsLogger;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -32,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 
 public class UtworyWykonawcy extends Activity {
 
@@ -67,6 +62,7 @@ public class UtworyWykonawcy extends Activity {
 		mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 		// [END shared_app_measurement]
 		bun = getIntent().getExtras();
+		assert bun != null;
 		String authId = bun.getString("param_auth_id");
 
 		refreshAuthSong(authId);
@@ -99,17 +95,9 @@ public class UtworyWykonawcy extends Activity {
 		
 		url = Constants.UTWORY_WYK_URL.replace("AUTH_ID", authId);
 		wykUtwory = findViewById(R.id.wykUtwory);
-		wykSongsList = new ArrayList<HashMap<String, String>>();
+		wykSongsList = new ArrayList<>();
 		adapter = new LazyAdapter(this, wykSongsList);		
-		wykUtwory.setOnItemClickListener(new OnItemClickListener() {
-
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-
-				 showSongMenu(position, Constants.KEY_UTW_WYKONAWCY);
-
-			}
-		});		
+		wykUtwory.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_UTW_WYKONAWCY));
         progressDialog = ProgressDialog.show(UtworyWykonawcy.this, "", getString(R.string.text_auth_refresh_list));
         new RefreshAuthSongs().execute(url);		
 		
@@ -118,9 +106,9 @@ public class UtworyWykonawcy extends Activity {
 	
 	@SuppressWarnings({ "unchecked" })
 	public void showSongMenu(int position, String listType){
-        HashMap<String, String> o = new HashMap<String, String>();
+        HashMap<String, String> o = new HashMap<>();
         
-        if (listType==Constants.KEY_UTW_WYKONAWCY) {
+        if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
         	
 			o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
         }
@@ -140,24 +128,22 @@ public class UtworyWykonawcy extends Activity {
       //  builder.setIcon(R.drawable.ic_menu_more);
 
 		if (!adReward) {
-			if (listType == Constants.KEY_UTW_WYKONAWCY) {
-				builder.setItems(wykItems, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int item) {
-						//Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
-						if (wykItems[item] == getString(R.string.zaglosuj)) {
-							glosTeledysk = "0";
-							zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
-						} else if (wykItems[item] == getString(R.string.teledysk)) {
-							glosTeledysk = "1";
-							zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
-							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-							startActivity(browserIntent);
-						}
-						//else if(wykItems[item]==getString(R.string.zobacz_slowa)){
-						//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
-						//	startActivity(browserIntent);
-						//}
+			if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
+				builder.setItems(wykItems, (dialog, item) -> {
+					//Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
+					if (wykItems[item] == getString(R.string.zaglosuj)) {
+						glosTeledysk = "0";
+						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
+					} else if (wykItems[item] == getString(R.string.teledysk)) {
+						glosTeledysk = "1";
+						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
+						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
+						startActivity(browserIntent);
 					}
+					//else if(wykItems[item]==getString(R.string.zobacz_slowa)){
+					//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
+					//	startActivity(browserIntent);
+					//}
 				});
 			}
 		}
@@ -189,20 +175,20 @@ public class UtworyWykonawcy extends Activity {
 			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 			// [END glos_utw_wykon_event]
 			// [START facebook events]
-			AppEventsLogger logger = AppEventsLogger.newLogger(this);
+///			AppEventsLogger logger = AppEventsLogger.newLogger(this);
 
-			Bundle params = new Bundle();
-			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, idWykonawcy);
-			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, idUtworu);
-			params.putString(AppEventsConstants.EVENT_PARAM_CURRENCY, "glos_wykonawcy");
-			logger.logEvent(AppEventsConstants.EVENT_NAME_VIEWED_CONTENT, params);
+///			Bundle params = new Bundle();
+///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, idWykonawcy);
+///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, idUtworu);
+///			params.putString(AppEventsConstants.EVENT_PARAM_CURRENCY, "glos_wykonawcy");
+///			logger.logEvent(AppEventsConstants.EVENT_NAME_VIEWED_CONTENT, params);
 
-			Bundle parameters = new Bundle();
-			parameters.putString(AppEventsConstants.EVENT_PARAM_LEVEL, "glos_utw_wykonawcy");
-			logger.logEvent(AppEventsConstants.EVENT_NAME_ACHIEVED_LEVEL, parameters);
+///			Bundle parameters = new Bundle();
+///			parameters.putString(AppEventsConstants.EVENT_PARAM_LEVEL, "glos_utw_wykonawcy");
+///			logger.logEvent(AppEventsConstants.EVENT_NAME_ACHIEVED_LEVEL, parameters);
 			// [END facebook events]
 		} else {
-			if (teledysk!="1"){
+			if (!Objects.equals(teledysk, "1")){
 				Toast.makeText(getApplicationContext(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -228,7 +214,7 @@ public class UtworyWykonawcy extends Activity {
 				// looping through all song nodes <song>
 				for (int i = 0; i < nl.getLength(); i++) {
 					// creating new HashMap
-					HashMap<String, String> map = new HashMap<String, String>();
+					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
 					// adding each child node to HashMap key => value
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
@@ -240,7 +226,7 @@ public class UtworyWykonawcy extends Activity {
 					map.put(Constants.KEY_VIDEO,parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_CREATE_DATE," " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 					//only for PRO Version
-					if (adReward == true) {
+					if (adReward) {
 						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
 					}
 					//showing or not showing progress bar 
@@ -260,7 +246,7 @@ public class UtworyWykonawcy extends Activity {
        protected void onPostExecute(Integer result) {
     	   wykUtwory.setAdapter(adapter);
     	   progressDialog.dismiss();
-           if (connectionError==true) {
+           if (connectionError) {
    			new AlertDialog.Builder(UtworyWykonawcy.this)
    			.setTitle(R.string.text_connection_error_title)
    			.setMessage(getString(R.string.text_connection_error))
@@ -298,17 +284,17 @@ public class UtworyWykonawcy extends Activity {
 			
     	   progressDialogVote.dismiss();
 
-           if (connectionError==true) {
+           if (connectionError) {
    			new AlertDialog.Builder(UtworyWykonawcy.this)
    			.setTitle(R.string.text_connection_error_title)
    			.setMessage(getString(R.string.text_connection_error))
    			.setNeutralButton("Ok",	null).show();
            } else {
         	setUserVote(votingListId);
-        	if(glosTeledysk=="0"){
+        	if(Objects.equals(glosTeledysk, "0")){
         		Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
         	}
-			if (myListType==Constants.KEY_UTW_WYKONAWCY) {
+			if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
 				voted = true;
 					refreshAuthSong(myIdWykonawcy);
 			}
@@ -348,7 +334,7 @@ public class UtworyWykonawcy extends Activity {
 		String lastVoteDateString = settings.getString(idListy, lastVoteDate.format(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)));
 	    
 	    try {
-            return lastVoteDate.parse(lastVoteDateString).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
+            return Objects.requireNonNull(lastVoteDate.parse(lastVoteDateString)).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
 		} catch (ParseException e) {
 			return true;
 		}
@@ -359,7 +345,7 @@ public class UtworyWykonawcy extends Activity {
 		SimpleDateFormat newVoteDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		SharedPreferences.Editor editor = settings.edit();
 	    editor.putString(idListy, newVoteDate.format(System.currentTimeMillis()));
-	    editor.commit();
+	    editor.apply();
 
 	}
 	

@@ -9,7 +9,7 @@
     <string name="tab_wykonawcy">Wykonawcy</string>
     <string name="tab_2012">Hit miesiąca</string>
     
-    <string name="tab_wykonawcy_filtruj">Wyszukaj wykonawcę...</string>
+    <string name="tab_wykonawcy_filtruj">Wyszukaj wykonawcę…</string>
     
     <!-- menu -->
     <string name="menu_odswiez">Odśwież</string>
@@ -30,9 +30,9 @@
    <!-- <string name="zobacz_slowa">Zobacz słowa (teksty.org)</string> -->
     
     <!-- komunikaty -->
-    <string name="text_refresh_list">Trwa pobieranie aktualnego notowania...</string>
-    <string name="text_auth_refresh_list">Trwa pobieranie utworów wykonawcy...</string>
-    <string name="text_voting">Głosowanie...</string>
+    <string name="text_refresh_list">Trwa pobieranie aktualnego notowania…</string>
+    <string name="text_auth_refresh_list">Trwa pobieranie utworów wykonawcy…</string>
+    <string name="text_voting">Głosowanie…</string>
     <string name="text_voting_error">Nie udało się zatwierdzić głosu</string>
     <string name="text_connection_error">Brak aktywnego połączenia internetowego! Włącz dostęp do internetu i wybierz Odśwież w menu.</string>
     <string name="text_connection_error_title">Błąd połączenia!</string>
@@ -50,16 +50,16 @@
     <string name="email_subject">Android: DiscoPoloMuzycznaToplista</string>
     
     <string name="title_activity_oprogramie">O programie</string>
-    <string name="wersja_programu">Wersja</string>
+    <string name="wersja_programu">Wersja 1.12</string>
     <string name="company_name">Grand Line</string>
     <string name="programmer1">Jacek Rodak</string>
     <string name="programmer2">Jarosław Wołoszyn</string>
-    <string name="create_date">2019</string>
+    <string name="create_date">2024</string>
     <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
     <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
     <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
     <string name="facebook_app_id">425101674284807</string>
 
     <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
-    <string name="loading">Proszę czekać...</string>
+    <string name="loading">Proszę czekać…</string>
 </resources>

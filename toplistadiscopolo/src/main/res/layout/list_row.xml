@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
@@ -12,22 +13,23 @@
         android:id="@+id/miejsce"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
         android:layout_below="@+id/title"
-        android:layout_toLeftOf="@layout/main"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@layout/main"
         android:text="10"
         android:textColor="#343434"
-        android:textSize="15dip"
-        android:textStyle="bold" />
+        android:textSize="15sp"
+        android:textStyle="bold"
+        tools:ignore="TextSizeCheck" />
 
     <LinearLayout
         android:id="@+id/thumbnail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="false"
         android:layout_centerInParent="true"
-        android:layout_marginRight="5dip"
-        android:layout_toRightOf="@id/miejsce"
+        android:layout_marginEnd="5dip"
+        android:layout_toEndOf="@id/miejsce"
         android:background="@drawable/image_bg"
         android:padding="3dip" >
 
@@ -45,13 +47,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/thumbnail"
-        android:layout_toRightOf="@+id/thumbnail"
+        android:layout_toEndOf="@+id/thumbnail"
         android:lines="1"
         android:text="Rihanna Love the way lie"
         android:textColor="#040404"
-        android:textSize="15dip"
+        android:textSize="15sp"
         android:textStyle="bold"
-        android:typeface="sans" />
+        android:typeface="sans"
+        tools:ignore="TextSizeCheck" />
 
     <!-- Artist Name -->
 
@@ -65,9 +68,10 @@
         android:id="@+id/imageView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-        android:src="@drawable/arrow" />
+        android:src="@drawable/arrow"
+        tools:ignore="ImageContrastCheck" />
 
     <TextView
         android:id="@+id/id_listy"
@@ -76,50 +80,54 @@
         android:layout_below="@+id/title"
         android:text="000000"
         android:textColor="#343434"
-        android:textSize="10dip"
+        android:textSize="10sp"
         android:visibility="invisible" />
 
     <TextView
         android:id="@+id/artist"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/title"
         android:layout_below="@+id/title"
+        android:layout_alignStart="@+id/title"
         android:lines="1"
         android:text="Just gona stand there and ..."
         android:textColor="#343434"
-        android:textSize="10dip"
-        android:textStyle="bold" />
+        android:textSize="10sp"
+        android:textStyle="bold"
+        tools:ignore="TextSizeCheck" />
 
     <TextView
         android:id="@+id/zmiana"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/artist"
         android:layout_below="@+id/id_listy"
+        android:layout_alignStart="@+id/artist"
         android:text="Awans o 3 | "
         android:textColor="#343434"
-        android:textSize="10dip" />
+        android:textSize="10sp"
+        tools:ignore="TextSizeCheck" />
 
     <TextView
         android:id="@+id/TextView01"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/artist"
-        android:layout_toRightOf="@+id/zmiana"
+        android:layout_toEndOf="@+id/zmiana"
         android:text="@string/text_na_liscie_od"
         android:textColor="#343434"
-        android:textSize="10dip" />
+        android:textSize="10sp"
+        tools:ignore="TextSizeCheck" />
 
     <TextView
         android:id="@+id/data_dodania"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/artist"
-        android:layout_toRightOf="@+id/TextView01"
+        android:layout_toEndOf="@+id/TextView01"
         android:text="2012-01-01"
         android:textColor="#343434"
-        android:textSize="10dip" />
+        android:textSize="10sp"
+        tools:ignore="TextSizeCheck" />
 
 
 
@@ -133,8 +141,8 @@
     android:layout_width="wrap_content"
     android:layout_height="2dip"
     android:layout_alignBottom="@+id/thumbnail"
-    android:layout_alignLeft="@+id/zmiana"
-    android:layout_alignParentRight="true"
+    android:layout_alignStart="@+id/zmiana"
+    android:layout_alignParentEnd="true"
     android:layout_below="@+id/zmiana"
     android:indeterminateOnly="false"
     android:maxHeight="5dip"
@@ -149,9 +157,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/artist"
-        android:layout_toRightOf="@+id/data_dodania"
+        android:layout_toEndOf="@+id/data_dodania"
         android:text=" | Głosów: 000000"
         android:textColor="#343434"
-        android:textSize="10dip" />
+        android:textSize="10sp"
+        tools:ignore="TextSizeCheck" />
 
 </RelativeLayout>

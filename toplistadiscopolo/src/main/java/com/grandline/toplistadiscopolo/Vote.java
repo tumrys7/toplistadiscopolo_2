@@ -22,9 +22,9 @@ public class Vote {
 	 * @param url string
 	 * */
 	public String setVoteInUrl(String url) throws IOException {
-		String html = null;
+		String html;
 		String info = "";
-		String htmlEnd = "";
+		String htmlEnd;
 
 		try {
 			// defaultHttpClient
@@ -44,11 +44,9 @@ public class Vote {
 			info = htmlEnd.substring(0, htmlEnd.indexOf("<"));
 			
 
-		} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException | ClientProtocolException e) {
 			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} 
+		}
 		// return XML
 		return info;
 	}

@@ -1,5 +1,11 @@
 package com.grandline.toplistadiscopolo;
 
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.widget.ImageView;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,20 +20,11 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.grandline.toplistadiscopolo.R;
-
-
-import android.app.Activity;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.widget.ImageView;
-
 public class ImageLoader {
     
     MemoryCache memoryCache=new MemoryCache();
     FileCache fileCache;
-    private final Map<ImageView, String> imageViews=Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
+    private final Map<ImageView, String> imageViews=Collections.synchronizedMap(new WeakHashMap<>());
     ExecutorService executorService; 
     
     public ImageLoader(Context context){
@@ -51,7 +48,7 @@ public class ImageLoader {
         
     private void queuePhoto(String url, ImageView imageView)
     {
-        PhotoToLoad p=new PhotoToLoad(url, imageView);
+        PhotoToLoad p= new PhotoToLoad(url, imageView);
         executorService.submit(new PhotosLoader(p));
     }
     
@@ -91,7 +88,7 @@ public class ImageLoader {
             BitmapFactory.Options o = new BitmapFactory.Options();
             o.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(new FileInputStream(f),null,o);
-            
+
             //Find the correct scale value. It should be the power of 2.
             final int REQUIRED_SIZE=70;
             int width_tmp=o.outWidth, height_tmp=o.outHeight;
@@ -103,7 +100,7 @@ public class ImageLoader {
                 height_tmp/=2;
                 scale*=2;
             }
-            
+
             //decode with inSampleSize
             BitmapFactory.Options o2 = new BitmapFactory.Options();
             o2.inSampleSize=scale;
@@ -113,7 +110,7 @@ public class ImageLoader {
     }
     
     //Task for the queue
-    private class PhotoToLoad
+    private static class PhotoToLoad
     {
         public String url;
         public ImageView imageView;

@@ -4,7 +4,6 @@
 
     <!-- Strings related to Settings -->
 
-
     <!-- General settings -->
     <string name="pref_header_general">General</string>
     <string name="pref_title_social_recommendations">Refresh list after voting</string>

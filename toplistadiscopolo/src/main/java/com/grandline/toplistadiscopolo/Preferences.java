@@ -2,7 +2,6 @@ package com.grandline.toplistadiscopolo;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -84,9 +83,7 @@ public class Preferences extends PreferenceActivity {
 	 * "simplified" settings UI should be shown.
 	 */
 	private static boolean isSimplePreferences(Context context) {
-		return ALWAYS_SIMPLE_PREFS
-				|| Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN
-				|| !isXLargeTablet(context);
+		return ALWAYS_SIMPLE_PREFS || !isXLargeTablet(context);
 	}
 
 	/** {@inheritDoc} */
@@ -102,16 +99,14 @@ public class Preferences extends PreferenceActivity {
 	 * A preference value change listener that updates the preference's summary
 	 * to reflect its new value.
 	 */
-	private static final Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-		public boolean onPreferenceChange(Preference preference, Object value) {
-			String stringValue = value.toString();
+	private static final Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = (preference, value) -> {
+		String stringValue = value.toString();
 
-			// For all other preferences, set the summary to the value's
-			// simple string representation.
-			preference.setSummary(stringValue);
+		// For all other preferences, set the summary to the value's
+		// simple string representation.
+		preference.setSummary(stringValue);
 
-			return true;
-		}
+		return true;
 	};
 
 	/**

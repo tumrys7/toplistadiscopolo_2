@@ -3,7 +3,6 @@ package com.grandline.toplistadiscopolo;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -22,9 +21,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -39,24 +36,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
-
-import com.facebook.appevents.AppEventsConstants;
-import com.facebook.appevents.AppEventsLogger;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.OnUserEarnedRewardListener;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.firebase.analytics.FirebaseAnalytics;
-
-
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -186,7 +174,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		// [END user_property]
 
 		// [START facebook user_property]
-		AppEventsLogger.setUserID(androidId);
+///		AppEventsLogger.setUserID(androidId);
 		// [END facebook user_property]
 
 		// MobileAds.initialize(this, Constants.KEY_ADMOB_APP_ID);
@@ -237,7 +225,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 
 	     boolean voted = data.getBooleanExtra("param_return",false);
 	     if (voted){
-	    	 if (CheckboxPreference==true){
+	    	 if (CheckboxPreference){
 	    		 refreshListBackground();
 	    	 }
 	     }
@@ -287,17 +275,17 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_lista");
 			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 			// [END image_view_event]
-			// [START facebook events]
-			AppEventsLogger logger = AppEventsLogger.newLogger(this);
-
-			Bundle params = new Bundle();
-			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, "id_utworu");
-			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, idUtworu);
-			params.putString(AppEventsConstants.EVENT_PARAM_CURRENCY, "glos_lista");
-			logger.logEvent(AppEventsConstants.EVENT_NAME_VIEWED_CONTENT, params);
-			// [END facebook events]
+///			// [START facebook events]
+///			AppEventsLogger logger = AppEventsLogger.newLogger(this);
+///
+///			Bundle params = new Bundle();
+///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, "id_utworu");
+///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, idUtworu);
+///			params.putString(AppEventsConstants.EVENT_PARAM_CURRENCY, "glos_lista");
+///			logger.logEvent(AppEventsConstants.EVENT_NAME_VIEWED_CONTENT, params);
+///			// [END facebook events]
 		} else {
-			if (teledysk!="1"){
+			if (!Objects.equals(teledysk, "1")){
 				Toast.makeText(getApplicationContext(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -308,10 +296,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	public void refreshListBackground(){
 
 
-		MobileAds.initialize(this, new OnInitializationCompleteListener() {
-			@Override
-			public void onInitializationComplete(InitializationStatus initializationStatus) {
-			}
+		MobileAds.initialize(this, initializationStatus -> {
 		});
 
 		loadRewardedAd();
@@ -319,15 +304,15 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		listInfo = findViewById(R.id.info);
 		listInfoPocz = findViewById(R.id.infoPocz);
 		listInfo2012 = findViewById(R.id.info2012);
-		songsList = new ArrayList<HashMap<String, String>>();
-		songsListPocz = new ArrayList<HashMap<String, String>>();
-        wykonList = new ArrayList<HashMap<String, String>>();
-        filteredWykonList = new ArrayList<HashMap<String, String>>();
+		songsList = new ArrayList<>();
+		songsListPocz = new ArrayList<>();
+        wykonList = new ArrayList<>();
+        filteredWykonList = new ArrayList<>();
         inputSearch = findViewById(R.id.inputSearch);
         clearButton = findViewById(R.id.clearButton);
         //swiateczneList = new ArrayList<HashMap<String, String>>();
-        y2012List = new ArrayList<HashMap<String, String>>();
-        notowPrzedzialyList = new ArrayList<HashMap<String, String>>();
+        y2012List = new ArrayList<>();
+        notowPrzedzialyList = new ArrayList<>();
 
         list= findViewById(R.id.list);
 		adapter=new LazyAdapter(this, songsList); 
@@ -345,35 +330,21 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
         adapter2012=new LazyAdapter(this, y2012List); 
         
         spinnerNotowaniaPrzedzialy= findViewById(R.id.spinnerNotowaniaPrzedzialy);
-        listNotowPrzedzialy=new ArrayList<String>();
-        adapterNotowPrzedzialy=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, listNotowPrzedzialy);
+        listNotowPrzedzialy= new ArrayList<>();
+        adapterNotowPrzedzialy= new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, listNotowPrzedzialy);
         adapterNotowPrzedzialy.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         
         // Click event for single list row
-        list.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				showSongMenu(position, Constants.KEY_LISTA);
-			}
-		});	
+        list.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_LISTA));
         
-        listPocz.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				showSongMenu(position, Constants.KEY_POCZEKALNIA);
-			}
-		});	        
+        listPocz.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_POCZEKALNIA));
         // Click event for single list row
-       listWykon.setOnItemClickListener(new OnItemClickListener() {
-			@SuppressWarnings("unchecked")
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				  HashMap<String, String> mapo = new HashMap<String, String>();
-				     mapo = (HashMap<String, String>) listWykon.getItemAtPosition(position);
-					 final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
-    			showAuthSongs(id_wykonawcy);
-			}
-		});
+       listWykon.setOnItemClickListener((parent, view, position, id) -> {
+			 HashMap<String, String> mapo;
+				mapo = (HashMap<String, String>) listWykon.getItemAtPosition(position);
+				final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
+		   showAuthSongs(id_wykonawcy);
+	   });
 
 	   spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(new OnItemSelectedListener(){
 		   public void onItemSelected(AdapterView<?> parent, View view, 
@@ -384,7 +355,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		   //refreshListBackground();
 	       if (isSpinnerClicked) { 
 	    	   
-			   HashMap<String, String> o = new HashMap<String, String>();
+			   HashMap<String, String> o;
 	           o = notowPrzedzialyList.get(pos);
 	           notowanieId = o.get(Constants.KEY_NOTOWANIE_ZA);
 	          // Toast.makeText(getApplicationContext(), notowanieId, Toast.LENGTH_LONG).show();
@@ -421,21 +392,10 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			}
     	});     
        
-       clearButton.setOnClickListener(new OnClickListener() {
-		
-		public void onClick(View arg0) {
-			inputSearch.setText("");
-			
-		}
-	});
+       clearButton.setOnClickListener(arg0 -> inputSearch.setText(""));
        
        // Click event for single list row
-       list2012.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				showSongMenu(position, Constants.KEY_LISTA_2012);
-			}
-		});	
+       list2012.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_LISTA_2012));
 
         progressDialog = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_refresh_list));
         new RefreshList().execute();
@@ -535,7 +495,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	
 	@SuppressWarnings({ "unchecked" })
 	public void showSongMenu(int position, String listType){
-        HashMap<String, String> o = new HashMap<String, String>();
+        HashMap<String, String> o = new HashMap<>();
         
         if (listType.equals(Constants.KEY_LISTA)) {
         	o = (HashMap<String, String>) list.getItemAtPosition(position);
@@ -566,80 +526,74 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
        // builder.setIcon(R.drawable.ic_menu_more);
         
         if (listType.equals(Constants.KEY_LISTA) || listType.equals(Constants.KEY_POCZEKALNIA)) {
-			if (adReward == false)  {
-				builder.setItems(RewardItems, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int item) {
+			if (!adReward)  {
+				builder.setItems(RewardItems, (dialog, item) -> {
+					//Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
+					if (RewardItems[item] == getString(R.string.zaglosuj)) {
+						glosTeledysk = "0";
+						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
+					} else if (RewardItems[item] == getString(R.string.liczba_glosow)) {
+							if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
+								showRewardedVideo();
+							}
+					} else if (RewardItems[item] == getString(R.string.utwory_wykonawcy)) {
+						finish();
+						showAuthSongs(idWykonawcy);
+					} else if (RewardItems[item] == getString(R.string.teledysk)) {
+						glosTeledysk = "1";
+						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
+						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
+						startActivity(browserIntent);
+					}
+					//else if(RewardItems[item]==getString(R.string.zobacz_slowa)){
+					//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
+					//	startActivity(browserIntent);
+					//}
+				});
+			} else if (adReward)  {
+					builder.setItems(items, (dialog, item) -> {
 						//Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
-						if (RewardItems[item] == getString(R.string.zaglosuj)) {
+						if (items[item] == getString(R.string.zaglosuj)) {
 							glosTeledysk = "0";
 							zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-						} else if (RewardItems[item] == getString(R.string.liczba_glosow)) {
-								if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
-									showRewardedVideo();
-								}
-						} else if (RewardItems[item] == getString(R.string.utwory_wykonawcy)) {
+						} else if (items[item] == getString(R.string.utwory_wykonawcy)) {
 							finish();
 							showAuthSongs(idWykonawcy);
-						} else if (RewardItems[item] == getString(R.string.teledysk)) {
+						} else if (items[item] == getString(R.string.teledysk)) {
 							glosTeledysk = "1";
 							zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
 							startActivity(browserIntent);
 						}
-						//else if(RewardItems[item]==getString(R.string.zobacz_slowa)){
+						//else if(items[item]==getString(R.string.zobacz_slowa)){
 						//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
 						//	startActivity(browserIntent);
 						//}
-					}
-				});
-			} else if (adReward == true)  {
-					builder.setItems(items, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int item) {
-							//Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
-							if (items[item] == getString(R.string.zaglosuj)) {
-								glosTeledysk = "0";
-								zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-							} else if (items[item] == getString(R.string.utwory_wykonawcy)) {
-								finish();
-								showAuthSongs(idWykonawcy);
-							} else if (items[item] == getString(R.string.teledysk)) {
-								glosTeledysk = "1";
-								zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-								Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-								startActivity(browserIntent);
-							}
-							//else if(items[item]==getString(R.string.zobacz_slowa)){
-							//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
-							//	startActivity(browserIntent);
-							//}
-						}
 					});
 			}
         }
         
-        if (listType==Constants.KEY_LISTA_2012) {
+        if (listType.equals(Constants.KEY_LISTA_2012)) {
         	finish();
         	showAuthSongs(idWykonawcy);
         }
 
-        if (listType==Constants.KEY_UTW_WYKONAWCY) {
-			builder.setItems(wykItems, new DialogInterface.OnClickListener() {
-	            public void onClick(DialogInterface dialog, int item) {
-	                //Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
-	        		if(wykItems[item]==getString(R.string.zaglosuj)){
-	        			zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
-	        		}  
-	        		else if(wykItems[item]==getString(R.string.teledysk)){
-	        			zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"1");
-	        			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-	        			startActivity(browserIntent);
-	        		}
-	        	//	else if(wykItems[item]==getString(R.string.zobacz_slowa)){
-	        	//		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
-	        	//		startActivity(browserIntent);
-	        	//	}
-	            }
-	        });
+        if (listType.equals(Constants.KEY_UTW_WYKONAWCY)) {
+			builder.setItems(wykItems, (dialog, item) -> {
+				//Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
+				if(wykItems[item]==getString(R.string.zaglosuj)){
+					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
+				}
+				else if(wykItems[item]==getString(R.string.teledysk)){
+					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"1");
+					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
+					startActivity(browserIntent);
+				}
+			//	else if(wykItems[item]==getString(R.string.zobacz_slowa)){
+			//		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
+			//		startActivity(browserIntent);
+			//	}
+			});
         }
         
         if (!listType.equals(Constants.KEY_LISTA_2012)) {
@@ -675,7 +629,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 				// looping through all song nodes <song>
 				for (int i = 0; i < nl.getLength(); i++) {
 					// creating new HashMap
-					HashMap<String, String> map = new HashMap<String, String>();
+					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
 					// adding each child node to HashMap key => value
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
@@ -684,7 +638,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
 					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
 					//only for PRO Version
-					if (adReward == true) {
+					if (adReward) {
 						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
 					}
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
@@ -693,9 +647,9 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 					map.put(Constants.KEY_LYRICS, parser.getValue(e, Constants.KEY_LYRICS));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
-					if ((parser.getValue(e, Constants.KEY_PLACE_CHANGE).indexOf(getString(R.string.text_awans)))>=0) {
+					if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_awans))) {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
-					} else if ((parser.getValue(e, Constants.KEY_PLACE_CHANGE).indexOf(getString(R.string.text_spadek)))>=0) {
+					} else if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_spadek))) {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
 					} else {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
@@ -725,7 +679,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			// looping through all song nodes <song>
 			for (int i = 0; i < nl.getLength(); i++) {
 				// creating new HashMap
-				HashMap<String, String> map = new HashMap<String, String>();
+				HashMap<String, String> map = new HashMap<>();
 				Element e = (Element) nl.item(i);
 				// adding each child node to HashMap key => value
 				map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
@@ -733,9 +687,9 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 				map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
 				map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
 				map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
-				if (adReward == true) {
+				if (adReward) {
 					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
-				}
+		 		}
 				map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 				map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 				map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
@@ -765,7 +719,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			// looping through all song nodes <song>
 			for (int i = 0; i < nl.getLength(); i++) {
 				// creating new HashMap
-				HashMap<String, String> map = new HashMap<String, String>();
+				HashMap<String, String> map = new HashMap<>();
 				Element e = (Element) nl.item(i);
 				// adding each child node to HashMap key => value
 				map.put(Constants.KEY_ID_WYKON, parser.getValue(e, Constants.KEY_ID_WYKON));
@@ -794,7 +748,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			// looping through all records
 			for (int i = 0; i < nl.getLength(); i++) {
 				// creating new HashMap
-				HashMap<String, String> map = new HashMap<String, String>();
+				HashMap<String, String> map = new HashMap<>();
 				Element e = (Element) nl.item(i);
 				// adding each child node to HashMap key => value
 				map.put(Constants.KEY_NOTOWANIE_ZA, parser.getValue(e, Constants.KEY_NOTOWANIE_ZA));
@@ -812,7 +766,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			// looping through all song nodes <song>
 			for (int i = 0; i < nl.getLength(); i++) {
 				// creating new HashMap
-				HashMap<String, String> map = new HashMap<String, String>();
+				HashMap<String, String> map = new HashMap<>();
 				Element e = (Element) nl.item(i);
 				// adding each child node to HashMap key => value
 				map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
@@ -821,7 +775,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 				map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
 				map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
 				//only for PRO Version
-				if (adReward == true) {
+				if (adReward) {
 					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
 				}
 				map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
@@ -878,7 +832,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
    	    	   spinnerNotowaniaPrzedzialy.setSelection(spinnerPosition, false);
    	    	   }
     	   progressDialog.dismiss();
-           if (connectionError==true) {
+           if (connectionError) {
    			new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
    			.setTitle(R.string.text_connection_error_title)
    			.setMessage(getString(R.string.text_connection_error))
@@ -920,18 +874,18 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			
     	   progressDialogVote.dismiss();
 
-           if (connectionError==true) {
+           if (connectionError) {
    			new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
    			.setTitle(R.string.text_connection_error_title)
    			.setMessage(getString(R.string.text_connection_error))
    			.setNeutralButton("Ok",	null).show();
            } else {
 		        setUserVote(votingListId);
-		        if(glosTeledysk=="0"){
+		        if(Objects.equals(glosTeledysk, "0")){
 		        	Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
 		        }
 		   		if (myListType.equals(Constants.KEY_LISTA) || myListType.equals(Constants.KEY_POCZEKALNIA) || myListType.equals(Constants.KEY_WYKONAWCY)) {
-					if (CheckboxPreference==true){
+					if (CheckboxPreference){
 						refreshListBackground();
 					}
 				}
@@ -958,7 +912,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		String lastVoteDateString = settings.getString(idListy, lastVoteDate.format(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)));
 	    
 	    try {
-            return lastVoteDate.parse(lastVoteDateString).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
+            return Objects.requireNonNull(lastVoteDate.parse(lastVoteDateString)).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
 		} catch (ParseException e) {
 			return true;
 		}
@@ -969,10 +923,10 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		SimpleDateFormat newVoteDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		SharedPreferences.Editor editor = settings.edit();
 	    editor.putString(idListy, newVoteDate.format(System.currentTimeMillis()));
-	    editor.commit();
+	    editor.apply();
 	}
 	
-	protected void onSaveInstanceState(Bundle outState) {
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
     	super.onSaveInstanceState(outState);
     	
     	if (progressDialog.isShowing()){
@@ -995,23 +949,16 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
         else if (localeString.equals("pl")){
         	checkedItem = 1;
         }
-			builder.setSingleChoiceItems(items, checkedItem, new DialogInterface.OnClickListener() {
-
-				public void onClick(DialogInterface dialog, int item) {
-					if (item == 0){
-						setLocaleSettings("en");
-					}
-					if (item == 1){
-						setLocaleSettings("pl");
-					}
+			builder.setSingleChoiceItems(items, checkedItem, (dialog, item) -> {
+				if (item == 0){
+					setLocaleSettings("en");
 				}
-	        });
+				if (item == 1){
+					setLocaleSettings("pl");
+				}
+			});
       
-        builder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
-        	public void onClick(DialogInterface dialog, int item) {
-        		Toast.makeText(getApplicationContext(), R.string.text_zmiana_jezyka, Toast.LENGTH_LONG).show();
-        	}
-        });
+        builder.setNeutralButton("OK", (dialog, item) -> Toast.makeText(getApplicationContext(), R.string.text_zmiana_jezyka, Toast.LENGTH_LONG).show());
         AlertDialog alert = builder.create();
         alert.show();		
 		
@@ -1019,8 +966,8 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	
 	public String getLocaleSettings() {
 		//SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
-		Locale lc = Locale.getDefault(); 
-		String localeDefault = lc.getLanguage(); 
+		Locale lc = Locale.getDefault();
+		String localeDefault = lc.getLanguage();
 		//String localeString = settings.getString("locale",localeDefault);
 		return localeDefault;
 	}
@@ -1029,7 +976,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
 		SharedPreferences.Editor editor = settings.edit();
 	    editor.putString("locale",localeString);
-	    editor.commit();
+	    editor.apply();
 	}
 	public void setLocale(String localeString){
 		Locale locale = new Locale(localeString);
@@ -1082,7 +1029,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 							ListaPrzebojowDiscoPolo.this.rewardedAd = rewardedAd;
 							Log.d(TAG, "onAdLoaded");
 							ListaPrzebojowDiscoPolo.this.isLoading = false;
-							Toast.makeText(ListaPrzebojowDiscoPolo.this, "onAdLoaded", Toast.LENGTH_SHORT).show();
+							//Toast.makeText(ListaPrzebojowDiscoPolo.this, "onAdLoaded", Toast.LENGTH_SHORT).show();
 						}
 					});
 		}
@@ -1107,7 +1054,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 					}
 
 					@Override
-					public void onAdFailedToShowFullScreenContent(AdError adError) {
+					public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
 						// Called when ad fails to show.
 						Log.d(TAG, "onAdFailedToShowFullScreenContent");
 						// Don't forget to set the ad reference to null so you
@@ -1135,27 +1082,24 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		Activity activityContext = ListaPrzebojowDiscoPolo.this;
 		rewardedAd.show(
 				activityContext,
-				new OnUserEarnedRewardListener() {
-					@Override
-					public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
-						// Handle the reward.
-						Log.d("TAG", "The user earned the reward.");
-						adReward = true;
-						refreshListBackground();
-						// [START image_view_event]
-						Bundle bundlereward = new Bundle();
-						bundlereward.putString(FirebaseAnalytics.Param.ITEM_ID, androidId);
-						bundlereward.putString(FirebaseAnalytics.Param.ITEM_NAME, "rewardvideo");
-						bundlereward.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "on_rewarded_video");
-						mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundlereward);
+				rewardItem -> {
+					// Handle the reward.
+					Log.d("TAG", "The user earned the reward.");
+					adReward = true;
+					refreshListBackground();
+					// [START image_view_event]
+					Bundle bundlereward = new Bundle();
+					bundlereward.putString(FirebaseAnalytics.Param.ITEM_ID, androidId);
+					bundlereward.putString(FirebaseAnalytics.Param.ITEM_NAME, "rewardvideo");
+					bundlereward.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "on_rewarded_video");
+					mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundlereward);
 
-						Bundle bundleparams = new Bundle();
-						bundleparams.putString(FirebaseAnalytics.Param.ACHIEVEMENT_ID, "rewarded_video");
-						mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundleparams);
-						// [END image_view_event]
+					Bundle bundleparams = new Bundle();
+					bundleparams.putString(FirebaseAnalytics.Param.ACHIEVEMENT_ID, "rewarded_video");
+					mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundleparams);
+					// [END image_view_event]
 
 
-					}
 				});
 	}
 

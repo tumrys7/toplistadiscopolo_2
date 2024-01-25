@@ -8,6 +8,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -18,6 +20,7 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.Objects;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -50,7 +53,7 @@ public class XMLParser {
 			e.printStackTrace();
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
-		} 
+		}
 		// return XML
 		return xml;
 	}
@@ -60,7 +63,7 @@ public class XMLParser {
 	 * @param xml string
 	 * */
 	public Document getDomElement(String xml){
-		Document doc = null;
+		Document doc;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setCoalescing(true);//aby obsluzyc znak & w xml
 		try {
@@ -72,13 +75,13 @@ public class XMLParser {
 		        doc = db.parse(is); 
 
 			} catch (ParserConfigurationException e) {
-				Log.e("Error: ", e.getMessage());
+				Log.e("Error: ", Objects.requireNonNull(e.getMessage()));
 				return null;
 			} catch (SAXException e) {
-				Log.e("Error: ", e.getMessage());
+				Log.e("Error: ", Objects.requireNonNull(e.getMessage()));
 	            return null;
 			} catch (IOException e) {
-				Log.e("Error: ", e.getMessage());
+				Log.e("Error: ", Objects.requireNonNull(e.getMessage()));
 				return null;
 			}
 
