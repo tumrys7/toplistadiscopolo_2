@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.w3c.dom.Document;
@@ -28,8 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
-
-import static com.google.android.material.snackbar.Snackbar.*;
 
 public class UtworyWykonawcy extends Activity {
 
@@ -281,9 +278,9 @@ public class UtworyWykonawcy extends Activity {
            } else {
         	setUserVote(votingListId);
         	if(Objects.equals(glosTeledysk, "0")){
-				Snackbar snackbar = make(UtworyWykonawcy.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
-				snackbar.show();
-        	//	Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
+			//	Snackbar snackbar = make(UtworyWykonawcy.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
+			//	snackbar.show();
+        		Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
         	}
 			if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
 				voted = true;

@@ -43,7 +43,6 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.w3c.dom.Document;
@@ -57,8 +56,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
-
-import static com.google.android.material.snackbar.Snackbar.make;
 
 
 public class ListaPrzebojowDiscoPolo extends Activity  {
@@ -287,9 +284,9 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 
 		} else {
 			if (!Objects.equals(teledysk, "1")){
-			//	Toast.makeText(getApplicationContext(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)), Toast.LENGTH_LONG).show();
-				Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)),  Snackbar.LENGTH_LONG);
-				snackbar.show();
+				Toast.makeText(getApplicationContext(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)), Toast.LENGTH_LONG).show();
+			//	Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)),  Snackbar.LENGTH_LONG);
+			//	snackbar.show();
 			}
 		}
 
@@ -979,9 +976,9 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		   } else {
 			   setUserVote(votingListId);
 			   if(Objects.equals(glosTeledysk, "0")){
-				//   Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
-				   Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
-				   snackbar.show();
+				   Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
+				//   Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
+				//   snackbar.show();
 			   }
 			   if (Objects.equals(myListType, Constants.KEY_LISTA) || Objects.equals(myListType, Constants.KEY_POCZEKALNIA) || Objects.equals(myListType, Constants.KEY_NOWOSCI) || Objects.equals(myListType, Constants.KEY_MOJALISTA)|| Objects.equals(myListType, Constants.KEY_WYKONAWCY)) {
 				   if (CheckboxPreference){
