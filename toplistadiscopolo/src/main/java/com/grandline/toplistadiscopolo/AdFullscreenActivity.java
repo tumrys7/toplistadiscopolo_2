@@ -3,7 +3,6 @@ package com.grandline.toplistadiscopolo;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -41,13 +40,13 @@ public class AdFullscreenActivity extends Activity {
                         // The mInterstitialAd reference will be null until
                         // an ad is loaded.
                         mInterstitialAd = interstitialAd;
-                        Log.i(TAG, "onAdLoaded");
+                     //   Log.i(TAG, "onAdLoaded");
                         showInterstitial();
                         mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
                             @Override
                             public void onAdDismissedFullScreenContent() {
                                 // Called when fullscreen content is dismissed.
-                                Log.d("TAG", "The ad was dismissed.");
+                            //    Log.d("TAG", "The ad was dismissed.");
                                 finish();
                                 showLista();
                             }
@@ -55,7 +54,7 @@ public class AdFullscreenActivity extends Activity {
                             @Override
                             public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                                 // Called when fullscreen content failed to show.
-                                Log.d("TAG", "The ad failed to show.");
+                         //       Log.d("TAG", "The ad failed to show.");
                                 mInterstitialAd = null;
                                 finish();
                                 showLista();
@@ -66,7 +65,7 @@ public class AdFullscreenActivity extends Activity {
                                 // Called when fullscreen content is shown.
                                 // Make sure to set your reference to null so you don't
                                 // show it a second time.
-                                Log.d("TAG", "The ad was shown.");
+                        //        Log.d("TAG", "The ad was shown.");
                             }
                         });
                     }
@@ -74,7 +73,7 @@ public class AdFullscreenActivity extends Activity {
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         // Handle the error
-                        Log.i(TAG, loadAdError.getMessage());
+                    //    Log.i(TAG, loadAdError.getMessage());
                         mInterstitialAd = null;
                     }
                 });
@@ -94,7 +93,7 @@ public class AdFullscreenActivity extends Activity {
             if (mInterstitialAd != null) {
                 mInterstitialAd.show(AdFullscreenActivity.this);
             } else {
-                Log.d("TAG", "The interstitial ad wasn't ready yet.");
+         //       Log.d("TAG", "The interstitial ad wasn't ready yet.");
             }
         }
 

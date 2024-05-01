@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
@@ -9,27 +8,25 @@
 
     <!-- ListRow Left sied Thumbnail image -->
 
-    <TextView
+   <!-- <TextView
         android:id="@+id/miejsce"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/title"
         android:layout_alignParentStart="true"
+        android:layout_below="@+id/title"
         android:layout_toStartOf="@layout/main"
         android:text="10"
         android:textColor="#343434"
         android:textSize="15sp"
-        android:textStyle="bold"
-        tools:ignore="TextSizeCheck" />
-
+        android:textStyle="bold" />
+-->
     <LinearLayout
         android:id="@+id/thumbnail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="false"
+        android:layout_alignParentStart="true"
         android:layout_centerInParent="true"
         android:layout_marginEnd="5dip"
-        android:layout_toEndOf="@id/miejsce"
         android:background="@drawable/image_bg"
         android:padding="3dip" >
 
@@ -38,7 +35,6 @@
             android:layout_width="66dip"
             android:layout_height="50dip"
             android:src="@drawable/rihanna" />
-
     </LinearLayout>
 
     <!-- Title Of Song -->
@@ -54,8 +50,7 @@
         android:textColor="#040404"
         android:textSize="15sp"
         android:textStyle="bold"
-        android:typeface="sans"
-        tools:ignore="TextSizeCheck" />
+        android:typeface="sans" />
 
     <!-- Artist Name -->
 
@@ -64,15 +59,6 @@
 
 
     <!-- Rightend Arrow -->
-
-    <ImageView
-        android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:src="@drawable/arrow"
-        tools:ignore="ImageContrastCheck" />
 
     <TextView
         android:id="@+id/id_listy"
@@ -88,36 +74,24 @@
         android:id="@+id/artist"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/title"
         android:layout_alignStart="@+id/title"
+        android:layout_below="@+id/title"
         android:lines="1"
         android:text="Just gona stand there and ..."
         android:textColor="#343434"
         android:textSize="11sp"
-        android:textStyle="bold"
-        tools:ignore="TextSizeCheck" />
+        android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/zmiana"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/id_listy"
-        android:layout_alignStart="@+id/artist"
-        android:text="Awans o 3 | "
-        android:textColor="#343434"
-        android:textSize="11sp"
-        tools:ignore="TextSizeCheck" />
 
     <TextView
         android:id="@+id/TextView01"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/title"
         android:layout_below="@+id/artist"
-        android:layout_toEndOf="@+id/zmiana"
         android:text="@string/text_na_liscie_od"
         android:textColor="#343434"
-        android:textSize="11sp"
-        tools:ignore="TextSizeCheck" />
+        android:textSize="11sp" />
 
     <TextView
         android:id="@+id/data_dodania"
@@ -127,26 +101,8 @@
         android:layout_toEndOf="@+id/TextView01"
         android:text="2012-01-01"
         android:textColor="#343434"
-        android:textSize="11sp"
-        tools:ignore="TextSizeCheck" />
+        android:textSize="11sp" />
 
-
-<ProgressBar
-    android:id="@+id/votesProgress"
-    style="?android:attr/progressBarStyleHorizontal"
-    android:layout_width="wrap_content"
-    android:layout_height="5dip"
-    android:layout_alignBottom="@+id/thumbnail"
-    android:layout_alignStart="@+id/zmiana"
-    android:layout_alignParentEnd="true"
-    android:layout_below="@+id/zmiana"
-    android:indeterminateOnly="false"
-    android:maxHeight="5dip"
-    android:maxWidth="150dip"
-    android:minHeight="10dip"
-    android:progress="23"
-    android:progressDrawable="@drawable/progress_horizontal"
-    android:scrollbarStyle="insideOverlay" />
 
     <TextView
         android:id="@+id/ile_glosow"
@@ -154,9 +110,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/artist"
         android:layout_toEndOf="@+id/data_dodania"
-        android:text=" | Głosów: 000000"
+        android:text="Głosów: 000000"
         android:textColor="#343434"
-        android:textSize="11sp"
-        tools:ignore="TextSizeCheck" />
+        android:textSize="11sp" />
 
 </RelativeLayout>

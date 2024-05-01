@@ -48,11 +48,11 @@ public class LazyAdapter extends BaseAdapter {
         TextView artist = vi.findViewById(R.id.artist); // artist name
         TextView duration = vi.findViewById(R.id.ile_glosow); // duration
         ImageView thumb_image= vi.findViewById(R.id.list_image); // thumb image
-        ImageView arrow_image= vi.findViewById(R.id.imageView1); // thumb image
+        ImageView arrow_image= vi.findViewById(R.id.imageView1); // arrow image
         TextView listPosition = vi.findViewById(R.id.miejsce); // listPosition
         TextView createDate = vi.findViewById(R.id.data_dodania); // listPosition
-        TextView placeChange = vi.findViewById(R.id.zmiana); // title
-        ProgressBar votesProgress = vi.findViewById(R.id.votesProgress); // title
+        TextView placeChange = vi.findViewById(R.id.zmiana); // zmiana
+        ProgressBar votesProgress = vi.findViewById(R.id.votesProgress); // progress
         
         HashMap<String, String> song;
         song = data.get(position);

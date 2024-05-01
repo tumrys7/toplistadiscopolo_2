@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.w3c.dom.Document;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
+
+import static com.google.android.material.snackbar.Snackbar.*;
 
 public class UtworyWykonawcy extends Activity {
 
@@ -116,12 +119,12 @@ public class UtworyWykonawcy extends Activity {
         final String idListy = o.get(Constants.KEY_ID);
         final String idWykonawcy = o.get(Constants.KEY_ARTIST_ID);
         String title = o.get(Constants.KEY_TITLE);
-		//final String slowa = o.get(Constants.KEY_LYRICS);
+
 		final String teledysk = o.get(Constants.KEY_VIDEO);
+		final String spotify = o.get(Constants.KEY_SPOTIFY);
         
 		//final CharSequence[] RewardWykItems = {getString(R.string.zaglosuj),getString(R.string.liczba_glosow), getString(R.string.teledysk)};
-		final CharSequence[] wykItems = {getString(R.string.zaglosuj), getString(R.string.teledysk)};
-
+		final CharSequence[] wykItems = {getString(R.string.zaglosuj), getString(R.string.teledysk),getString(R.string.spotify)};
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(UtworyWykonawcy.this);
         builder.setTitle(title);
@@ -139,11 +142,10 @@ public class UtworyWykonawcy extends Activity {
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
 						startActivity(browserIntent);
+					} else if(wykItems[item]==getString(R.string.spotify)){
+						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(spotify));
+						startActivity(browserIntent);
 					}
-					//else if(wykItems[item]==getString(R.string.zobacz_slowa)){
-					//	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(slowa));
-					//	startActivity(browserIntent);
-					//}
 				});
 			}
 		}
@@ -174,19 +176,6 @@ public class UtworyWykonawcy extends Activity {
 			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_utw_wykonawcy");
 			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 			// [END glos_utw_wykon_event]
-			// [START facebook events]
-///			AppEventsLogger logger = AppEventsLogger.newLogger(this);
-
-///			Bundle params = new Bundle();
-///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_TYPE, idWykonawcy);
-///			params.putString(AppEventsConstants.EVENT_PARAM_CONTENT_ID, idUtworu);
-///			params.putString(AppEventsConstants.EVENT_PARAM_CURRENCY, "glos_wykonawcy");
-///			logger.logEvent(AppEventsConstants.EVENT_NAME_VIEWED_CONTENT, params);
-
-///			Bundle parameters = new Bundle();
-///			parameters.putString(AppEventsConstants.EVENT_PARAM_LEVEL, "glos_utw_wykonawcy");
-///			logger.logEvent(AppEventsConstants.EVENT_NAME_ACHIEVED_LEVEL, parameters);
-			// [END facebook events]
 		} else {
 			if (!Objects.equals(teledysk, "1")){
 				Toast.makeText(getApplicationContext(), getString(R.string.text_too_many_votes).replace("VOTES_INTERVAL",Integer.toString(Constants.VOTES_INTERVAL)), Toast.LENGTH_LONG).show();
@@ -222,8 +211,8 @@ public class UtworyWykonawcy extends Activity {
 					map.put(Constants.KEY_ARTIST,parser.getValue(e, Constants.KEY_ARTIST));
 					map.put(Constants.KEY_ARTIST_ID,parser.getValue(e, Constants.KEY_ARTIST_ID));
 					map.put(Constants.KEY_THUMB_URL,parser.getValue(e, Constants.KEY_THUMB_URL));
-					map.put(Constants.KEY_LYRICS,parser.getValue(e, Constants.KEY_LYRICS));
 					map.put(Constants.KEY_VIDEO,parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY,parser.getValue(e, Constants.KEY_SPOTIFY));
 					map.put(Constants.KEY_CREATE_DATE," " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 					//only for PRO Version
 					if (adReward) {
@@ -292,11 +281,15 @@ public class UtworyWykonawcy extends Activity {
            } else {
         	setUserVote(votingListId);
         	if(Objects.equals(glosTeledysk, "0")){
-        		Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
+				Snackbar snackbar = make(UtworyWykonawcy.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
+				snackbar.show();
+        	//	Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
         	}
 			if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
 				voted = true;
+				if (adReward) {
 					refreshAuthSong(myIdWykonawcy);
+				}
 			}
            }
     	   super.onPostExecute(result);
@@ -348,13 +341,13 @@ public class UtworyWykonawcy extends Activity {
 	    editor.apply();
 
 	}
-	
+
 	public String getLocaleSettings() {
 		//SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
-		Locale lc = Locale.getDefault(); 
-		String localeDefault = lc.getLanguage(); 
+		Locale lc = Locale.getDefault();
+
 		//String localeString = settings.getString("locale",localeDefault);
-		return localeDefault;
+		return lc.getLanguage();
 	}
 
 	

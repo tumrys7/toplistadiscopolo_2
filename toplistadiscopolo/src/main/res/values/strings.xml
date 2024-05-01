@@ -4,12 +4,14 @@
     <string name="app_name">Disco Polo - Music Chart</string>
 
     <!-- zakladki -->
-    <string name="tab_lista">Chart</string>
+    <string name="tab_lista">Chart 7 days</string>
     <string name="tab_poczekalnia">Propositions</string>
+    <string name="tab_nowosci">New</string>
+    <string name="tab_mojalista">My</string>
     <string name="tab_wykonawcy">Artists</string>
     <string name="tab_2012">Hit of the month</string>
 
-    <string name="tab_wykonawcy_filtruj">Search artist…</string>
+    <string name="tab_wykonawcy_filtruj">Search artist&#8230;</string>
 
     <!-- menu -->
     <string name="menu_odswiez">Refresh</string>
@@ -27,13 +29,16 @@
     <string name="zaglosuj">Vote</string>
     <string name="liczba_glosow">Show votes (Watch Ad Video)</string>
     <string name="teledysk">Video</string>
+    <string name="spotify">Play music</string>
     <string name="utwory_wykonawcy">Artist\'s songs</string>
-    <!--  <string name="zobacz_slowa">Lyrics (teksty.org)</string> -->
 
     <!-- komunikaty -->
-    <string name="text_refresh_list">Please wait while retrieving current chart…</string>
-    <string name="text_auth_refresh_list">Please wait while retrieving artist\'s song…</string>
-    <string name="text_voting">Voting…</string>
+    <string name="text_cookie_title">Consent to Use of cookies</string>
+    <string name="text_cookie">We use device identifiers to personalise content and ads, to provide social media features and to analyse our traffic. We also share such identifiers and other information from your device with our social media, advertising and analytics partners. <!--  <a href="https://www.google.com/about/company/user-consent-policy.html">See details</a> --> </string>
+    <string name="text_cookie_close">I accept cookies</string>
+    <string name="text_refresh_list">Please wait while retrieving current chart&#8230;</string>
+    <string name="text_auth_refresh_list">Please wait while retrieving artist\'s song&#8230;</string>
+    <string name="text_voting">Voting&#8230;</string>
     <string name="text_voting_error">Vote was not submitted</string>
     <string name="text_connection_error">No active internet connection! Turn on internet connection and choose Refresh from menu.</string>
     <string name="text_connection_error_title">Connection error!</string>
@@ -45,13 +50,14 @@
     <string name="text_spadek">Down</string>
     <string name="text_glosow">Votes:</string>
     <string name="text_na_liscie_od">Added:</string>
+    <string name="menu_settings">Settings</string>
 
     <string name="title_activity_utwory_wykonawcy">Artist\'s songs</string>
 
     <string name="email_subject">Android: DiscoPoloMusicChart</string>
 
     <string name="title_activity_oprogramie">About program</string>
-    <string name="wersja_programu">Version 1.13</string>
+    <string name="wersja_programu">Version 1.14</string>
     <string name="company_name">Grand Line</string>
     <string name="programmer1">Jacek Rodak</string>
     <string name="programmer2">Jarosław Wołoszyn</string>
@@ -59,9 +65,8 @@
     <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
     <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
     <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
-    <string name="facebook_app_id">425101674284807</string>
 
     <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
-    <string name="loading">Please wait…</string>
+    <string name="loading">Please wait&#8230;</string>
 
 </resources>

@@ -1,21 +1,21 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdk 33
+    compileSdk 34
 //23
 
     defaultConfig {
         applicationId "com.grandline.toplistadiscopolo"
         minSdk 19
-        targetSdkVersion 33
+        targetSdkVersion 34
         //23
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_8
             targetCompatibility JavaVersion.VERSION_1_8
             useLibrary 'org.apache.http.legacy'
-            multiDexEnabled true
-        }
 
+        }
+        multiDexEnabled true
     }
 
     lintOptions {
@@ -31,15 +31,22 @@ android {
         }
     }
     namespace 'com.grandline.toplistadiscopolo'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'androidx.appcompat:appcompat-resources:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'com.google.android.ads:mediation-test-suite:3.0.0'
     implementation 'com.google.android.gms:play-services-ads:22.6.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
 }
+
+
 
 apply plugin: 'com.google.gms.google-services'
