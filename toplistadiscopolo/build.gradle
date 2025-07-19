@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.grandline.toplistadiscopolo"
-        minSdk 19
+        minSdk 23
         targetSdkVersion 36
         //23
         compileOptions {
@@ -18,11 +18,6 @@ android {
         multiDexEnabled true
     }
 
-    lintOptions {
-        checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
-    }
 
     buildTypes {
         release {
@@ -35,21 +30,28 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    lint {
+        checkReleaseBuilds false
+    }
 }
 
 dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.appcompat:appcompat-resources:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.appcompat:appcompat-resources:1.7.1'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.google.android.ads:mediation-test-suite:3.0.0'
-    implementation 'com.google.android.gms:play-services-ads:22.6.0'
+    implementation 'com.google.android.gms:play-services-ads:24.4.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'androidx.viewpager2:viewpager2:1.0.0'
-    implementation 'androidx.fragment:fragment:1.6.2'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
+    implementation 'androidx.fragment:fragment:1.8.8'
 }
-
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 
 apply plugin: 'com.google.gms.google-services'
