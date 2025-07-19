@@ -1,4 +1,4 @@
-package com.grandline.toplistadiscopolo;
+package com.grandline.toplistadiscopolo.fragments;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -16,6 +16,12 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import com.grandline.toplistadiscopolo.Constants;
+import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
+import com.grandline.toplistadiscopolo.R;
+import com.grandline.toplistadiscopolo.UtworyWykonawcy;
+import com.grandline.toplistadiscopolo.adapters.WykAdapter;
 
 public class WykonawcyFragment extends Fragment {
     private ListView listWykon;

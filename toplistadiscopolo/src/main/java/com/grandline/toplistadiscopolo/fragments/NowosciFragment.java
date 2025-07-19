@@ -1,4 +1,4 @@
-package com.grandline.toplistadiscopolo;
+package com.grandline.toplistadiscopolo.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,6 +12,11 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import com.grandline.toplistadiscopolo.Constants;
+import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
+import com.grandline.toplistadiscopolo.R;
+import com.grandline.toplistadiscopolo.adapters.NowosciAdapter;
 
 public class NowosciFragment extends Fragment {
     private ListView listNowosci;

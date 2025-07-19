@@ -71,22 +71,23 @@ public class UtworyWykonawcy extends Activity {
 			createNativeAd();
 		}
 
+
 	}
 
+	@SuppressWarnings("deprecation")
+	@Override
 	public void onBackPressed() {
-	
-	   Bundle conData = new Bundle();
-	   conData.putBoolean("param_return", voted);
-	   Intent intent = new Intent();
-	   intent.putExtras(conData);
-	   setResult(RESULT_OK, intent);
+		Bundle conData = new Bundle();
+		conData.putBoolean("param_return", voted);
+		Intent intent = new Intent();
+		intent.putExtras(conData);
+		setResult(RESULT_OK, intent);
 
 		if (adView != null) {
 			adView.destroy();
 		}
-		finish();
+		super.onBackPressed();
 		showAdFullscreen();
-
 	}
 
 

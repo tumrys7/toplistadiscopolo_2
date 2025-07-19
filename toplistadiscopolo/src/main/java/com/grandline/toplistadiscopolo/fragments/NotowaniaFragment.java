@@ -1,4 +1,4 @@
-package com.grandline.toplistadiscopolo;
+package com.grandline.toplistadiscopolo.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,28 +16,33 @@ import androidx.fragment.app.Fragment;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Lista2012Fragment extends Fragment {
+import com.grandline.toplistadiscopolo.Constants;
+import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
+import com.grandline.toplistadiscopolo.R;
+import com.grandline.toplistadiscopolo.adapters.LazyAdapter;
+
+public class NotowaniaFragment extends Fragment {
     private ListView list2012;
     private LazyAdapter adapter2012;
-    private ArrayList<HashMap<String, String>> y2012List;
+    private ArrayList<HashMap<String, String>> notowaniaList;
     private Spinner spinnerNotowaniaPrzedzialy;
     private ArrayList<String> listNotowPrzedzialy;
     private ArrayAdapter<String> adapterNotowPrzedzialy;
     private ArrayList<HashMap<String, String>> notowPrzedzialyList;
     private boolean isSpinnerClicked = false;
 
-    public Lista2012Fragment() {
+    public NotowaniaFragment() {
         // Required empty public constructor
     }
 
-    public static Lista2012Fragment newInstance() {
-        return new Lista2012Fragment();
+    public static NotowaniaFragment newInstance() {
+        return new NotowaniaFragment();
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        y2012List = new ArrayList<>();
+        notowaniaList = new ArrayList<>();
         listNotowPrzedzialy = new ArrayList<>();
         notowPrzedzialyList = new ArrayList<>();
     }
@@ -45,12 +50,12 @@ public class Lista2012Fragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_lista_2012, container, false);
+        View view = inflater.inflate(R.layout.fragment_notowania, container, false);
         
         list2012 = view.findViewById(R.id.list2012);
         spinnerNotowaniaPrzedzialy = view.findViewById(R.id.spinnerNotowaniaPrzedzialy);
         
-        adapter2012 = new LazyAdapter(getActivity(), y2012List);
+        adapter2012 = new LazyAdapter(getActivity(), notowaniaList);
         list2012.setAdapter(adapter2012);
         
         adapterNotowPrzedzialy = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, listNotowPrzedzialy);
@@ -83,10 +88,10 @@ public class Lista2012Fragment extends Fragment {
         return view;
     }
 
-    public void updateAdapter(ArrayList<HashMap<String, String>> newY2012List) {
-        if (y2012List != null && adapter2012 != null) {
-            y2012List.clear();
-            y2012List.addAll(newY2012List);
+    public void updateAdapter(ArrayList<HashMap<String, String>> newNotowaniaList) {
+        if (notowaniaList != null && adapter2012 != null) {
+            notowaniaList.clear();
+            notowaniaList.addAll(newNotowaniaList);
             adapter2012.notifyDataSetChanged();
         }
     }
@@ -107,8 +112,8 @@ public class Lista2012Fragment extends Fragment {
         }
     }
 
-    public ArrayList<HashMap<String, String>> getY2012List() {
-        return y2012List;
+    public ArrayList<HashMap<String, String>> getNotowaniaList() {
+        return notowaniaList;
     }
 
     public LazyAdapter getAdapter2012() {
