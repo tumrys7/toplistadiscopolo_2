@@ -10,65 +10,82 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import com.grandline.toplistadiscopolo.Constants;
 import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
 import com.grandline.toplistadiscopolo.R;
 import com.grandline.toplistadiscopolo.adapters.MojaAdapter;
 
 public class MojaListaFragment extends Fragment {
+    
     private ListView listMojalista;
     private MojaAdapter adapterMojalista;
-    private ArrayList<HashMap<String, String>> songsListMojalista;
-
-    public MojaListaFragment() {
-        // Required empty public constructor
-    }
-
+    private ListaPrzebojowDiscoPolo parentActivity;
+    
     public static MojaListaFragment newInstance() {
         return new MojaListaFragment();
     }
-
+    
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        songsListMojalista = new ArrayList<>();
+        parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
     }
-
+    
+    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_moja_lista, container, false);
         
         listMojalista = view.findViewById(R.id.listMojalista);
-        adapterMojalista = new MojaAdapter(getActivity(), songsListMojalista);
-        listMojalista.setAdapter(adapterMojalista);
-        
-        // Set click listener
-        listMojalista.setOnItemClickListener((parent, view1, position, id) -> {
-            if (getActivity() instanceof ListaPrzebojowDiscoPolo) {
-                ((ListaPrzebojowDiscoPolo) getActivity()).showSongMenu(position, Constants.KEY_MOJALISTA);
-            }
-        });
         
         return view;
     }
-
-    public void updateAdapter(ArrayList<HashMap<String, String>> newSongsListMojalista) {
-        if (songsListMojalista != null && adapterMojalista != null) {
-            songsListMojalista.clear();
-            songsListMojalista.addAll(newSongsListMojalista);
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        if (parentActivity != null) {
+            adapterMojalista = new MojaAdapter(getActivity(), parentActivity.songsListMojalista);
+            listMojalista.setAdapter(adapterMojalista);
+            
+            listMojalista.setOnItemClickListener((parent, clickedView, position, id) -> 
+                parentActivity.showSongMenu(position, Constants.KEY_MOJALISTA));
+        }
+    }
+    
+    public void updateAdapter() {
+        if (adapterMojalista != null && isAdded() && !isRemoving() && getView() != null) {
             adapterMojalista.notifyDataSetChanged();
         }
     }
-
-    public ArrayList<HashMap<String, String>> getSongsListMojalista() {
-        return songsListMojalista;
+    
+    @Override
+    public void onDestroyView() {
+        cleanupViews();
+        super.onDestroyView();
     }
-
-    public MojaAdapter getAdapterMojalista() {
-        return adapterMojalista;
+    
+    @Override
+    public void onDestroy() {
+        cleanupReferences();
+        super.onDestroy();
+    }
+    
+    private void cleanupViews() {
+        if (listMojalista != null) {
+            listMojalista.clearAnimation();
+            listMojalista.clearFocus();
+            listMojalista.setOnItemClickListener(null);
+            listMojalista.setOnItemLongClickListener(null);
+            listMojalista.setOnScrollListener(null);
+            listMojalista.setAdapter(null);
+        }
+    }
+    
+    private void cleanupReferences() {
+        adapterMojalista = null;
+        listMojalista = null;
+        parentActivity = null;
     }
 }

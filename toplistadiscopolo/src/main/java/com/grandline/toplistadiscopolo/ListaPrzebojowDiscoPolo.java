@@ -406,7 +406,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 	
 	// Filter wykonawcy method (moved from old implementation)
-	private void filterWykonawcy(ArrayList<HashMap<String, String>> wykonList, CharSequence searchText) {
+	public void filterWykonawcy(ArrayList<HashMap<String, String>> wykonList, CharSequence searchText) {
 		filteredWykonList.clear();
 		if (searchText.length() == 0) {
 			filteredWykonList.addAll(wykonList);
