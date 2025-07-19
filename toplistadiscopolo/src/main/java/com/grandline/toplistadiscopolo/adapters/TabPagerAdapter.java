@@ -1,9 +1,16 @@
-package com.grandline.toplistadiscopolo;
+package com.grandline.toplistadiscopolo.adapters;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.grandline.toplistadiscopolo.fragments.ListaFragment;
+import com.grandline.toplistadiscopolo.fragments.PoczekalniaFragment;
+import com.grandline.toplistadiscopolo.fragments.NowosciFragment;
+import com.grandline.toplistadiscopolo.fragments.MojaListaFragment;
+import com.grandline.toplistadiscopolo.fragments.WykonawcyFragment;
+import com.grandline.toplistadiscopolo.fragments.NotowaniaFragment;
 
 public class TabPagerAdapter extends FragmentStateAdapter {
     
@@ -36,7 +43,7 @@ public class TabPagerAdapter extends FragmentStateAdapter {
             case TAB_WYKONAWCY:
                 return WykonawcyFragment.newInstance();
             case TAB_LISTA_2012:
-                return Lista2012Fragment.newInstance();
+                return NotowaniaFragment.newInstance();
             default:
                 return ListaFragment.newInstance();
         }

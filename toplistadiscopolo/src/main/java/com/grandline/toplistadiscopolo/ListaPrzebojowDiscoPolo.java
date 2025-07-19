@@ -25,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.constraintlayout.solver.ArrayLinkedVariables;
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -53,6 +54,14 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
+import com.grandline.toplistadiscopolo.adapters.TabPagerAdapter;
+import com.grandline.toplistadiscopolo.fragments.ListaFragment;
+import com.grandline.toplistadiscopolo.fragments.PoczekalniaFragment;
+import com.grandline.toplistadiscopolo.fragments.NowosciFragment;
+import com.grandline.toplistadiscopolo.fragments.MojaListaFragment;
+import com.grandline.toplistadiscopolo.fragments.WykonawcyFragment;
+import com.grandline.toplistadiscopolo.fragments.NotowaniaFragment;
+
 
 public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
@@ -77,7 +86,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	private NowosciFragment nowosciFragment;
 	private MojaListaFragment mojaListaFragment;
 	private WykonawcyFragment wykonawcyFragment;
-	private Lista2012Fragment lista2012Fragment;
+	private NotowaniaFragment notowaniaFragment;
 	
 	ListView wykUtwory;
     String teledysk;
@@ -99,8 +108,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
     public ArrayList<HashMap<String, String>> wykonList;
     public ArrayList<HashMap<String, String>> filteredWykonList;
     //public ArrayList<HashMap<String, String>> swiateczneList;
-    public ArrayList<HashMap<String, String>> y2012List;
+    public ArrayList<HashMap<String, String>> notowaniaList;
     public ArrayList<HashMap<String, String>> notowPrzedzialyList;
+    public ArrayList<String> listNotowPrzedzialy;
     public String info;
     public String info2012;
     public String voteMessage;
@@ -178,6 +188,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		isSpinnerClicked = false;
 		refreshListBackground();
 		getPrefs();
+		setupBackPressedCallback();
 
 	}
 
@@ -233,18 +244,23 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 
 	//funkcja podwojnego nacisniecia wstecz aby wyjsc z aplikacji
-	@Override
-	public void onBackPressed() {
-		if (this.lastBackPressTime < System.currentTimeMillis() - 3000) {
-		    toast = Toast.makeText(this, R.string.text_exit_app, Toast.LENGTH_SHORT);
-		    toast.show();
-		    this.lastBackPressTime = System.currentTimeMillis();
-		  } else {
-		    if (toast != null) {
-		    	toast.cancel();
-		    }
-		  super.onBackPressed();
-		  }
+	private void setupBackPressedCallback() {
+		OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+			@Override
+			public void handleOnBackPressed() {
+				if (lastBackPressTime < System.currentTimeMillis() - 3000) {
+					toast = Toast.makeText(ListaPrzebojowDiscoPolo.this, R.string.text_exit_app, Toast.LENGTH_SHORT);
+					toast.show();
+					lastBackPressTime = System.currentTimeMillis();
+				} else {
+					if (toast != null) {
+						toast.cancel();
+					}
+					finish();
+				}
+			}
+		};
+		getOnBackPressedDispatcher().addCallback(this, callback);
 	}
 
 	@Override
@@ -301,8 +317,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		songsListMojalista = new ArrayList<>();
         wykonList = new ArrayList<>();
         filteredWykonList = new ArrayList<>();
-        y2012List = new ArrayList<>();
+        notowaniaList = new ArrayList<>();
         notowPrzedzialyList = new ArrayList<>();
+        listNotowPrzedzialy = new ArrayList<>();
 
         progressDialog = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_refresh_list));
         new RefreshList().execute();
@@ -322,7 +339,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
 		mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
 		wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
-		lista2012Fragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
+		notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
 		
 		// Update fragment adapters
 		if (listaFragment != null) {
@@ -340,16 +357,16 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (wykonawcyFragment != null) {
 			wykonawcyFragment.updateAdapter(wykonList);
 		}
-		if (lista2012Fragment != null) {
-			lista2012Fragment.updateAdapter(y2012List);
-			// Handle spinner for Lista2012Fragment
+		if (notowaniaFragment != null) {
+			notowaniaFragment.updateAdapter(notowaniaList);
+			// Handle spinner for NotowaniaFragment
 			ArrayList<String> listNotowPrzedzialy = new ArrayList<>();
 			for (HashMap<String, String> item : notowPrzedzialyList) {
 				listNotowPrzedzialy.add(item.get(Constants.KEY_NOTOWANIE_NAZWA));
 			}
-			lista2012Fragment.updateSpinnerAdapter(notowPrzedzialyList, listNotowPrzedzialy);
+			notowaniaFragment.updateSpinnerAdapter(notowPrzedzialyList, listNotowPrzedzialy);
 			if (spinnerPosition != -1) {
-				lista2012Fragment.setSpinnerSelection(spinnerPosition);
+				notowaniaFragment.setSpinnerSelection(spinnerPosition);
 			}
 		}
 	}
@@ -365,7 +382,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		return null;
 	}
 	
-	// Handle spinner selection for Lista2012Fragment
+			// Handle spinner selection for NotowaniaFragment
 	public void handleSpinnerSelection(String notowanieId, int position) {
 		this.notowanieId = notowanieId;
 		this.spinnerPosition = position;
@@ -503,7 +520,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_LISTA_2012)) {
-			o = y2012List.get(position);
+			o = notowaniaList.get(position);
 		}
 
 
@@ -804,7 +821,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			//filteredWykonList=wykonList;
 			filterWykonawcy(wykonList, "");
 			
-			xml = parser.getXmlFromUrl(Constants.URL_2012.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId)); // getting XML from URL
+			xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId)); // getting XML from URL
 			
 			doc = parser.getDomElement(xml); // getting DOM element
 			
@@ -879,7 +896,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 	
 				// adding HashList to ArrayList
-				y2012List.add(map);
+				notowaniaList.add(map);
 			}
 
 			

@@ -12,7 +12,7 @@ public interface Constants {
     String URL = "http://toplista.gline.webd.pl/gen_xml_lista_mobile.php?lang=LANG&groupid=3";
 	String URL_NOWOSCI = "http://toplista.gline.webd.pl/gen_xml_nowosci_mobile.php?lang=LANG&groupid=3";
 	String URL_MOJALISTA = "http://toplista.gline.webd.pl/gen_xml_mojalista_mobile.php?lang=LANG&groupid=3&android_id=ANDROIDID";
-	String URL_2012 = "http://toplista.gline.webd.pl/gen_xml_notowania_mobile.php?lang=LANG&groupid=3&notowanieid=START_NOTOWANIE_ID";
+	String URL_NOTOWANIA = "http://toplista.gline.webd.pl/gen_xml_notowania_mobile.php?lang=LANG&groupid=3&notowanieid=START_NOTOWANIE_ID";
     String VOTE_URL = "http://toplista.gline.webd.pl/index_andro.php?glos=ID_LISTY&aid=DEV_ID&lang=LANG&groupid=3&teledysk=TEL_PARAM";
 	String WYK_URL = "http://toplista.gline.webd.pl/gen_xml_wyk.php?groupid=3";
 	String UTWORY_WYK_URL = "http://toplista.gline.webd.pl/gen_xml_utw_wyk_mobile.php?wyk_id=AUTH_ID&groupid=3";
