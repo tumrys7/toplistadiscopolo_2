@@ -10,65 +10,82 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import com.grandline.toplistadiscopolo.Constants;
 import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
 import com.grandline.toplistadiscopolo.R;
 import com.grandline.toplistadiscopolo.adapters.LazyAdapter;
 
 public class ListaFragment extends Fragment {
+    
     private ListView list;
     private LazyAdapter adapter;
-    private ArrayList<HashMap<String, String>> songsList;
-
-    public ListaFragment() {
-        // Required empty public constructor
-    }
-
+    private ListaPrzebojowDiscoPolo parentActivity;
+    
     public static ListaFragment newInstance() {
         return new ListaFragment();
     }
-
+    
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        songsList = new ArrayList<>();
+        parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
     }
-
+    
+    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_lista, container, false);
         
         list = view.findViewById(R.id.list);
-        adapter = new LazyAdapter(getActivity(), songsList);
-        list.setAdapter(adapter);
-        
-        // Set click listener
-        list.setOnItemClickListener((parent, view1, position, id) -> {
-            if (getActivity() instanceof ListaPrzebojowDiscoPolo) {
-                ((ListaPrzebojowDiscoPolo) getActivity()).showSongMenu(position, Constants.KEY_LISTA);
-            }
-        });
         
         return view;
     }
-
-    public void updateAdapter(ArrayList<HashMap<String, String>> newSongsList) {
-        if (songsList != null && adapter != null) {
-            songsList.clear();
-            songsList.addAll(newSongsList);
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        if (parentActivity != null) {
+            adapter = new LazyAdapter(getActivity(), parentActivity.songsList);
+            list.setAdapter(adapter);
+            
+            list.setOnItemClickListener((parent, clickedView, position, id) -> 
+                parentActivity.showSongMenu(position, Constants.KEY_LISTA));
+        }
+    }
+    
+    public void updateAdapter() {
+        if (adapter != null && isAdded() && !isRemoving() && getView() != null) {
             adapter.notifyDataSetChanged();
         }
     }
-
-    public ArrayList<HashMap<String, String>> getSongsList() {
-        return songsList;
+    
+    @Override
+    public void onDestroyView() {
+        cleanupViews();
+        super.onDestroyView();
     }
-
-    public LazyAdapter getAdapter() {
-        return adapter;
+    
+    @Override
+    public void onDestroy() {
+        cleanupReferences();
+        super.onDestroy();
+    }
+    
+    private void cleanupViews() {
+        if (list != null) {
+            list.clearAnimation();
+            list.clearFocus();
+            list.setOnItemClickListener(null);
+            list.setOnItemLongClickListener(null);
+            list.setOnScrollListener(null);
+            list.setAdapter(null);
+        }
+    }
+    
+    private void cleanupReferences() {
+        adapter = null;
+        list = null;
+        parentActivity = null;
     }
 }
