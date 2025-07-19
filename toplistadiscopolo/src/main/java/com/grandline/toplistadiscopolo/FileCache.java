@@ -3,7 +3,6 @@ package com.grandline.toplistadiscopolo;
 import android.content.Context;
 
 import java.io.File;
-import java.nio.file.SecureDirectoryStream;
 
 public class FileCache {
     
@@ -31,9 +30,9 @@ public class FileCache {
         File[] files=cacheDir.listFiles();
         if(files==null)
             return;
-        SecureDirectoryStream<Object> context;
-        for(File f:files)
-        f.delete();
+        for(File f:files) {
+            f.delete();
+        }
     }
 
 }
