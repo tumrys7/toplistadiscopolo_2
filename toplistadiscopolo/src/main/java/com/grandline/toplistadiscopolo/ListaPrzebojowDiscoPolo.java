@@ -9,8 +9,9 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -53,6 +54,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.grandline.toplistadiscopolo.adapters.TabPagerAdapter;
 import com.grandline.toplistadiscopolo.fragments.ListaFragment;
@@ -73,6 +76,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	AdView mAdView;
 	boolean adError;
 	AdRequest adRequest;
+	
+	// ExecutorService and Handler for background tasks
+	private ExecutorService executorService;
+	private Handler mainHandler;
 	
 	// New ViewPager2 and TabLayout
 	private ViewPager2 viewPager;
@@ -156,6 +163,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		super.onCreate(savedInstanceState);
 		//FacebookSdk.sdkInitialize(getApplicationContext());
 		//AppEventsLogger.activateApp(this);
+		
+		// Initialize ExecutorService and Handler
+		executorService = Executors.newFixedThreadPool(3);
+		mainHandler = new Handler(Looper.getMainLooper());
+		
 		language = getLocaleSettings();
 		notowanieId = Constants.VALUE_START_NOTOWANIE_ID; 
 		//setLocale(language);
@@ -215,6 +227,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	    // Clean up TabLayoutMediator
 	    if (tabLayoutMediator != null) {
 	    	tabLayoutMediator.detach();
+	    }
+	    // Clean up ExecutorService to prevent memory leaks
+	    if (executorService != null && !executorService.isShutdown()) {
+	    	executorService.shutdown();
 	    }
 	    super.onDestroy();
 	  }
@@ -284,7 +300,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			myListType = listType;
 			myIdWykonawcy = idWykonawcy;
 	        votingListId = idUtworu;
-	        new Zaglosuj().execute(url, listType);
+	        voteInBackground(url, listType);
 			// [START image_view_event]
 			Bundle bundle = new Bundle();
 			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, idUtworu);
@@ -322,7 +338,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
         listNotowPrzedzialy = new ArrayList<>();
 
         progressDialog = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_refresh_list));
-        new RefreshList().execute();
+        refreshListInBackground();
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
 	    	if (adError){
 	    		adView.loadAd(adRequest);
@@ -614,14 +630,12 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 
 	}
-	private class RefreshList extends AsyncTask<Void, Void, Integer> {
-
-		protected Integer doInBackground(Void... urls) {
-			connectionError = false;
-
-			XMLParser parser = new XMLParser();
-
+	private void refreshListInBackground() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
 			try {
+				XMLParser parser = new XMLParser();
 				
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language)); // getting XML from URL
 			// Log.e(TAG, "Root xml element: " + xml );
@@ -900,93 +914,69 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
 
 			
-			}
-			catch (IOException e){
-				
+			} catch (IOException e){
 				connectionError = true;
 			}
 			
-			return 1;
-        }
-       protected void onPostExecute(Integer result) {
-    	   // Update all fragment adapters with new data
-    	   updateAllFragmentAdapters();
-   		   isSpinnerClicked = false;
-    	   progressDialog.dismiss();
-           if (connectionError) {
-   			new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
-   			.setTitle(R.string.text_connection_error_title)
-   			.setMessage(getString(R.string.text_connection_error))
-   			.setNeutralButton("Ok",	null).show();
-           }
-    	   super.onPostExecute(result);
-
-        }
-        
-        protected void onPreExecute() {
-
-        }
-        
-        protected void onCancelled() {
-        	progressDialog.dismiss();
-        }
-
-    }
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				// Update all fragment adapters with new data
+				updateAllFragmentAdapters();
+				isSpinnerClicked = false;
+				progressDialog.dismiss();
+				if (finalConnectionError) {
+					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
+					.setTitle(R.string.text_connection_error_title)
+					.setMessage(getString(R.string.text_connection_error))
+					.setNeutralButton("Ok",	null).show();
+				}
+			});
+		});
+	}
 	
-	private class Zaglosuj extends AsyncTask<String, Void, String> {
-		protected String doInBackground(String... urls) {
-			connectionError = false;
+	private void voteInBackground(String url, String listType) {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			String voteMessage = "";
+			
 			Vote vote = new Vote();
 			try{
-				voteMessage = vote.setVoteInUrl(urls[0]);
-
+				voteMessage = vote.setVoteInUrl(url);
 			} catch (IOException er){
-				
 				connectionError = true;
 				voteMessage = getString(R.string.text_voting_error);
-				
 			}
-
 			
-			return voteMessage;
-		}
-		
-		protected void onPostExecute(String result) {
-			
-    	   progressDialogVote.dismiss();
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			final String finalVoteMessage = voteMessage;
+			mainHandler.post(() -> {
+				progressDialogVote.dismiss();
 
-           if (connectionError) {
-   			new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
-   			.setTitle(R.string.text_connection_error_title)
-   			.setMessage(getString(R.string.text_connection_error))
-   			.setNeutralButton("Ok",	null).show();
-		   } else {
-			   setUserVote(votingListId);
-			   if(Objects.equals(glosTeledysk, "0")){
-				   Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
-				//   Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
-				//   snackbar.show();
-			   }
-			   if (Objects.equals(myListType, Constants.KEY_LISTA) || Objects.equals(myListType, Constants.KEY_POCZEKALNIA) || Objects.equals(myListType, Constants.KEY_NOWOSCI) || Objects.equals(myListType, Constants.KEY_MOJALISTA)|| Objects.equals(myListType, Constants.KEY_WYKONAWCY)) {
-				   if (CheckboxPreference){
-					   refreshListBackground();
-				   }
-			   }
-			   if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
-
-				   showAuthSongs(myIdWykonawcy);
-			   }
-		   }
-    	   super.onPostExecute(result);
-		}
-        protected void onPreExecute() {
-
-        }
-        
-        protected void onCancelled() {
-        	progressDialogVote.dismiss();
-        }
-		
+				if (finalConnectionError) {
+					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
+					.setTitle(R.string.text_connection_error_title)
+					.setMessage(getString(R.string.text_connection_error))
+					.setNeutralButton("Ok",	null).show();
+				} else {
+					setUserVote(votingListId);
+					if(Objects.equals(glosTeledysk, "0")){
+						Toast.makeText(getApplicationContext(), finalVoteMessage, Toast.LENGTH_LONG).show();
+						//   Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
+						//   snackbar.show();
+					}
+					if (Objects.equals(myListType, Constants.KEY_LISTA) || Objects.equals(myListType, Constants.KEY_POCZEKALNIA) || Objects.equals(myListType, Constants.KEY_NOWOSCI) || Objects.equals(myListType, Constants.KEY_MOJALISTA)|| Objects.equals(myListType, Constants.KEY_WYKONAWCY)) {
+						if (CheckboxPreference){
+							refreshListBackground();
+						}
+					}
+					if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
+						showAuthSongs(myIdWykonawcy);
+					}
+				}
+			});
+		});
 	}
 	
 	public boolean canUserVotes(String idListy) {

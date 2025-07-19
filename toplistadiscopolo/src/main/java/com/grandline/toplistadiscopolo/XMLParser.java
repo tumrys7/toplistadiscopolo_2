@@ -1,11 +1,5 @@
 package com.grandline.toplistadiscopolo;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -13,11 +7,14 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,18 +33,31 @@ public class XMLParser {
 	 * */
 	public String getXmlFromUrl(String url) throws IOException {
 		String xml = null;
-
+		HttpURLConnection httpURLConnection = null;
+		
 		try {
-			// defaultHttpClient
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(url);
-
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			xml = EntityUtils.toString(httpEntity, "UTF-8");
-
-		} catch (UnsupportedEncodingException | ClientProtocolException e) {
-			e.printStackTrace();
+			URL requestURL = new URL(url);
+			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.setConnectTimeout(30000); // 30 seconds
+			httpURLConnection.setReadTimeout(30000); // 30 seconds
+			httpURLConnection.setRequestProperty("User-Agent", "Android App");
+			
+			int responseCode = httpURLConnection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				StringBuilder result = new StringBuilder();
+				String line;
+				while ((line = reader.readLine()) != null) {
+					result.append(line);
+				}
+				reader.close();
+				xml = result.toString();
+			}
+		} finally {
+			if (httpURLConnection != null) {
+				httpURLConnection.disconnect();
+			}
 		}
 		// return XML
 		return xml;
@@ -59,18 +69,31 @@ public class XMLParser {
 	 * */
 	public String getXmlFromUrl2(String url2) throws IOException {
 		String xml_nowosci = null;
-
+		HttpURLConnection httpURLConnection = null;
+		
 		try {
-			// defaultHttpClient
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(url2);
-
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			xml_nowosci = EntityUtils.toString(httpEntity, "UTF-8");
-
-		} catch (UnsupportedEncodingException | ClientProtocolException e) {
-			e.printStackTrace();
+			URL requestURL = new URL(url2);
+			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.setConnectTimeout(30000); // 30 seconds
+			httpURLConnection.setReadTimeout(30000); // 30 seconds
+			httpURLConnection.setRequestProperty("User-Agent", "Android App");
+			
+			int responseCode = httpURLConnection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				StringBuilder result = new StringBuilder();
+				String line;
+				while ((line = reader.readLine()) != null) {
+					result.append(line);
+				}
+				reader.close();
+				xml_nowosci = result.toString();
+			}
+		} finally {
+			if (httpURLConnection != null) {
+				httpURLConnection.disconnect();
+			}
 		}
 		// return XML
 		return xml_nowosci;
@@ -82,18 +105,31 @@ public class XMLParser {
 	 * */
 	public String getXmlFromUrlMoja(String urlmoja) throws IOException {
 		String xml_mojalista = null;
-
+		HttpURLConnection httpURLConnection = null;
+		
 		try {
-			// defaultHttpClient
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(urlmoja);
-
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			xml_mojalista = EntityUtils.toString(httpEntity, "UTF-8");
-
-		} catch (UnsupportedEncodingException | ClientProtocolException e) {
-			e.printStackTrace();
+			URL requestURL = new URL(urlmoja);
+			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.setConnectTimeout(30000); // 30 seconds
+			httpURLConnection.setReadTimeout(30000); // 30 seconds
+			httpURLConnection.setRequestProperty("User-Agent", "Android App");
+			
+			int responseCode = httpURLConnection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				StringBuilder result = new StringBuilder();
+				String line;
+				while ((line = reader.readLine()) != null) {
+					result.append(line);
+				}
+				reader.close();
+				xml_mojalista = result.toString();
+			}
+		} finally {
+			if (httpURLConnection != null) {
+				httpURLConnection.disconnect();
+			}
 		}
 		// return XML
 		return xml_mojalista;

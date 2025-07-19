@@ -6,8 +6,9 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UtworyWykonawcy extends Activity {
 
@@ -49,12 +52,23 @@ public class UtworyWykonawcy extends Activity {
     String glosTeledysk;
     boolean connectionError = false;
     ArrayList<HashMap<String, String>> wykSongsList;
+    
+    // ExecutorService and Handler for background tasks
+	private ExecutorService executorService;
+	private Handler mainHandler;
+    
 	// [START declare_analytics]
 	private FirebaseAnalytics mFirebaseAnalytics;
 	// [END declare_analytics]
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		// Initialize ExecutorService and Handler
+		executorService = Executors.newFixedThreadPool(3);
+		mainHandler = new Handler(Looper.getMainLooper());
+		
 		language = getLocaleSettings();
 		setContentView(R.layout.utwory_wykonawcy);
 		// [START shared_app_measurement]
@@ -70,8 +84,6 @@ public class UtworyWykonawcy extends Activity {
 			createAd();
 			createNativeAd();
 		}
-
-
 	}
 
 	@SuppressWarnings("deprecation")
@@ -89,8 +101,15 @@ public class UtworyWykonawcy extends Activity {
 		super.onBackPressed();
 		showAdFullscreen();
 	}
-
-
+	
+	@Override
+	protected void onDestroy() {
+		// Clean up ExecutorService to prevent memory leaks
+		if (executorService != null && !executorService.isShutdown()) {
+			executorService.shutdown();
+		}
+		super.onDestroy();
+	}
 
 	public void refreshAuthSong(String authId) {
 		
@@ -100,8 +119,7 @@ public class UtworyWykonawcy extends Activity {
 		adapter = new LazyAdapter(this, wykSongsList);		
 		wykUtwory.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_UTW_WYKONAWCY));
         progressDialog = ProgressDialog.show(UtworyWykonawcy.this, "", getString(R.string.text_auth_refresh_list));
-        new RefreshAuthSongs().execute(url);		
-		
+        refreshAuthSongsInBackground(url);		
 	}
 	
 	
@@ -166,7 +184,7 @@ public class UtworyWykonawcy extends Activity {
 	        myListType = listType;
 	        myIdWykonawcy = idWykonawcy;
 	        votingListId = idUtworu;
-	        new Zaglosuj().execute(url, listType);
+	        voteInBackground(url, listType);
 			// [START glos_utw_wykon_event]
 			Bundle bundle = new Bundle();
 			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, myIdWykonawcy);
@@ -182,16 +200,16 @@ public class UtworyWykonawcy extends Activity {
 
 	}
 
-	private class RefreshAuthSongs extends AsyncTask<String, Void, Integer> {
-
-		protected Integer doInBackground(String... urls) {
-			connectionError = false;
+	// Replace RefreshAuthSongs AsyncTask with ExecutorService + Handler
+	private void refreshAuthSongsInBackground(String url) {
+		executorService.execute(() -> {
+			boolean connectionError = false;
 
 			XMLParser parser = new XMLParser();
 
 			try {
 				
-				String xml = parser.getXmlFromUrl(urls[0]); // getting XML from URL
+				String xml = parser.getXmlFromUrl(url); // getting XML from URL
 
 				Document doc = parser.getDomElement(xml); // getting DOM element
 
@@ -223,80 +241,67 @@ public class UtworyWykonawcy extends Activity {
 				}
 			}
 			catch (IOException e){
-				
 				connectionError = true;
 			}
 			
-			return 1;
-        }
-		
-       protected void onPostExecute(Integer result) {
-    	   wykUtwory.setAdapter(adapter);
-    	   progressDialog.dismiss();
-           if (connectionError) {
-   			new AlertDialog.Builder(UtworyWykonawcy.this)
-   			.setTitle(R.string.text_connection_error_title)
-   			.setMessage(getString(R.string.text_connection_error))
-   			.setNeutralButton("Ok",	null).show();
-           }
-    	   super.onPostExecute(result);
-
-        }
-        
-        protected void onPreExecute() {
-
-        }
-
-    }
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				wykUtwory.setAdapter(adapter);
+				progressDialog.dismiss();
+				if (finalConnectionError) {
+					new AlertDialog.Builder(UtworyWykonawcy.this)
+					.setTitle(R.string.text_connection_error_title)
+					.setMessage(getString(R.string.text_connection_error))
+					.setNeutralButton("Ok",	null).show();
+				}
+			});
+		});
+	}
 	
-	
-	private class Zaglosuj extends AsyncTask<String, Void, String> {
-		protected String doInBackground(String... urls) {
-			connectionError = false;
+	// Replace Zaglosuj AsyncTask with ExecutorService + Handler
+	private void voteInBackground(String url, String listType) {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			String voteMessage = "";
+			
 			Vote vote = new Vote();
 			try{
-				voteMessage = vote.setVoteInUrl(urls[0]);
-
+				voteMessage = vote.setVoteInUrl(url);
 			} catch (IOException er){
-				
 				connectionError = true;
 				voteMessage = getString(R.string.text_voting_error);
-				
 			}
 
-			return voteMessage;
-		}
-		
-		protected void onPostExecute(String result) {
-			
-    	   progressDialogVote.dismiss();
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			final String finalVoteMessage = voteMessage;
+			mainHandler.post(() -> {
+				progressDialogVote.dismiss();
 
-           if (connectionError) {
-   			new AlertDialog.Builder(UtworyWykonawcy.this)
-   			.setTitle(R.string.text_connection_error_title)
-   			.setMessage(getString(R.string.text_connection_error))
-   			.setNeutralButton("Ok",	null).show();
-           } else {
-        	setUserVote(votingListId);
-        	if(Objects.equals(glosTeledysk, "0")){
-			//	Snackbar snackbar = make(UtworyWykonawcy.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
-			//	snackbar.show();
-        		Toast.makeText(getApplicationContext(), voteMessage, Toast.LENGTH_LONG).show();
-        	}
-			if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
-				voted = true;
-				if (adReward) {
-					refreshAuthSong(myIdWykonawcy);
+				if (finalConnectionError) {
+					new AlertDialog.Builder(UtworyWykonawcy.this)
+					.setTitle(R.string.text_connection_error_title)
+					.setMessage(getString(R.string.text_connection_error))
+					.setNeutralButton("Ok",	null).show();
+				} else {
+					setUserVote(votingListId);
+					if(Objects.equals(glosTeledysk, "0")){
+						//	Snackbar snackbar = make(UtworyWykonawcy.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
+						//	snackbar.show();
+						Toast.makeText(getApplicationContext(), finalVoteMessage, Toast.LENGTH_LONG).show();
+					}
+					if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
+						voted = true;
+						if (adReward) {
+							refreshAuthSong(myIdWykonawcy);
+						}
+					}
 				}
-			}
-           }
-    	   super.onPostExecute(result);
-		}
-        protected void onPreExecute() {
-
-        }
-		
+			});
+		});
 	}
+
 	//reklama banner przerobiona z natywnej
 	public void createNativeAd(){
 		adViewNative = new AdView(this);
