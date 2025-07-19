@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"  ?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical" >
 
     <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
@@ -14,151 +15,21 @@
         ads:adUnitId="@string/banner_ad_unit_id">
     </com.google.android.gms.ads.AdView>
 
-
-    <TabHost
-        android:id="@+id/tabhost"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:textAlignment="center"
-        android:textSize="11sp">
-       <LinearLayout
-            style="@android:style/Widget.DeviceDefault.Light.AutoCompleteTextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:textSize="11sp"
-            android:textAlignment="center">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:tabTextColor="@android:color/white"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabIndicatorColor="@android:color/white"
+        app:tabMode="scrollable"
+        app:tabGravity="fill" />
 
-           <TabWidget
-               android:id="@android:id/tabs"
-               android:layout_width="match_parent"
-               android:layout_height="match_parent"
-               android:textAlignment="center"
-               android:showDividers="none"
-               android:textSize="11sp"
-               android:listSelector="@drawable/list_selector">
-           </TabWidget>
-
-            <FrameLayout
-                android:id="@android:id/tabcontent"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <LinearLayout
-                    android:id="@+id/tabLista"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical" >
-                    <ListView
-                        android:id="@+id/list"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-                <LinearLayout
-                    android:id="@+id/tabPoczekalnia"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <ListView
-                        android:id="@+id/listPocz"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-                <LinearLayout
-                    android:id="@+id/tabNowosci"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-                    <ListView android:id="@+id/listNowosci"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/tabMojalista"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-                    <ListView android:id="@+id/listMojalista"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-                <LinearLayout
-                    android:id="@+id/tabWykonawcy"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-                    <FrameLayout
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="0dp"
-                        android:padding="0dp">
-                        <EditText
-                            android:id="@+id/inputSearch"
-                            style="@android:style/Widget.DeviceDefault.Light.AutoCompleteTextView"
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="45dp"
-                            android:autofillHints=""
-                            android:hint="@string/tab_wykonawcy_filtruj"
-                            android:inputType="textVisiblePassword" />
-                        <ImageButton
-                            android:id="@+id/clearButton"
-                            style="@android:style/Widget.DeviceDefault.Light.ImageButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:src="@drawable/ic_clear_black_18dp" />
-                    </FrameLayout>
-                    <ListView
-                        android:id="@+id/listWykon"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/tab2012"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-                    <Spinner
-                        android:id="@+id/spinnerNotowaniaPrzedzialy"
-                        android:layout_width="match_parent"
-                        android:layout_height="50sp"
-                        android:background="@drawable/gradient_bg"
-                        android:dropDownSelector="@drawable/list_selector"
-                        android:popupBackground="@drawable/gradient_bg"
-                        android:spinnerMode="dropdown"
-                        android:splitMotionEvents="false" />
-                    <ListView
-                        android:id="@+id/list2012"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:divider="#b5b5b5"
-                        android:dividerHeight="1dp"
-                        android:listSelector="@drawable/list_selector" />
-                </LinearLayout>
-
-            </FrameLayout>
-
-        </LinearLayout>
-    </TabHost>
-
-
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </LinearLayout>

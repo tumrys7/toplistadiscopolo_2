@@ -1,6 +1,5 @@
 package com.grandline.toplistadiscopolo;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -28,12 +27,16 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
+
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -58,7 +61,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 
-public class ListaPrzebojowDiscoPolo extends Activity  {
+public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	private static final String TAG = "MyActivity";
 	private boolean adReward;
@@ -68,22 +71,22 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	AdView mAdView;
 	boolean adError;
 	AdRequest adRequest;
-	ListView list;
-	ListView listPocz;
-	ListView listNowosci;
-	ListView listMojalista;
+	
+	// New ViewPager2 and TabLayout
+	private ViewPager2 viewPager;
+	private TabLayout tabLayout;
+	private TabPagerAdapter tabPagerAdapter;
+	private TabLayoutMediator tabLayoutMediator;
+	
+	// Fragment references
+	private ListaFragment listaFragment;
+	private PoczekalniaFragment poczekalniaFragment;
+	private NowosciFragment nowosciFragment;
+	private MojaListaFragment mojaListaFragment;
+	private WykonawcyFragment wykonawcyFragment;
+	private Lista2012Fragment lista2012Fragment;
+	
 	ListView wykUtwory;
-	ListView listWykon;
-	ListView list2012;
-	ArrayList<String> listNotowPrzedzialy;
-    LazyAdapter adapter;
-    LazyAdapter adapterPocz;
-	NowosciAdapter adapterNowosci;
-	MojaAdapter adapterMojalista;
-    Spinner spinnerNotowaniaPrzedzialy;
-    ArrayAdapter<String> adapterNotowPrzedzialy;
-    WykAdapter adapterWyk;
-    LazyAdapter adapter2012;
     String teledysk;
 	String spotify;
     String androidId;
@@ -105,11 +108,6 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
     //public ArrayList<HashMap<String, String>> swiateczneList;
     public ArrayList<HashMap<String, String>> y2012List;
     public ArrayList<HashMap<String, String>> notowPrzedzialyList;
- //   public TextView listInfo;
- //   public TextView listInfoPocz;
-//    public TextView listInfo2012;
-    public EditText inputSearch;
-    public ImageButton clearButton;
     public String info;
     public String info2012;
     public String voteMessage;
@@ -177,7 +175,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		// [END user_property]
 
 
-		createTabs();
+		setupTabLayoutWithViewPager();
 
 		//only for Free Version
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
@@ -209,6 +207,10 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	  public void onDestroy() {
 	    if (adView != null) {
 	      adView.destroy();
+	    }
+	    // Clean up TabLayoutMediator
+	    if (tabLayoutMediator != null) {
+	    	tabLayoutMediator.detach();
 	    }
 	    super.onDestroy();
 	  }
@@ -294,113 +296,20 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	}
 	
 	public void refreshListBackground(){
-
-
 		MobileAds.initialize(this, initializationStatus -> {
 		});
 
 		loadRewardedAd();
 
-	//	listInfo = findViewById(R.id.info);
-	//	listInfoPocz = findViewById(R.id.infoPocz);
-	//	listInfo2012 = findViewById(R.id.info2012);
+		// Initialize data lists
 		songsList = new ArrayList<>();
 		songsListPocz = new ArrayList<>();
 		songsListNowosci = new ArrayList<>();
 		songsListMojalista = new ArrayList<>();
         wykonList = new ArrayList<>();
         filteredWykonList = new ArrayList<>();
-        inputSearch = findViewById(R.id.inputSearch);
-        clearButton = findViewById(R.id.clearButton);
-
         y2012List = new ArrayList<>();
         notowPrzedzialyList = new ArrayList<>();
-
-        list= findViewById(R.id.list);
-		adapter=new LazyAdapter(this, songsList);
-
-		listPocz= findViewById(R.id.listPocz);
-		listNowosci= findViewById(R.id.listNowosci);
-		listMojalista= findViewById(R.id.listMojalista);
-		adapterPocz=new LazyAdapter(this, songsListPocz);
-		adapterNowosci=new NowosciAdapter(this, songsListNowosci);
-		adapterMojalista=new MojaAdapter(this, songsListMojalista);
-		
-        listWykon= findViewById(R.id.listWykon);
-        adapterWyk=new WykAdapter(this, filteredWykonList);
-
-        list2012= findViewById(R.id.list2012);
-        adapter2012=new LazyAdapter(this, y2012List); 
-        
-        spinnerNotowaniaPrzedzialy= findViewById(R.id.spinnerNotowaniaPrzedzialy);
-        listNotowPrzedzialy= new ArrayList<>();
-        adapterNotowPrzedzialy= new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, listNotowPrzedzialy);
-        adapterNotowPrzedzialy.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        
-        // Click event for single list row
-        list.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_LISTA));
-        
-        listPocz.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_POCZEKALNIA));
-		listNowosci.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_NOWOSCI));
-		listMojalista.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_MOJALISTA));
-        // Click event for single list row
-       listWykon.setOnItemClickListener((parent, view, position, id) -> {
-			 HashMap<String, String> mapo;
-				mapo = (HashMap<String, String>) listWykon.getItemAtPosition(position);
-				final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
-		   showAuthSongs(id_wykonawcy);
-	   });
-
-	   spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(new OnItemSelectedListener(){
-		   public void onItemSelected(AdapterView<?> parent, View view, 
-		            int pos, long id) {
-		        // An item was selected. You can retrieve the selected item using
-	        // parent.getItemAtPosition(pos)
-
-			   //refreshListBackground();
-			   if (isSpinnerClicked) {
-
-				   HashMap<String, String> o;
-				   o = (HashMap<String, String>) notowPrzedzialyList.get(pos);
-				   notowanieId = o.get(Constants.KEY_NOTOWANIE_ZA);
-				   //Toast.makeText(getApplicationContext(), notowanieId, Toast.LENGTH_LONG).show();
-				   spinnerPosition = pos;
-				   refreshListBackground();
-			   }
-			   isSpinnerClicked = true;
-		   }
-	
-		public void onNothingSelected(AdapterView<?> arg0) {
-			// TODO Auto-generated method stub
-				
-			}
-	
-	   });       
-       
-       inputSearch.addTextChangedListener(new TextWatcher() {
-    	    
-    	    public void onTextChanged(CharSequence cs, int arg1, int arg2, int arg3) {
-    	        // When user changed the Text
-    	    	filterWykonawcy(wykonList, cs);
-
-    	    }
-    	    
-    	    public void beforeTextChanged(CharSequence arg0, int arg1, int arg2,
-    	            int arg3) {
-    	        // TODO Auto-generated method stub
-    	 
-    	    }
-    	 
-			public void afterTextChanged(Editable arg0) {
-				// TODO Auto-generated method stub
-				adapterWyk.notifyDataSetChanged();
-			}
-    	});     
-       
-       clearButton.setOnClickListener(arg0 -> inputSearch.setText(""));
-       
-       // Click event for single list row
-       list2012.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_LISTA_2012));
 
         progressDialog = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_refresh_list));
         new RefreshList().execute();
@@ -410,6 +319,80 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	    	}
 		}
         
+	}
+	
+	// Update all fragment adapters when data changes (replaces direct adapter updates)
+	public void updateAllFragmentAdapters() {
+		// Get fragment references from ViewPager2 adapter
+		listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+		poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
+		nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
+		mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
+		wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
+		lista2012Fragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
+		
+		// Update fragment adapters
+		if (listaFragment != null) {
+			listaFragment.updateAdapter(songsList);
+		}
+		if (poczekalniaFragment != null) {
+			poczekalniaFragment.updateAdapter(songsListPocz);
+		}
+		if (nowosciFragment != null) {
+			nowosciFragment.updateAdapter(songsListNowosci);
+		}
+		if (mojaListaFragment != null) {
+			mojaListaFragment.updateAdapter(songsListMojalista);
+		}
+		if (wykonawcyFragment != null) {
+			wykonawcyFragment.updateAdapter(wykonList);
+		}
+		if (lista2012Fragment != null) {
+			lista2012Fragment.updateAdapter(y2012List);
+			// Handle spinner for Lista2012Fragment
+			ArrayList<String> listNotowPrzedzialy = new ArrayList<>();
+			for (HashMap<String, String> item : notowPrzedzialyList) {
+				listNotowPrzedzialy.add(item.get(Constants.KEY_NOTOWANIE_NAZWA));
+			}
+			lista2012Fragment.updateSpinnerAdapter(notowPrzedzialyList, listNotowPrzedzialy);
+			if (spinnerPosition != -1) {
+				lista2012Fragment.setSpinnerSelection(spinnerPosition);
+			}
+		}
+	}
+	
+	// Helper method to get fragment by position
+	@SuppressWarnings("unchecked")
+	private <T extends Fragment> T getFragmentByPosition(int position) {
+		if (tabPagerAdapter != null) {
+			String fragmentTag = "f" + position;
+			Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
+			return (T) fragment;
+		}
+		return null;
+	}
+	
+	// Handle spinner selection for Lista2012Fragment
+	public void handleSpinnerSelection(String notowanieId, int position) {
+		this.notowanieId = notowanieId;
+		this.spinnerPosition = position;
+		refreshListBackground();
+	}
+	
+	// Filter wykonawcy method (moved from old implementation)
+	private void filterWykonawcy(ArrayList<HashMap<String, String>> wykonList, CharSequence searchText) {
+		filteredWykonList.clear();
+		if (searchText.length() == 0) {
+			filteredWykonList.addAll(wykonList);
+		} else {
+			String searchString = searchText.toString().toLowerCase();
+			for (HashMap<String, String> item : wykonList) {
+				String wykonawca = item.get(Constants.KEY_WYKONAWCA);
+				if (wykonawca != null && wykonawca.toLowerCase().contains(searchString)) {
+					filteredWykonList.add(item);
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -450,34 +433,39 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 	}
 	
 
-	//zakladki
-	public void createTabs(){
-		TabHost th = findViewById(R.id.tabhost);
-		th.setup();
-		TabSpec spec = th.newTabSpec("tag1");
-		spec.setContent(R.id.tabLista);
-		spec.setIndicator(getString(R.string.tab_lista));
-		th.addTab(spec);
-		spec = th.newTabSpec("tag2");
-		spec.setContent(R.id.tabPoczekalnia);
-		spec.setIndicator(getString(R.string.tab_poczekalnia));
-		th.addTab(spec);
-		spec = th.newTabSpec("tag3");
-		spec.setContent(R.id.tabNowosci);
-		spec.setIndicator(getString(R.string.tab_nowosci));
-		th.addTab(spec);
-		spec = th.newTabSpec("tag4");
-		spec.setContent(R.id.tabMojalista);
-		spec.setIndicator(getString(R.string.tab_mojalista));
-		th.addTab(spec);
-		spec = th.newTabSpec("tag5");
-		spec.setContent(R.id.tabWykonawcy);
-		spec.setIndicator(getString(R.string.tab_wykonawcy));
-		th.addTab(spec);
-		spec = th.newTabSpec("tag6");
-		spec.setContent(R.id.tab2012);
-		spec.setIndicator(getString(R.string.tab_2012));
-		th.addTab(spec);
+	// Setup TabLayout with ViewPager2 (replaced createTabs)
+	public void setupTabLayoutWithViewPager(){
+		tabLayout = findViewById(R.id.tabLayout);
+		viewPager = findViewById(R.id.viewPager);
+		
+		// Initialize TabPagerAdapter
+		tabPagerAdapter = new TabPagerAdapter(this);
+		viewPager.setAdapter(tabPagerAdapter);
+		
+		// Create TabLayoutMediator with tab configuration
+		tabLayoutMediator = new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+			switch (position) {
+				case TabPagerAdapter.TAB_LISTA:
+					tab.setText(getString(R.string.tab_lista));
+					break;
+				case TabPagerAdapter.TAB_POCZEKALNIA:
+					tab.setText(getString(R.string.tab_poczekalnia));
+					break;
+				case TabPagerAdapter.TAB_NOWOSCI:
+					tab.setText(getString(R.string.tab_nowosci));
+					break;
+				case TabPagerAdapter.TAB_MOJALISTA:
+					tab.setText(getString(R.string.tab_mojalista));
+					break;
+				case TabPagerAdapter.TAB_WYKONAWCY:
+					tab.setText(getString(R.string.tab_wykonawcy));
+					break;
+				case TabPagerAdapter.TAB_LISTA_2012:
+					tab.setText(getString(R.string.tab_2012));
+					break;
+			}
+		});
+		tabLayoutMediator.attach();
 	}
 	
 	//reklama
@@ -507,22 +495,22 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
         HashMap<String, String> o = new HashMap<>();
 
 		if (Objects.equals(listType, Constants.KEY_LISTA)) {
-			o = (HashMap<String, String>) list.getItemAtPosition(position);
+			o = songsList.get(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_POCZEKALNIA)) {
-			o = (HashMap<String, String>) listPocz.getItemAtPosition(position);
+			o = songsListPocz.get(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_NOWOSCI)) {
-			o = (HashMap<String, String>) listNowosci.getItemAtPosition(position);
+			o = songsListNowosci.get(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_MOJALISTA)) {
-			o = (HashMap<String, String>) listMojalista.getItemAtPosition(position);
+			o = songsListMojalista.get(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
 			o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
 		}
 		if (Objects.equals(listType, Constants.KEY_LISTA_2012)) {
-			o = (HashMap<String, String>) list2012.getItemAtPosition(position);
+			o = y2012List.get(position);
 		}
 
 
@@ -911,20 +899,9 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 			return 1;
         }
        protected void onPostExecute(Integer result) {
-//    	   listInfo.setText(info);
-//    	   listInfoPocz.setText(info);
-//    	   listInfo2012.setText(info2012);
-    	   list.setAdapter(adapter);
-    	   listPocz.setAdapter(adapterPocz);
-		   listNowosci.setAdapter(adapterNowosci);
-		   listMojalista.setAdapter(adapterMojalista);
-    	   listWykon.setAdapter(adapterWyk);
-    	   list2012.setAdapter(adapter2012);
-    	   spinnerNotowaniaPrzedzialy.setAdapter(adapterNotowPrzedzialy);
+    	   // Update all fragment adapters with new data
+    	   updateAllFragmentAdapters();
    		   isSpinnerClicked = false;
-   	       if (spinnerPosition > -1) {
-   	    	   spinnerNotowaniaPrzedzialy.setSelection(spinnerPosition, false);
-   	    	   }
     	   progressDialog.dismiss();
            if (connectionError) {
    			new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
@@ -1083,14 +1060,7 @@ public class ListaPrzebojowDiscoPolo extends Activity  {
 		config.locale = locale;
 		res.updateConfiguration(config, dm);
 	}
-	public void filterWykonawcy(ArrayList<HashMap<String, String>> list, CharSequence cs){
-		filteredWykonList.clear();
-		 for (int i = 0; i < list.size(); i++) {
-			 if (((Objects.requireNonNull(list.get(i).get(Constants.KEY_WYKONAWCA))).toLowerCase()).contains(cs.toString().toLowerCase())){
-				 filteredWykonList.add(list.get(i));
-			 }
-		 }
-	}
+
 	
     private void getPrefs() {
         // Get the xml/preferences.xml preferences
