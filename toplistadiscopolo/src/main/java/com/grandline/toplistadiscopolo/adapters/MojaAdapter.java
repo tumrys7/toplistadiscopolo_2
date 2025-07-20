@@ -49,6 +49,22 @@ public class MojaAdapter extends BaseAdapter {
         return position;
     }
     
+    /**
+     * Safe version of notifyDataSetChanged() that includes null checks and synchronization
+     */
+    public void safeNotifyDataSetChanged() {
+        try {
+            synchronized(data) {
+                if (data != null) {
+                    notifyDataSetChanged();
+                }
+            }
+        } catch (Exception e) {
+            // Silently handle any exceptions that might occur during notification
+            e.printStackTrace();
+        }
+    }
+    
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
