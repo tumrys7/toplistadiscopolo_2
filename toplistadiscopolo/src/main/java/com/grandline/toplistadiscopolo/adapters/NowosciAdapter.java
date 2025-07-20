@@ -43,14 +43,14 @@ public class NowosciAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
-            vi = inflater.inflate(R.layout.list_row_nowosci, null);
-        TextView id_listy = (TextView)vi.findViewById(R.id.id_listy); // id_listy
-        TextView title = (TextView)vi.findViewById(R.id.title); // title
-        TextView artist = (TextView)vi.findViewById(R.id.artist); // artist name
-        TextView duration = (TextView)vi.findViewById(R.id.ile_glosow); // duration
-        ImageView thumb_image=(ImageView)vi.findViewById(R.id.list_image); // thumb image
-      //  TextView listPosition = (TextView)vi.findViewById(R.id.miejsce); // listPosition
-        TextView createDate = (TextView)vi.findViewById(R.id.data_dodania); // createDate
+            vi = inflater.inflate(R.layout.list_row_nowosci, parent, false);
+        TextView id_listy = vi.findViewById(R.id.id_listy); // id_listy
+        TextView title = vi.findViewById(R.id.title); // title
+        TextView artist = vi.findViewById(R.id.artist); // artist name
+        TextView duration = vi.findViewById(R.id.ile_glosow); // duration
+        ImageView thumb_image = vi.findViewById(R.id.list_image); // thumb image
+      //  TextView listPosition = vi.findViewById(R.id.miejsce); // listPosition
+        TextView createDate = vi.findViewById(R.id.data_dodania); // createDate
 
         HashMap<String, String> song;
         song = data.get(position);

@@ -27,6 +27,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.constraintlayout.solver.ArrayLinkedVariables;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -94,6 +96,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	private MojaListaFragment mojaListaFragment;
 	private WykonawcyFragment wykonawcyFragment;
 	private NotowaniaFragment notowaniaFragment;
+	
+	// Activity result launcher
+	private ActivityResultLauncher<Intent> activityResultLauncher;
 	
 	ListView wykUtwory;
     String teledysk;
@@ -167,6 +172,22 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		// Initialize ExecutorService and Handler
 		executorService = Executors.newFixedThreadPool(3);
 		mainHandler = new Handler(Looper.getMainLooper());
+		
+		// Initialize ActivityResultLauncher
+		activityResultLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(),
+			result -> {
+				if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+					Bundle conData = result.getData().getExtras();
+					if (conData != null) {
+						boolean voted = conData.getBoolean("param_return", false);
+						if (voted) {
+							refreshLista();
+						}
+					}
+				}
+			}
+		);
 		
 		language = getLocaleSettings();
 		notowanieId = Constants.VALUE_START_NOTOWANIE_ID; 
@@ -359,22 +380,22 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		
 		// Update fragment adapters
 		if (listaFragment != null) {
-			listaFragment.updateAdapter(songsList);
+			listaFragment.updateAdapter();
 		}
 		if (poczekalniaFragment != null) {
-			poczekalniaFragment.updateAdapter(songsListPocz);
+			poczekalniaFragment.updateAdapter();
 		}
 		if (nowosciFragment != null) {
-			nowosciFragment.updateAdapter(songsListNowosci);
+			nowosciFragment.updateAdapter();
 		}
 		if (mojaListaFragment != null) {
-			mojaListaFragment.updateAdapter(songsListMojalista);
+			mojaListaFragment.updateAdapter();
 		}
 		if (wykonawcyFragment != null) {
-			wykonawcyFragment.updateAdapter(wykonList);
+			wykonawcyFragment.updateAdapter();
 		}
 		if (notowaniaFragment != null) {
-			notowaniaFragment.updateAdapter(notowaniaList);
+			notowaniaFragment.updateAdapter();
 			// Handle spinner for NotowaniaFragment
 			ArrayList<String> listNotowPrzedzialy = new ArrayList<>();
 			for (HashMap<String, String> item : notowPrzedzialyList) {
@@ -510,8 +531,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 		intent.setClass(this, UtworyWykonawcy.class);
 		intent.putExtras(bun);
-		final int result = 1;
-		startActivityForResult(intent, result); 
+		activityResultLauncher.launch(intent); 
 	}
 
 	

@@ -28,7 +28,9 @@ public class MojaListaFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        if (getActivity() != null) {
+            parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        }
     }
     
     @Nullable
@@ -45,7 +47,7 @@ public class MojaListaFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        if (parentActivity != null) {
+        if (parentActivity != null && getActivity() != null) {
             adapterMojalista = new MojaAdapter(getActivity(), parentActivity.songsListMojalista);
             listMojalista.setAdapter(adapterMojalista);
             

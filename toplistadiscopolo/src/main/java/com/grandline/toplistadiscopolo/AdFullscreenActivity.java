@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -18,15 +21,24 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class AdFullscreenActivity extends Activity {
+public class AdFullscreenActivity extends AppCompatActivity {
 
     private static final String TAG = null;
     private InterstitialAd mInterstitialAd;
+    private ActivityResultLauncher<Intent> activityResultLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ad_fullscreen);
+
+        // Initialize ActivityResultLauncher
+        activityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                // Handle result if needed
+            }
+        );
 
         MobileAds.initialize(this, initializationStatus -> {});
 
@@ -84,8 +96,7 @@ public class AdFullscreenActivity extends Activity {
     private void showLista() {
         Intent intent = new Intent();
         intent.setClass(this,ListaPrzebojowDiscoPolo.class);
-        final int result = 1;
-        startActivityForResult(intent, result);
+        activityResultLauncher.launch(intent);
     }
 
 

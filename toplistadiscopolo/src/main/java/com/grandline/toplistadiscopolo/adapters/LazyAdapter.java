@@ -45,7 +45,7 @@ public class LazyAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
-            vi = inflater.inflate(R.layout.list_row, null);
+            vi = inflater.inflate(R.layout.list_row, parent, false);
 
         TextView id_listy = vi.findViewById(R.id.id_listy); // id_listy
         TextView title = vi.findViewById(R.id.title); // title

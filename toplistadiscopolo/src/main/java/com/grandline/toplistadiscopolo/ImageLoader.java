@@ -14,11 +14,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.util.Log;
 
 public class ImageLoader {
     
@@ -70,13 +72,13 @@ public class ImageLoader {
             conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(true);
             InputStream is=conn.getInputStream();
-            OutputStream os = new FileOutputStream(f);
+            OutputStream os = Files.newOutputStream(f.toPath());
             Utils.CopyStream(is, os);
             os.close();
             bitmap = decodeFile(f);
             return bitmap;
         } catch (Exception ex){
-           ex.printStackTrace();
+           Log.e("ImageLoader", "Error loading image: " + url, ex);
            return null;
         }
     }
