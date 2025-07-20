@@ -62,6 +62,12 @@ public class PoczekalniaFragment extends Fragment {
         }
     }
     
+    public void refreshWithAdReward() {
+        if (parentActivity != null) {
+            parentActivity.refreshPoczekalniaWithAdReward();
+        }
+    }
+    
     @Override
     public void onDestroyView() {
         cleanupViews();

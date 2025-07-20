@@ -62,6 +62,12 @@ public class ListaFragment extends Fragment {
         }
     }
     
+    public void refreshWithAdReward() {
+        if (parentActivity != null) {
+            parentActivity.refreshListaWithAdReward();
+        }
+    }
+    
     @Override
     public void onDestroyView() {
         cleanupViews();

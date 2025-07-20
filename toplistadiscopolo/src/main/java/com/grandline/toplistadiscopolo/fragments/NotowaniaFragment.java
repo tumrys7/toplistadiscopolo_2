@@ -98,6 +98,12 @@ public class NotowaniaFragment extends Fragment {
         }
     }
 
+    public void refreshWithAdReward() {
+        if (parentActivity != null) {
+            parentActivity.refreshNotowaniaWithAdReward();
+        }
+    }
+
     @Override
     public void onDestroyView() {
         cleanupViews();
