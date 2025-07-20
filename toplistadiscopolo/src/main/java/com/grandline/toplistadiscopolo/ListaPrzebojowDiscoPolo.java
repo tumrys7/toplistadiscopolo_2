@@ -411,11 +411,108 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		return null;
 	}
 	
-			// Handle spinner selection for NotowaniaFragment
+	// Handle spinner selection for NotowaniaFragment
 	public void handleSpinnerSelection(String notowanieId, int position) {
 		this.notowanieId = notowanieId;
 		this.spinnerPosition = position;
-		refreshListBackground();
+		// Instead of refreshing all data, only refresh notowania data
+		refreshNotowaniaDataBackground();
+	}
+	
+	// New method to refresh only notowania data for the selected period
+	private void refreshNotowaniaDataBackground() {
+		// Show progress dialog for notowania refresh
+		if (progressDialog == null || !progressDialog.isShowing()) {
+			progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
+			progressDialog.show();
+		}
+		
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear only notowania related data
+				notowaniaList.clear();
+				
+				String xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
+				Document doc = parser.getDomElement(xml);
+				
+				// Update info for notowania
+				NodeList nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
+				Element el = (Element) nlInfo.item(0);
+				info2012 = parser.getValue(el, Constants.KEY_INFO);
+				
+				int votesProgress = 0;
+				int maxVotes = 0;
+				int currentVotes = 0;
+				
+				// Load notowania songs for the selected period
+				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
+				
+				for (int i = 0; i < nl.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					
+					// Add all required fields for notowania
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					
+					// Only for PRO Version
+					if (adReward) {
+						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					}
+					
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
+					
+					// Calculate votes progress
+					if (i == 0) {
+						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+						if (maxVotes == 0) {
+							maxVotes = 1;
+						}
+					}
+					
+					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					votesProgress = (currentVotes * 100) / maxVotes;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+					
+					notowaniaList.add(map);
+				}
+				
+			} catch (IOException e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread - only update NotowaniaFragment
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				// Update only NotowaniaFragment adapter
+				NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
+				if (notowaniaFragment != null) {
+					notowaniaFragment.updateAdapter();
+				}
+				
+				progressDialog.dismiss();
+				
+				if (finalConnectionError) {
+					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
+						.setTitle(R.string.text_connection_error_title)
+						.setMessage(getString(R.string.text_connection_error))
+						.setNeutralButton("Ok", null).show();
+				}
+			});
+		});
 	}
 	
 	// Filter wykonawcy method (moved from old implementation)
