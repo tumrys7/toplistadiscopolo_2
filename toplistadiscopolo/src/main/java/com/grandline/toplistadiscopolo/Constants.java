@@ -27,7 +27,7 @@ public interface Constants {
 	String KEY_MOJALISTA = "mojalista";
 	String KEY_POCZEKALNIA = "poczekalnia";
 	String KEY_NOWOSCI = "nowosci";
-	String KEY_LISTA_2012 = "y2012";
+	String KEY_LISTA_NOTOWANIA = "y2012";
 	String KEY_UTW_WYKONAWCY = "utw_wykonawcy";
 	String KEY_SONG = "rec"; // parent node for list
 	String KEY_SONG_POCZ = "recp"; // parent node for poczekalnia

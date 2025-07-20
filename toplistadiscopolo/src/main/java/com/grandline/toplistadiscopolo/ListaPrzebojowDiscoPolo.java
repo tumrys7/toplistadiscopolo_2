@@ -371,7 +371,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
         NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
         MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
         WykonawcyFragment wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
-        NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
+        NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
 		
 		// Update fragment adapters
 		if (listaFragment != null) {
@@ -499,8 +499,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				case TabPagerAdapter.TAB_WYKONAWCY:
 					tab.setText(getString(R.string.tab_wykonawcy));
 					break;
-				case TabPagerAdapter.TAB_LISTA_2012:
-					tab.setText(getString(R.string.tab_2012));
+				case TabPagerAdapter.TAB_NOTOWANIA:
+					tab.setText(getString(R.string.tab_notowanie));
 					break;
 			}
 		});
@@ -547,7 +547,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
 			o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
 		}
-		if (Objects.equals(listType, Constants.KEY_LISTA_2012)) {
+		if (Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
 			o = notowaniaList.get(position);
 		}
 
@@ -613,7 +613,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
         }
 
-		if (Objects.equals(listType, Constants.KEY_LISTA_2012)) {
+		if (Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
 			//	finish();
 			showAuthSongs(idWykonawcy);
 		}
@@ -636,7 +636,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			});
         }
 
-		if (!Objects.equals(listType, Constants.KEY_LISTA_2012)) {
+		if (!Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
         	AlertDialog alert = builder.create();
         	alert.show();
 	}

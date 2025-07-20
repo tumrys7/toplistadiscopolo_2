@@ -20,7 +20,7 @@ public class TabPagerAdapter extends FragmentStateAdapter {
     public static final int TAB_NOWOSCI = 2;
     public static final int TAB_MOJALISTA = 3;
     public static final int TAB_WYKONAWCY = 4;
-    public static final int TAB_LISTA_2012 = 5;
+    public static final int TAB_NOTOWANIA = 5;
     
     private static final int TAB_COUNT = 6;
 
@@ -43,7 +43,7 @@ public class TabPagerAdapter extends FragmentStateAdapter {
                 return MojaListaFragment.newInstance();
             case TAB_WYKONAWCY:
                 return WykonawcyFragment.newInstance();
-            case TAB_LISTA_2012:
+            case TAB_NOTOWANIA:
                 return NotowaniaFragment.newInstance();
         }
     }
