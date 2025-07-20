@@ -235,6 +235,15 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	    if (adView != null) {
 	      adView.destroy();
 	    }
+	    // Clean up dialogs to prevent window leaks
+	    if (progressDialog != null && progressDialog.isShowing()) {
+	    	progressDialog.dismiss();
+	    	progressDialog = null;
+	    }
+	    if (progressDialogVote != null && progressDialogVote.isShowing()) {
+	    	progressDialogVote.dismiss();
+	    	progressDialogVote = null;
+	    }
 	    // Clean up TabLayoutMediator
 	    if (tabLayoutMediator != null) {
 	    	tabLayoutMediator.detach();
