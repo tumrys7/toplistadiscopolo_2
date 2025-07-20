@@ -163,18 +163,28 @@ public class XMLParser {
 			Document doc2;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setCoalescing(true);//aby obsluzyc znak & w xml
+			InputStream is = null;
 			try {
 
 				DocumentBuilder db = dbf.newDocumentBuilder();
 
 				//InputSource is = new InputSource();
-				InputStream is = new ByteArrayInputStream(xml_nowosci.getBytes(StandardCharsets.UTF_8));
+				is = new ByteArrayInputStream(xml_nowosci.getBytes(StandardCharsets.UTF_8));
 				//is.setCharacterStream(new StringReader(xml_nowosci));
 				doc2 = db.parse(is);
 
 			} catch (ParserConfigurationException | SAXException | IOException e) {
 				//	Log.e("Error2: ", e.getMessage());
 				return null;
+			} finally {
+				// Close InputStream properly
+				try {
+					if (is != null) {
+						is.close();
+					}
+				} catch (IOException e) {
+					android.util.Log.e("XMLParser", "Error closing InputStream", e);
+				}
 			}
 
 			return doc2;
@@ -185,18 +195,28 @@ public class XMLParser {
 			Document docmoja;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setCoalescing(true);//aby obsluzyc znak & w xml
+			InputStream is = null;
 			try {
 
 				DocumentBuilder db = dbf.newDocumentBuilder();
 
 				//InputSource is = new InputSource();
-				InputStream is = new ByteArrayInputStream(xml_mojalista.getBytes(StandardCharsets.UTF_8));
+				is = new ByteArrayInputStream(xml_mojalista.getBytes(StandardCharsets.UTF_8));
 				//is.setCharacterStream(new StringReader(xml_mojalista));
 				docmoja = db.parse(is);
 
 			} catch (ParserConfigurationException | SAXException | IOException e) {
 				//		Log.e("Error2: ", e.getMessage());
 				return null;
+			} finally {
+				// Close InputStream properly
+				try {
+					if (is != null) {
+						is.close();
+					}
+				} catch (IOException e) {
+					android.util.Log.e("XMLParser", "Error closing InputStream", e);
+				}
 			}
 			return docmoja;
 		}

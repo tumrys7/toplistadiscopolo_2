@@ -63,32 +63,56 @@ public class ImageLoader {
             return b;
         
         //from web
+        HttpURLConnection conn = null;
+        InputStream is = null;
+        OutputStream os = null;
         try {
             Bitmap bitmap;
             URL imageUrl = new URL(url);
-            HttpURLConnection conn = (HttpURLConnection)imageUrl.openConnection();
+            conn = (HttpURLConnection)imageUrl.openConnection();
             conn.setConnectTimeout(30000);
             conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(true);
-            InputStream is=conn.getInputStream();
-            OutputStream os = Files.newOutputStream(f.toPath());
+            is = conn.getInputStream();
+            os = Files.newOutputStream(f.toPath());
             Utils.CopyStream(is, os);
-            os.close();
             bitmap = decodeFile(f);
             return bitmap;
         } catch (Exception ex){
            Log.e("ImageLoader", "Error loading image: " + url, ex);
            return null;
+        } finally {
+            // Close resources properly
+            try {
+                if (os != null) {
+                    os.close();
+                }
+            } catch (Exception e) {
+                Log.e("ImageLoader", "Error closing OutputStream", e);
+            }
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (Exception e) {
+                Log.e("ImageLoader", "Error closing InputStream", e);
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
     //decodes image and scales it to reduce memory consumption
     private Bitmap decodeFile(File f){
+        FileInputStream fis1 = null;
+        FileInputStream fis2 = null;
         try {
             //decode image size
             BitmapFactory.Options o = new BitmapFactory.Options();
             o.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(new FileInputStream(f),null,o);
+            fis1 = new FileInputStream(f);
+            BitmapFactory.decodeStream(fis1, null, o);
 
             //Find the correct scale value. It should be the power of 2.
             final int REQUIRED_SIZE=70;
@@ -103,9 +127,27 @@ public class ImageLoader {
             //decode with inSampleSize
             BitmapFactory.Options o2 = new BitmapFactory.Options();
             o2.inSampleSize=scale;
-            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
-        } catch (FileNotFoundException ignored) {}
-        return null;
+            fis2 = new FileInputStream(f);
+            return BitmapFactory.decodeStream(fis2, null, o2);
+        } catch (FileNotFoundException ignored) {
+            return null;
+        } finally {
+            // Close FileInputStream resources properly
+            try {
+                if (fis1 != null) {
+                    fis1.close();
+                }
+            } catch (Exception e) {
+                Log.e("ImageLoader", "Error closing first FileInputStream", e);
+            }
+            try {
+                if (fis2 != null) {
+                    fis2.close();
+                }
+            } catch (Exception e) {
+                Log.e("ImageLoader", "Error closing second FileInputStream", e);
+            }
+        }
     }
     
     //Task for the queue
