@@ -31,7 +31,10 @@ public class FileCache {
         if(files==null)
             return;
         for(File f:files) {
-            f.delete();
+            if (!f.delete()) {
+                // Log warning if file couldn't be deleted, but continue
+                android.util.Log.w("FileCache", "Could not delete file: " + f.getName());
+            }
         }
     }
 

@@ -36,7 +36,9 @@ public class WykonawcyFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        if (getActivity() != null) {
+            parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        }
     }
     
     @Nullable
@@ -55,11 +57,12 @@ public class WykonawcyFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        if (parentActivity != null) {
+        if (parentActivity != null && getActivity() != null) {
             adapterWyk = new WykAdapter(getActivity(), parentActivity.filteredWykonList);
             listWykon.setAdapter(adapterWyk);
             
             listWykon.setOnItemClickListener((parent, clickedView, position, id) -> {
+                @SuppressWarnings("unchecked")
                 HashMap<String, String> mapo = (HashMap<String, String>) listWykon.getItemAtPosition(position);
                 final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
                 parentActivity.showAuthSongs(id_wykonawcy);

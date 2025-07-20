@@ -33,7 +33,9 @@ public class NotowaniaFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        if (getActivity() != null) {
+            parentActivity = (ListaPrzebojowDiscoPolo) getActivity();
+        }
     }
 
     @Nullable
@@ -51,7 +53,7 @@ public class NotowaniaFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        if (parentActivity != null) {
+        if (parentActivity != null && getActivity() != null) {
             adapter2012 = new LazyAdapter(getActivity(), parentActivity.notowaniaList);
             list2012.setAdapter(adapter2012);
             

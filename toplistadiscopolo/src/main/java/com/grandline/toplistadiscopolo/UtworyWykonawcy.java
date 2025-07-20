@@ -13,6 +13,11 @@ import android.provider.Settings;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -31,7 +36,9 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UtworyWykonawcy extends Activity {
+import com.grandline.toplistadiscopolo.adapters.LazyAdapter;
+
+public class UtworyWykonawcy extends AppCompatActivity {
 
 	boolean adReward;
 	AdView adView;
@@ -56,6 +63,9 @@ public class UtworyWykonawcy extends Activity {
     // ExecutorService and Handler for background tasks
 	private ExecutorService executorService;
 	private Handler mainHandler;
+	
+	// Activity result launcher
+	private ActivityResultLauncher<Intent> activityResultLauncher;
     
 	// [START declare_analytics]
 	private FirebaseAnalytics mFirebaseAnalytics;
@@ -68,6 +78,14 @@ public class UtworyWykonawcy extends Activity {
 		// Initialize ExecutorService and Handler
 		executorService = Executors.newFixedThreadPool(3);
 		mainHandler = new Handler(Looper.getMainLooper());
+		
+		// Initialize ActivityResultLauncher
+		activityResultLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(),
+			result -> {
+				// Handle result if needed
+			}
+		);
 		
 		language = getLocaleSettings();
 		setContentView(R.layout.utwory_wykonawcy);
@@ -84,23 +102,28 @@ public class UtworyWykonawcy extends Activity {
 			createAd();
 			createNativeAd();
 		}
+		
+		// Setup OnBackPressedCallback
+		OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+			@Override
+			public void handleOnBackPressed() {
+				Bundle conData = new Bundle();
+				conData.putBoolean("param_return", voted);
+				Intent intent = new Intent();
+				intent.putExtras(conData);
+				setResult(RESULT_OK, intent);
+
+				if (adView != null) {
+					adView.destroy();
+				}
+				finish();
+				showAdFullscreen();
+			}
+		};
+		getOnBackPressedDispatcher().addCallback(this, callback);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public void onBackPressed() {
-		Bundle conData = new Bundle();
-		conData.putBoolean("param_return", voted);
-		Intent intent = new Intent();
-		intent.putExtras(conData);
-		setResult(RESULT_OK, intent);
 
-		if (adView != null) {
-			adView.destroy();
-		}
-		super.onBackPressed();
-		showAdFullscreen();
-	}
 	
 	@Override
 	protected void onDestroy() {
@@ -320,8 +343,7 @@ public class UtworyWykonawcy extends Activity {
 	private void showAdFullscreen() {
 		Intent intent = new Intent();
 		intent.setClass(this,AdFullscreenActivity.class);
-		final int result = 1;
-		startActivityForResult(intent, result);
+		activityResultLauncher.launch(intent);
 	}
 
 	public boolean canUserVotes(String idListy) {

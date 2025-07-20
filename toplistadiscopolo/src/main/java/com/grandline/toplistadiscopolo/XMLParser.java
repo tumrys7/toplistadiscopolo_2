@@ -19,6 +19,7 @@ import java.net.URL;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.nio.charset.StandardCharsets;
 
 public class XMLParser {
 	private android.util.Log Log;
@@ -45,7 +46,7 @@ public class XMLParser {
 			
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
 				StringBuilder result = new StringBuilder();
 				String line;
 				while ((line = reader.readLine()) != null) {
@@ -81,7 +82,7 @@ public class XMLParser {
 			
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
 				StringBuilder result = new StringBuilder();
 				String line;
 				while ((line = reader.readLine()) != null) {
@@ -117,7 +118,7 @@ public class XMLParser {
 			
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
 				StringBuilder result = new StringBuilder();
 				String line;
 				while ((line = reader.readLine()) != null) {
@@ -167,7 +168,7 @@ public class XMLParser {
 				DocumentBuilder db = dbf.newDocumentBuilder();
 
 				//InputSource is = new InputSource();
-				InputStream is = new ByteArrayInputStream(xml_nowosci.getBytes("UTF-8"));
+				InputStream is = new ByteArrayInputStream(xml_nowosci.getBytes(StandardCharsets.UTF_8));
 				//is.setCharacterStream(new StringReader(xml_nowosci));
 				doc2 = db.parse(is);
 
@@ -189,7 +190,7 @@ public class XMLParser {
 				DocumentBuilder db = dbf.newDocumentBuilder();
 
 				//InputSource is = new InputSource();
-				InputStream is = new ByteArrayInputStream(xml_mojalista.getBytes("UTF-8"));
+				InputStream is = new ByteArrayInputStream(xml_mojalista.getBytes(StandardCharsets.UTF_8));
 				//is.setCharacterStream(new StringReader(xml_mojalista));
 				docmoja = db.parse(is);
 

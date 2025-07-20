@@ -44,7 +44,7 @@ public class WykAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
-            vi = inflater.inflate(R.layout.wykon_row, null);
+            vi = inflater.inflate(R.layout.wykon_row, parent, false);
 
         TextView id_wykonawcy = vi.findViewById(R.id.id_wykonawcy); // id wykonawcy
         TextView artist = vi.findViewById(R.id.artist); // artist name

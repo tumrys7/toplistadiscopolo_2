@@ -33,6 +33,7 @@ public class TabPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case TAB_LISTA:
+            default:
                 return ListaFragment.newInstance();
             case TAB_POCZEKALNIA:
                 return PoczekalniaFragment.newInstance();
@@ -44,8 +45,6 @@ public class TabPagerAdapter extends FragmentStateAdapter {
                 return WykonawcyFragment.newInstance();
             case TAB_LISTA_2012:
                 return NotowaniaFragment.newInstance();
-            default:
-                return ListaFragment.newInstance();
         }
     }
 
