@@ -118,7 +118,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
     private Toast toast;
     private long lastBackPressTime = 0;
     boolean connectionError = false;
-    boolean isSpinnerClicked = false;
 
     int spinnerPosition = -1;
 	// [START declare_analytics]
@@ -210,7 +209,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			// reklama
 			createAd();
 		}
-		isSpinnerClicked = false;
 		refreshListBackground();
 		getPrefs();
 		setupBackPressedCallback();
@@ -1039,7 +1037,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			mainHandler.post(() -> {
 				// Update all fragment adapters with new data
 				updateAllFragmentAdapters();
-				isSpinnerClicked = false;
 				progressDialog.dismiss();
 				if (finalConnectionError) {
 					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
