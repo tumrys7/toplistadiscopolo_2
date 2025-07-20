@@ -58,7 +58,7 @@ public class ListaFragment extends Fragment {
     
     public void updateAdapter() {
         if (adapter != null && isAdded() && !isRemoving() && getView() != null) {
-            adapter.notifyDataSetChanged();
+            adapter.safeNotifyDataSetChanged();
         }
     }
     

@@ -58,7 +58,7 @@ public class PoczekalniaFragment extends Fragment {
     
     public void updateAdapter() {
         if (adapterPocz != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterPocz.notifyDataSetChanged();
+            adapterPocz.safeNotifyDataSetChanged();
         }
     }
     
