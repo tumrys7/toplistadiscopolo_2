@@ -128,6 +128,15 @@ public class UtworyWykonawcy extends AppCompatActivity {
 	
 	@Override
 	protected void onDestroy() {
+		// Clean up dialogs to prevent window leaks
+		if (progressDialog != null && progressDialog.isShowing()) {
+			progressDialog.dismiss();
+			progressDialog = null;
+		}
+		if (progressDialogVote != null && progressDialogVote.isShowing()) {
+			progressDialogVote.dismiss();
+			progressDialogVote = null;
+		}
 		// Clean up ExecutorService to prevent memory leaks
 		if (executorService != null && !executorService.isShutdown()) {
 			executorService.shutdown();
