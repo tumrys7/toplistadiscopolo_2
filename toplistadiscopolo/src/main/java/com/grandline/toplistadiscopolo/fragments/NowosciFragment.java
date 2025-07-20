@@ -62,6 +62,12 @@ public class NowosciFragment extends Fragment {
         }
     }
     
+    public void refreshWithAdReward() {
+        if (parentActivity != null) {
+            parentActivity.refreshNowosciWithAdReward();
+        }
+    }
+    
     @Override
     public void onDestroyView() {
         cleanupViews();

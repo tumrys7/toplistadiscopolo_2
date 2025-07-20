@@ -618,6 +618,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			Bundle bun = new Bundle();
 
 		bun.putString("param_auth_id", authId);
+		bun.putBoolean("param_ad_reward", adReward);
 
 		intent.setClass(this, UtworyWykonawcy.class);
 		intent.putExtras(bun);
@@ -1262,7 +1263,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					// Handle the reward.
 					Log.d("TAG", "The user earned the reward.");
 					adReward = true;
-					refreshListBackground();
+					// Refresh MojaLista and Nowosci fragments with adReward = true
+					refreshMojaListaWithAdReward();
+					refreshNowosciWithAdReward();
 					// [START image_view_event]
 					Bundle bundlereward = new Bundle();
 					bundlereward.putString(FirebaseAnalytics.Param.ITEM_ID, androidId);
@@ -1314,5 +1317,128 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		return builder.create();
 	}
 
+	// Refresh MojaLista with adReward = true
+	public void refreshMojaListaWithAdReward() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear and reload mojalista data with adReward = true
+				songsListMojalista.clear();
+				
+				String xml_mojalista = parser.getXmlFromUrlMoja(Constants.URL_MOJALISTA.replace("LANG", language).replace("ANDROIDID", androidId));
+				Document docmoja = parser.getDomElementMoja(xml_mojalista);
+				NodeList nl = docmoja.getElementsByTagName(Constants.KEY_SONG_MOJA);
+				
+				// Calculate max votes for progress
+				int maxVotes = 0;
+				if (songsList != null && !songsList.isEmpty()) {
+					try {
+						maxVotes = Integer.parseInt(songsList.get(0).get(Constants.KEY_VOTES).replaceAll("[^0-9]", ""));
+						if (maxVotes == 0) maxVotes = 1;
+					} catch (Exception e) {
+						maxVotes = 1;
+					}
+				}
+				
+				for (int i = 0; i < nl.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					// Show votes since adReward is true
+					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					
+					// Setting votes progress
+					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					int votesProgress = (currentVotes * 100) / maxVotes;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+					
+					songsListMojalista.add(map);
+				}
+				
+			} catch (Exception e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
+				if (mojaListaFragment != null) {
+					mojaListaFragment.updateAdapter();
+				}
+				
+				if (finalConnectionError) {
+					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+				}
+			});
+		});
+	}
+	
+	// Refresh Nowosci with adReward = true
+	public void refreshNowosciWithAdReward() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear and reload nowosci data with adReward = true
+				songsListNowosci.clear();
+				
+				String xml_nowosci = parser.getXmlFromUrl2(Constants.URL_NOWOSCI.replace("LANG", language));
+				Document doc2 = parser.getDomElement2(xml_nowosci);
+				NodeList nl2 = doc2.getElementsByTagName(Constants.KEY_SONG_NOWOSCI);
+				
+				for (int i = 0; i < nl2.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl2.item(i);
+					
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					// Show votes since adReward is true
+					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					
+					songsListNowosci.add(map);
+				}
+				
+			} catch (Exception e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
+				if (nowosciFragment != null) {
+					nowosciFragment.updateAdapter();
+				}
+				
+				if (finalConnectionError) {
+					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+				}
+			});
+		});
+	}
 
 }	

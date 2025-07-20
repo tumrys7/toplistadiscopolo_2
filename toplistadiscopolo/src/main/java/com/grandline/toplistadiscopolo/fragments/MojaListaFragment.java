@@ -62,6 +62,12 @@ public class MojaListaFragment extends Fragment {
         }
     }
     
+    public void refreshWithAdReward() {
+        if (parentActivity != null) {
+            parentActivity.refreshMojaListaWithAdReward();
+        }
+    }
+    
     @Override
     public void onDestroyView() {
         cleanupViews();
