@@ -69,9 +69,6 @@ public class NotowaniaFragment extends Fragment {
                     if (isSpinnerClicked && parentActivity != null) {
                         String notowanieId = parentActivity.notowPrzedzialyList.get(pos).get(Constants.KEY_NOTOWANIE_ZA);
                         parentActivity.handleSpinnerSelection(notowanieId, pos);
-                        updateAdapter();
-                        listNotowania.setAdapter(adapterNotowania);
-
                     }
                     isSpinnerClicked = true;
                 }
