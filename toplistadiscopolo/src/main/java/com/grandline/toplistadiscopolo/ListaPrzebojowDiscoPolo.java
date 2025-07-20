@@ -182,7 +182,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					if (conData != null) {
 						boolean voted = conData.getBoolean("param_return", false);
 						if (voted) {
-							refreshLista();
+							refreshListBackground();
 						}
 					}
 				}
@@ -401,7 +401,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			for (HashMap<String, String> item : notowPrzedzialyList) {
 				listNotowPrzedzialy.add(item.get(Constants.KEY_NOTOWANIE_NAZWA));
 			}
-			notowaniaFragment.updateSpinnerAdapter(notowPrzedzialyList, listNotowPrzedzialy);
+			notowaniaFragment.updateSpinnerAdapter();
 			if (spinnerPosition != -1) {
 				notowaniaFragment.setSpinnerSelection(spinnerPosition);
 			}
