@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -72,7 +71,7 @@ public class ImageLoader {
             conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(true);
             InputStream is=conn.getInputStream();
-            OutputStream os = Files.newOutputStream(f.toPath());
+            OutputStream os = new FileOutputStream(f);
             Utils.CopyStream(is, os);
             os.close();
             bitmap = decodeFile(f);

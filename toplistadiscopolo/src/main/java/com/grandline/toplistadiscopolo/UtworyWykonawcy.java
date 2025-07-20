@@ -9,7 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
+// Removed Settings import as we no longer use device identifiers
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -141,7 +141,9 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		wykSongsList = new ArrayList<>();
 		adapter = new LazyAdapter(this, wykSongsList);		
 		wykUtwory.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_UTW_WYKONAWCY));
-        progressDialog = ProgressDialog.show(UtworyWykonawcy.this, "", getString(R.string.text_auth_refresh_list));
+        progressDialog = new ProgressDialog(UtworyWykonawcy.this);
+        progressDialog.setMessage(getString(R.string.text_auth_refresh_list));
+        progressDialog.show();
         refreshAuthSongsInBackground(url);		
 	}
 	
@@ -195,15 +197,22 @@ public class UtworyWykonawcy extends AppCompatActivity {
 
 	private void zaglosuj(String idUtworu, String listType, String idWykonawcy, String teledysk) {
 		if (canUserVotes(idUtworu)){
-			String androidId = Settings.Secure.getString(getContentResolver(),
-			         Settings.Secure.ANDROID_ID);
+			// Using a more privacy-friendly approach instead of device identifier
+			SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+			String androidId = prefs.getString("user_id", null);
+			if (androidId == null) {
+				androidId = java.util.UUID.randomUUID().toString();
+				prefs.edit().putString("user_id", androidId).apply();
+			}
 			String url;
 			try{
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", androidId).replace("LANG", language).replace("TEL_PARAM", teledysk);
 			} catch (NullPointerException e) {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", "UNKNOWN").replace("LANG", language).replace("TEL_PARAM", teledysk);
 			}
-	        progressDialogVote = ProgressDialog.show(UtworyWykonawcy.this, "", getString(R.string.text_voting));
+	        progressDialogVote = new ProgressDialog(UtworyWykonawcy.this);
+	        progressDialogVote.setMessage(getString(R.string.text_voting));
+	        progressDialogVote.show();
 	        myListType = listType;
 	        myIdWykonawcy = idWykonawcy;
 	        votingListId = idUtworu;
@@ -286,7 +295,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 	private void voteInBackground(String url, String listType) {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			String voteMessage = "";
+			String voteMessage;
 			
 			Vote vote = new Vote();
 			try{

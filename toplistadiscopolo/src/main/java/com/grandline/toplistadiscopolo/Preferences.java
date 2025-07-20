@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
+// Updated to use androidx.preference.PreferenceManager
 
 import java.util.List;
 
@@ -127,7 +127,7 @@ public class Preferences extends PreferenceActivity {
 		// current value.
 		sBindPreferenceSummaryToValueListener.onPreferenceChange(
 				preference,
-				PreferenceManager.getDefaultSharedPreferences(
+				androidx.preference.PreferenceManager.getDefaultSharedPreferences(
 						preference.getContext()).getString(preference.getKey(),
 						""));
 	}

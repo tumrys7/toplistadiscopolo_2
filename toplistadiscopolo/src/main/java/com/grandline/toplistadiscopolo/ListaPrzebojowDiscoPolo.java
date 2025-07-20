@@ -12,8 +12,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
-import android.provider.Settings;
+// Removed deprecated PreferenceManager import
+// Removed Settings import as we no longer use device identifiers
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -199,8 +199,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 
 
-		androidId = Settings.Secure.getString(getContentResolver(),
-		         Settings.Secure.ANDROID_ID);
+		// Using a more privacy-friendly approach instead of device identifier
+		SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+		androidId = prefs.getString("user_id", null);
+		if (androidId == null) {
+			androidId = java.util.UUID.randomUUID().toString();
+			prefs.edit().putString("user_id", androidId).apply();
+		}
 		// [START shared_app_measurement]
 		// Obtain the FirebaseAnalytics instance.
 		mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
@@ -309,15 +314,18 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	private void zaglosuj(String idUtworu, String listType, String idWykonawcy, String idGrupy, String teledysk) {
 		if (canUserVotes(idUtworu)){
-			String androidId = Settings.Secure.getString(getContentResolver(),
-			         Settings.Secure.ANDROID_ID);
+			// Using the same privacy-friendly user ID
+			SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+			String androidId = prefs.getString("user_id", this.androidId);
 			String url;
 			try {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", androidId).replace("LANG", language).replace("ID_GRUPY", idGrupy).replace("TEL_PARAM", teledysk);
 			} catch (NullPointerException e) {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", "UNKNOWN").replace("LANG", language).replace("ID_GRUPY", idGrupy).replace("TEL_PARAM", teledysk);
 			}
-	        progressDialogVote = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_voting));
+	        progressDialogVote = new ProgressDialog(ListaPrzebojowDiscoPolo.this);
+	        progressDialogVote.setMessage(getString(R.string.text_voting));
+	        progressDialogVote.show();
 			myListType = listType;
 			myIdWykonawcy = idWykonawcy;
 	        votingListId = idUtworu;
@@ -358,7 +366,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
         notowPrzedzialyList = new ArrayList<>();
         listNotowPrzedzialy = new ArrayList<>();
 
-        progressDialog = ProgressDialog.show(ListaPrzebojowDiscoPolo.this, "", getString(R.string.text_refresh_list));
+        progressDialog = new ProgressDialog(ListaPrzebojowDiscoPolo.this);
+        progressDialog.setMessage(getString(R.string.text_refresh_list));
+        progressDialog.show();
         refreshListInBackground();
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
 	    	if (adError){
@@ -397,10 +407,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (notowaniaFragment != null) {
 			notowaniaFragment.updateAdapter();
 			// Handle spinner for NotowaniaFragment
-			ArrayList<String> listNotowPrzedzialy = new ArrayList<>();
-			for (HashMap<String, String> item : notowPrzedzialyList) {
-				listNotowPrzedzialy.add(item.get(Constants.KEY_NOTOWANIE_NAZWA));
-			}
 			notowaniaFragment.updateSpinnerAdapter();
 			if (spinnerPosition != -1) {
 				notowaniaFragment.setSpinnerSelection(spinnerPosition);
@@ -444,38 +450,38 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle item selection
-	    switch (item.getItemId()) {
-	        case R.id.odswiez:
-	        	refreshListBackground();
-	            return true;
-            case R.id.policy:
-                Intent browserIntent2 = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.POLICY_URL));
-                startActivity(browserIntent2);
-                return true;
-	        case R.id.kontakt:
-				Intent email = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Constants.EMAIL_TO + "?subject=" +
-						Uri.encode(getString(R.string.email_subject)) + "&body="));
-				startActivity(email);
-				return true;
-	        case R.id.jezyk:
-	        	showLanguageMenu();
-	        	return true;	        	
-	        case R.id.oProgramie:
-	        	Intent intentAbout = new Intent(Intent.ACTION_VIEW);
+	    // Handle item selection using if-else instead of switch for resource IDs
+	    int itemId = item.getItemId();
+	    if (itemId == R.id.odswiez) {
+	        refreshListBackground();
+	        return true;
+	    } else if (itemId == R.id.policy) {
+	        Intent browserIntent2 = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.POLICY_URL));
+	        startActivity(browserIntent2);
+	        return true;
+	    } else if (itemId == R.id.kontakt) {
+	        Intent email = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Constants.EMAIL_TO + "?subject=" +
+	                Uri.encode(getString(R.string.email_subject)) + "&body="));
+	        startActivity(email);
+	        return true;
+	    } else if (itemId == R.id.jezyk) {
+	        showLanguageMenu();
+	        return true;
+	    } else if (itemId == R.id.oProgramie) {
+	        Intent intentAbout = new Intent(Intent.ACTION_VIEW);
 	        	intentAbout.setClassName(this, OProgramie.class.getName());
 	        	startActivity(intentAbout);
 	        	return true;
-	        case R.id.facebook:
-	        	Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.FACEBOOK_URL));
-	        	startActivity(browserIntent);
-	        	return true;
-	        case R.id.ustawienia:
-	        	Intent settingsIntent = new Intent(getBaseContext(),Preferences.class);
-	        	startActivity(settingsIntent);
-	        	return true;	        	
-	        default:
-	            return super.onOptionsItemSelected(item);
+	    } else if (itemId == R.id.facebook) {
+	        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.FACEBOOK_URL));
+	        startActivity(browserIntent);
+	        return true;
+	    } else if (itemId == R.id.ustawienia) {
+	        Intent settingsIntent = new Intent(getBaseContext(),Preferences.class);
+	        startActivity(settingsIntent);
+	        return true;
+	    } else {
+	        return super.onOptionsItemSelected(item);
 	    }
 	}
 	
@@ -958,7 +964,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	private void voteInBackground(String url, String listType) {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			String voteMessage = "";
+			String voteMessage;
 			
 			Vote vote = new Vote();
 			try{
@@ -1083,8 +1089,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	
     private void getPrefs() {
-        // Get the xml/preferences.xml preferences
-        SharedPreferences prefs = PreferenceManager
+        // Get the xml/preferences.xml preferences using modern approach
+        SharedPreferences prefs = androidx.preference.PreferenceManager
                         .getDefaultSharedPreferences(getBaseContext());
         CheckboxPreference = prefs.getBoolean("example_checkbox", false);
     }
