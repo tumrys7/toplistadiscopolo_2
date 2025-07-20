@@ -1263,7 +1263,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					// Handle the reward.
 					Log.d("TAG", "The user earned the reward.");
 					adReward = true;
-					// Refresh MojaLista and Nowosci fragments with adReward = true
+					// Refresh all fragments with adReward = true
+					refreshListaWithAdReward();
+					refreshPoczekalniaWithAdReward();
+					refreshNotowaniaWithAdReward();
 					refreshMojaListaWithAdReward();
 					refreshNowosciWithAdReward();
 					// [START image_view_event]
@@ -1432,6 +1435,231 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
 				if (nowosciFragment != null) {
 					nowosciFragment.updateAdapter();
+				}
+				
+				if (finalConnectionError) {
+					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+				}
+			});
+		});
+	}
+
+	// Refresh Lista with adReward = true
+	public void refreshListaWithAdReward() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear and reload lista data with adReward = true
+				songsList.clear();
+				
+				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
+				Document doc = parser.getDomElement(xml);
+				NodeList nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
+				Element el = (Element) nlInfo.item(0);
+				info = parser.getValue(el, Constants.KEY_INFO);
+				
+				int votesProgress;
+				int maxVotes = 0;
+				int currentVotes;
+				
+				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
+				
+				for (int i = 0; i < nl.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					// Show votes since adReward is true
+					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
+					
+					if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_awans))) {
+						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
+					} else if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_spadek))) {
+						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
+					} else {
+						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
+					}
+					
+					if (i == 0) {
+						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+						if (maxVotes == 0) {
+							maxVotes = 1;
+						}
+					}
+					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					votesProgress = (currentVotes * 100) / maxVotes;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+					
+					songsList.add(map);
+				}
+				
+			} catch (Exception e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+				if (listaFragment != null) {
+					listaFragment.updateAdapter();
+				}
+				
+				if (finalConnectionError) {
+					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+				}
+			});
+		});
+	}
+	
+	// Refresh Poczekalnia with adReward = true
+	public void refreshPoczekalniaWithAdReward() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear and reload poczekalnia data with adReward = true
+				songsListPocz.clear();
+				
+				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
+				Document doc = parser.getDomElement(xml);
+				
+				// Calculate max votes for progress
+				int maxVotes = 0;
+				if (songsList != null && !songsList.isEmpty()) {
+					try {
+						maxVotes = Integer.parseInt(songsList.get(0).get(Constants.KEY_VOTES).replaceAll("[^0-9]", ""));
+						if (maxVotes == 0) maxVotes = 1;
+					} catch (Exception e) {
+						maxVotes = 1;
+					}
+				}
+				
+				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG_POCZ);
+				
+				for (int i = 0; i < nl.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					// Show votes since adReward is true
+					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					
+					// Setting votes progress
+					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					int votesProgress = (currentVotes * 100) / maxVotes;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+					
+					songsListPocz.add(map);
+				}
+				
+			} catch (Exception e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
+				if (poczekalniaFragment != null) {
+					poczekalniaFragment.updateAdapter();
+				}
+				
+				if (finalConnectionError) {
+					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+				}
+			});
+		});
+	}
+	
+	// Refresh Notowania with adReward = true
+	public void refreshNotowaniaWithAdReward() {
+		executorService.execute(() -> {
+			boolean connectionError = false;
+			
+			try {
+				XMLParser parser = new XMLParser();
+				
+				// Clear and reload notowania data with adReward = true
+				notowaniaList.clear();
+				
+				String xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
+				Document doc = parser.getDomElement(xml);
+				
+				int votesProgress = 0;
+				int maxVotes = 0;
+				int currentVotes = 0;
+				
+				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
+				
+				for (int i = 0; i < nl.getLength(); i++) {
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					// Show votes since adReward is true
+					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
+					
+					if (i == 0) {
+						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+						if (maxVotes == 0) {
+							maxVotes = 1;
+						}
+					}
+					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					votesProgress = (currentVotes * 100) / maxVotes;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+					
+					notowaniaList.add(map);
+				}
+				
+			} catch (Exception e) {
+				connectionError = true;
+			}
+			
+			// Update UI on main thread
+			final boolean finalConnectionError = connectionError;
+			mainHandler.post(() -> {
+				NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
+				if (notowaniaFragment != null) {
+					notowaniaFragment.updateAdapter();
 				}
 				
 				if (finalConnectionError) {
