@@ -58,7 +58,7 @@ public class MojaListaFragment extends Fragment {
     
     public void updateAdapter() {
         if (adapterMojalista != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterMojalista.notifyDataSetChanged();
+            adapterMojalista.safeNotifyDataSetChanged();
         }
     }
     

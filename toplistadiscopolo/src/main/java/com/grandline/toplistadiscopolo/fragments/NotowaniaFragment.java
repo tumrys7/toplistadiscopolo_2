@@ -88,7 +88,7 @@ public class NotowaniaFragment extends Fragment {
 
     public void updateAdapter() {
         if (adapterNotowania != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterNotowania.notifyDataSetChanged();
+            adapterNotowania.safeNotifyDataSetChanged();
         }
     }
 

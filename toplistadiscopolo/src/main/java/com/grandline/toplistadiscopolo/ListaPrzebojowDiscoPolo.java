@@ -381,6 +381,12 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	// Update all fragment adapters when data changes (replaces direct adapter updates)
 	public void updateAllFragmentAdapters() {
+		// Ensure we're on the main UI thread
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			mainHandler.post(this::updateAllFragmentAdapters);
+			return;
+		}
+		
 		// Get fragment references from ViewPager2 adapter
         // Fragment references
         ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);

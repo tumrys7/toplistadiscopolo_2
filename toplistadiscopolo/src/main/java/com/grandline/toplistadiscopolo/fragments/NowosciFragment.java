@@ -58,7 +58,7 @@ public class NowosciFragment extends Fragment {
     
     public void updateAdapter() {
         if (adapterNowosci != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterNowosci.notifyDataSetChanged();
+            adapterNowosci.safeNotifyDataSetChanged();
         }
     }
     

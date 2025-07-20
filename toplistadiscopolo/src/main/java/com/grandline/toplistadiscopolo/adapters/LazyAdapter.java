@@ -2,6 +2,8 @@ package com.grandline.toplistadiscopolo.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,20 +24,24 @@ public class LazyAdapter extends BaseAdapter {
 
     private final ArrayList<HashMap<String, String>> data;
     private static LayoutInflater inflater=null;
-    public ImageLoader imageLoader; 
+    public ImageLoader imageLoader;
+    private final Handler mainHandler;
     
     public LazyAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
         data=d;
         inflater = (LayoutInflater) a.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         imageLoader=new ImageLoader(a.getApplicationContext());
+        mainHandler = new Handler(Looper.getMainLooper());
     }
 
+    @Override
     public int getCount() {
         synchronized(data) {
             return data.size();
         }
     }
 
+    @Override
     public Object getItem(int position) {
         synchronized(data) {
             if (position >= 0 && position < data.size()) {
@@ -45,10 +51,12 @@ public class LazyAdapter extends BaseAdapter {
         }
     }
 
+    @Override
     public long getItemId(int position) {
         return position;
     }
     
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
@@ -69,7 +77,7 @@ public class LazyAdapter extends BaseAdapter {
         synchronized(data) {
             // Check bounds to prevent IndexOutOfBoundsException
             if (position >= 0 && position < data.size()) {
-                song = data.get(position);
+                song = new HashMap<>(data.get(position)); // Create a copy to avoid concurrent modification
             } else {
                 // Return empty view if position is invalid
                 return vi;
@@ -104,5 +112,18 @@ public class LazyAdapter extends BaseAdapter {
         	votesProgress.setVisibility(View.INVISIBLE);//invisible
         }
         return vi;
+    }
+    
+    /**
+     * Safely notify data set changed on the main UI thread
+     */
+    public void safeNotifyDataSetChanged() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            // Already on main thread
+            notifyDataSetChanged();
+        } else {
+            // Post to main thread
+            mainHandler.post(this::notifyDataSetChanged);
+        }
     }
 }
