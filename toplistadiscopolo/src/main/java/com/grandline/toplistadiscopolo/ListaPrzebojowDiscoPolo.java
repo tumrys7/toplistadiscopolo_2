@@ -339,26 +339,44 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 		loadRewardedAd();
 
-		// Initialize data lists
-		songsList = new ArrayList<>();
-		songsListPocz = new ArrayList<>();
-		songsListNowosci = new ArrayList<>();
-		songsListMojalista = new ArrayList<>();
-        wykonList = new ArrayList<>();
-        filteredWykonList = new ArrayList<>();
-        notowaniaList = new ArrayList<>();
-        notowPrzedzialyList = new ArrayList<>();
-        listNotowPrzedzialy = new ArrayList<>();
+		// Clear existing data lists instead of creating new instances
+		// This preserves the adapter references
+		if (songsList == null) songsList = new ArrayList<>();
+		else songsList.clear();
+		
+		if (songsListPocz == null) songsListPocz = new ArrayList<>();
+		else songsListPocz.clear();
+		
+		if (songsListNowosci == null) songsListNowosci = new ArrayList<>();
+		else songsListNowosci.clear();
+		
+		if (songsListMojalista == null) songsListMojalista = new ArrayList<>();
+		else songsListMojalista.clear();
+		
+		if (wykonList == null) wykonList = new ArrayList<>();
+		else wykonList.clear();
+		
+		if (filteredWykonList == null) filteredWykonList = new ArrayList<>();
+		else filteredWykonList.clear();
+		
+		if (notowaniaList == null) notowaniaList = new ArrayList<>();
+		else notowaniaList.clear();
+		
+		if (notowPrzedzialyList == null) notowPrzedzialyList = new ArrayList<>();
+		else notowPrzedzialyList.clear();
+		
+		if (listNotowPrzedzialy == null) listNotowPrzedzialy = new ArrayList<>();
+		else listNotowPrzedzialy.clear();
 
-        progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
-        progressDialog.show();
-        refreshListInBackground();
+		progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
+		progressDialog.show();
+		refreshListInBackground();
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
-	    	if (adError){
-	    		adView.loadAd(adRequest);
-	    	}
+			if (adError){
+				adView.loadAd(adRequest);
+			}
 		}
-        
+		
 	}
 	
 	// Update all fragment adapters when data changes (replaces direct adapter updates)
@@ -520,16 +538,16 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	// Filter wykonawcy method (moved from old implementation)
 	public void filterWykonawcy(ArrayList<HashMap<String, String>> wykonList, CharSequence searchText) {
-		filteredWykonList.clear();
+		synchronized(filteredWykonList) { filteredWykonList.clear(); }
 		if (searchText.length() == 0) {
-			filteredWykonList.addAll(wykonList);
+			synchronized(filteredWykonList) { filteredWykonList.addAll(wykonList); }
 		} else {
 			String searchString = searchText.toString().toLowerCase();
 			for (HashMap<String, String> item : wykonList) {
 				String wykonawca = item.get(Constants.KEY_WYKONAWCA);
-				if (wykonawca != null && wykonawca.toLowerCase().contains(searchString)) {
-					filteredWykonList.add(item);
-				}
+							if (wykonawca != null && wykonawca.toLowerCase().contains(searchString)) {
+				synchronized(filteredWykonList) { filteredWykonList.add(item); }
+			}
 			}
 		}
 	}
@@ -759,12 +777,22 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				Element el = (Element) nlInfo.item(0);
 				info = parser.getValue(el, Constants.KEY_INFO);
 				
-				int votesProgress;
-				int maxVotes = 0;
-				int currentVotes;
-				
-				//lista
-				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
+							int votesProgress;
+			int maxVotes = 0;
+			int currentVotes;
+			
+			// Clear existing data to prevent duplicates - synchronized to prevent UI thread conflicts
+			synchronized(songsList) { songsList.clear(); }
+			synchronized(songsListPocz) { songsListPocz.clear(); }
+			synchronized(songsListNowosci) { songsListNowosci.clear(); }
+			synchronized(songsListMojalista) { songsListMojalista.clear(); }
+			synchronized(wykonList) { wykonList.clear(); }
+			synchronized(notowaniaList) { notowaniaList.clear(); }
+			synchronized(notowPrzedzialyList) { notowPrzedzialyList.clear(); }
+			synchronized(listNotowPrzedzialy) { listNotowPrzedzialy.clear(); }
+			
+			//lista
+			NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
 				
 				// looping through all song nodes <song>
 				for (int i = 0; i < nl.getLength(); i++) {
@@ -808,8 +836,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					//showing or not showing progress bar 
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 		
-					// adding HashList to ArrayList
-					songsList.add(map);
+									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+				synchronized(songsList) { songsList.add(map); }
 				}
 	        
 	        //poczekalnia
@@ -842,8 +870,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				//showing or not showing progress bar 
 				map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 
-				// adding HashList to ArrayList
-				songsListPocz.add(map);
+							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+			synchronized(songsListPocz) { songsListPocz.add(map); }
 			}
 
 				//nowości
@@ -873,8 +901,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					// adding HashList to ArrayList
-					songsListNowosci.add(map);
+									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+				synchronized(songsListNowosci) { songsListNowosci.add(map); }
 				}
 
 
@@ -919,8 +947,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					//showing or not showing progress bar
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 
-					// adding HashList to ArrayList
-					songsListMojalista.add(map);
+									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+				synchronized(songsListMojalista) { songsListMojalista.add(map); }
 					//	Log.i(TAG, "songsListMojalista element: " + songsListMojalista );
 				}
 
@@ -942,8 +970,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				// adding each child node to HashMap key => value
 				map.put(Constants.KEY_ID_WYKON, parser.getValue(e, Constants.KEY_ID_WYKON));
 				map.put(Constants.KEY_WYKONAWCA, parser.getValue(e, Constants.KEY_WYKONAWCA));
-				// adding HashList to ArrayList
-				wykonList.add(map);
+							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+			synchronized(wykonList) { wykonList.add(map); }
 				//filteredWykonList.add(map);
 			}    
 			//filteredWykonList=wykonList;
@@ -1023,8 +1051,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				//showing or not showing progress bar 
 				map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 	
-				// adding HashList to ArrayList
-				notowaniaList.add(map);
+							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+			synchronized(notowaniaList) { notowaniaList.add(map); }
 			}
 
 			
@@ -1330,8 +1358,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			try {
 				XMLParser parser = new XMLParser();
 				
-				// Clear and reload mojalista data with adReward = true
-				songsListMojalista.clear();
+							// Clear and reload mojalista data with adReward = true
+			synchronized(songsListMojalista) { songsListMojalista.clear(); }
 				
 				String xml_mojalista = parser.getXmlFromUrlMoja(Constants.URL_MOJALISTA.replace("LANG", language).replace("ANDROIDID", androidId));
 				Document docmoja = parser.getDomElementMoja(xml_mojalista);
@@ -1369,9 +1397,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					int votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-					
-					songsListMojalista.add(map);
+									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+				
+				synchronized(songsListMojalista) { songsListMojalista.add(map); }
 				}
 				
 			} catch (Exception e) {
@@ -1404,8 +1432,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			try {
 				XMLParser parser = new XMLParser();
 				
-				// Clear and reload nowosci data with adReward = true
-				songsListNowosci.clear();
+							// Clear and reload nowosci data with adReward = true
+			synchronized(songsListNowosci) { songsListNowosci.clear(); }
 				
 				String xml_nowosci = parser.getXmlFromUrl2(Constants.URL_NOWOSCI.replace("LANG", language));
 				Document doc2 = parser.getDomElement2(xml_nowosci);
@@ -1425,9 +1453,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
-					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					
-					songsListNowosci.add(map);
+									map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+				
+				synchronized(songsListNowosci) { songsListNowosci.add(map); }
 				}
 				
 			} catch (Exception e) {
@@ -1457,8 +1485,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			try {
 				XMLParser parser = new XMLParser();
 				
-				// Clear and reload lista data with adReward = true
-				songsList.clear();
+							// Clear and reload lista data with adReward = true
+			synchronized(songsList) { songsList.clear(); }
 				
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
 				Document doc = parser.getDomElement(xml);
@@ -1507,9 +1535,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-					
-					songsList.add(map);
+									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+				
+				synchronized(songsList) { songsList.add(map); }
 				}
 				
 			} catch (Exception e) {
@@ -1539,8 +1567,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			try {
 				XMLParser parser = new XMLParser();
 				
-				// Clear and reload poczekalnia data with adReward = true
-				songsListPocz.clear();
+							// Clear and reload poczekalnia data with adReward = true
+			synchronized(songsListPocz) { songsListPocz.clear(); }
 				
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
 				Document doc = parser.getDomElement(xml);
@@ -1579,9 +1607,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					int votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-					
-					songsListPocz.add(map);
+									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+				
+				synchronized(songsListPocz) { songsListPocz.add(map); }
 				}
 				
 			} catch (Exception e) {
@@ -1614,8 +1642,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			try {
 				XMLParser parser = new XMLParser();
 				
-				// Clear and reload notowania data with adReward = true
-				notowaniaList.clear();
+							// Clear and reload notowania data with adReward = true
+			synchronized(notowaniaList) { notowaniaList.clear(); }
 				
 				String xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
 				Document doc = parser.getDomElement(xml);
@@ -1655,7 +1683,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
 					
-					notowaniaList.add(map);
+					synchronized(notowaniaList) { notowaniaList.add(map); }
 				}
 				
 			} catch (Exception e) {

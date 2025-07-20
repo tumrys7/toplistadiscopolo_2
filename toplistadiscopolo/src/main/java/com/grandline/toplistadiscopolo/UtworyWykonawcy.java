@@ -267,8 +267,8 @@ public class UtworyWykonawcy extends AppCompatActivity {
 					}
 					//showing or not showing progress bar 
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"FALSE");
-					// adding HashList to ArrayList
-					wykSongsList.add(map);
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(wykSongsList) { wykSongsList.add(map); }
 				}
 			}
 			catch (IOException e){

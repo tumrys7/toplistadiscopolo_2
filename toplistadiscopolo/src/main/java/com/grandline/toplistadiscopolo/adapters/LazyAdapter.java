@@ -31,11 +31,18 @@ public class LazyAdapter extends BaseAdapter {
     }
 
     public int getCount() {
-        return data.size();
+        synchronized(data) {
+            return data.size();
+        }
     }
 
     public Object getItem(int position) {
-        return data.get(position);
+        synchronized(data) {
+            if (position >= 0 && position < data.size()) {
+                return data.get(position);
+            }
+            return null;
+        }
     }
 
     public long getItemId(int position) {
@@ -59,7 +66,15 @@ public class LazyAdapter extends BaseAdapter {
         ProgressBar votesProgress = vi.findViewById(R.id.votesProgress); // progress
         
         HashMap<String, String> song;
-        song = data.get(position);
+        synchronized(data) {
+            // Check bounds to prevent IndexOutOfBoundsException
+            if (position >= 0 && position < data.size()) {
+                song = data.get(position);
+            } else {
+                // Return empty view if position is invalid
+                return vi;
+            }
+        }
         
         // Setting all values in listview
         id_listy.setText(song.get(Constants.KEY_ID));
