@@ -96,6 +96,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		bun = getIntent().getExtras();
 		assert bun != null;
 		String authId = bun.getString("param_auth_id");
+		adReward = bun.getBoolean("param_ad_reward", false);
 
 		refreshAuthSong(authId);
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
