@@ -404,9 +404,14 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	@SuppressWarnings("unchecked")
 	private <T extends Fragment> T getFragmentByPosition(int position) {
 		if (tabPagerAdapter != null) {
-			String fragmentTag = "f" + position;
-			Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
-			return (T) fragment;
+			// ViewPager2 with FragmentStateAdapter uses different tagging
+			// The tag format is: "f" + viewPagerId + ":" + position
+			ViewPager2 viewPager = findViewById(R.id.view_pager);
+			if (viewPager != null) {
+				String fragmentTag = "f" + viewPager.getId() + ":" + position;
+				Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
+				return (T) fragment;
+			}
 		}
 		return null;
 	}
@@ -1382,6 +1387,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
 				if (mojaListaFragment != null) {
 					mojaListaFragment.updateAdapter();
+				} else {
+					// Fragment not found, try to refresh all adapters as fallback
+					updateAllFragmentAdapters();
 				}
 				
 				if (finalConnectionError) {
@@ -1589,6 +1597,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
 				if (poczekalniaFragment != null) {
 					poczekalniaFragment.updateAdapter();
+				} else {
+					// Fragment not found, try to refresh all adapters as fallback
+					updateAllFragmentAdapters();
 				}
 				
 				if (finalConnectionError) {
