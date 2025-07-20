@@ -406,7 +406,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (tabPagerAdapter != null) {
 			// ViewPager2 with FragmentStateAdapter uses different tagging
 			// The tag format is: "f" + viewPagerId + ":" + position
-			ViewPager2 viewPager = findViewById(R.id.view_pager);
+			ViewPager2 viewPager = findViewById(R.id.viewPager);
 			if (viewPager != null) {
 				String fragmentTag = "f" + viewPager.getId() + ":" + position;
 				Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
