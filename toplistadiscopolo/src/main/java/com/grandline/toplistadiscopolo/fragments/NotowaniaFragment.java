@@ -24,7 +24,7 @@ public class NotowaniaFragment extends Fragment {
     private Spinner spinnerNotowaniaPrzedzialy;
     private ArrayAdapter<String> adapterNotowPrzedzialy;
     private ListaPrzebojowDiscoPolo parentActivity;
-    private boolean isSpinnerClicked = false;
+    private boolean isSpinnerInitialized = false;
 
     public static NotowaniaFragment newInstance() {
         return new NotowaniaFragment();
@@ -66,11 +66,17 @@ public class NotowaniaFragment extends Fragment {
 
             spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                    if (isSpinnerClicked && parentActivity != null) {
-                        String notowanieId = parentActivity.notowPrzedzialyList.get(pos).get(Constants.KEY_NOTOWANIE_ZA);
-                        parentActivity.handleSpinnerSelection(notowanieId, pos);
+                    // Only handle selection after the spinner has been fully initialized
+                    // This prevents the initial selection from triggering a refresh
+                    if (isSpinnerInitialized && parentActivity != null && parentActivity.notowPrzedzialyList != null && pos < parentActivity.notowPrzedzialyList.size()) {
+                        String selectedNotowanieId = parentActivity.notowPrzedzialyList.get(pos).get(Constants.KEY_NOTOWANIE_ZA);
+                        if (selectedNotowanieId != null && !selectedNotowanieId.isEmpty()) {
+                            parentActivity.handleSpinnerSelection(selectedNotowanieId, pos);
+                        }
+                    } else {
+                        // Mark spinner as initialized after the first selection
+                        isSpinnerInitialized = true;
                     }
-                    isSpinnerClicked = true;
                 }
 
                 public void onNothingSelected(AdapterView<?> arg0) {
@@ -93,8 +99,30 @@ public class NotowaniaFragment extends Fragment {
     }
 
     public void setSpinnerSelection(int position) {
-        if (spinnerNotowaniaPrzedzialy != null) {
+        if (spinnerNotowaniaPrzedzialy != null && position >= 0 && position < spinnerNotowaniaPrzedzialy.getCount()) {
+            // Temporarily disable the listener to prevent triggering refresh during programmatic selection
+            spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(null);
             spinnerNotowaniaPrzedzialy.setSelection(position);
+            
+            // Re-enable the listener after a short delay
+            spinnerNotowaniaPrzedzialy.post(() -> {
+                if (spinnerNotowaniaPrzedzialy != null) {
+                    spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                            if (isSpinnerInitialized && parentActivity != null && parentActivity.notowPrzedzialyList != null && pos < parentActivity.notowPrzedzialyList.size()) {
+                                String selectedNotowanieId = parentActivity.notowPrzedzialyList.get(pos).get(Constants.KEY_NOTOWANIE_ZA);
+                                if (selectedNotowanieId != null && !selectedNotowanieId.isEmpty()) {
+                                    parentActivity.handleSpinnerSelection(selectedNotowanieId, pos);
+                                }
+                            }
+                        }
+
+                        public void onNothingSelected(AdapterView<?> arg0) {
+                            // TODO Auto-generated method stub
+                        }
+                    });
+                }
+            });
         }
     }
 
