@@ -1,14 +1,17 @@
 package com.grandline.toplistadiscopolo;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -45,8 +48,8 @@ public class UtworyWykonawcy extends AppCompatActivity {
 	LazyAdapter adapter;
 	boolean voted = false;
 	Bundle bun;
-	ProgressDialog progressDialog;
-    ProgressDialog progressDialogVote;
+	AlertDialog progressDialog;
+    AlertDialog progressDialogVote;
     String myListType;
     String myIdWykonawcy;
     String voteMessage;
@@ -138,8 +141,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		wykSongsList = new ArrayList<>();
 		adapter = new LazyAdapter(this, wykSongsList);		
 		wykUtwory.setOnItemClickListener((parent, view, position, id) -> showSongMenu(position, Constants.KEY_UTW_WYKONAWCY));
-        progressDialog = new ProgressDialog(UtworyWykonawcy.this);
-        progressDialog.setMessage(getString(R.string.text_auth_refresh_list));
+        progressDialog = createProgressDialog(getString(R.string.text_auth_refresh_list));
         progressDialog.show();
         refreshAuthSongsInBackground(url);		
 	}
@@ -207,8 +209,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			} catch (NullPointerException e) {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", "UNKNOWN").replace("LANG", language).replace("TEL_PARAM", teledysk);
 			}
-	        progressDialogVote = new ProgressDialog(UtworyWykonawcy.this);
-	        progressDialogVote.setMessage(getString(R.string.text_voting));
+	        progressDialogVote = createProgressDialog(getString(R.string.text_voting));
 	        progressDialogVote.show();
 	        myListType = listType;
 	        myIdWykonawcy = idWykonawcy;
@@ -277,7 +278,9 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
 				wykUtwory.setAdapter(adapter);
-				progressDialog.dismiss();
+				if (progressDialog != null && progressDialog.isShowing()) {
+					progressDialog.dismiss();
+				}
 				if (finalConnectionError) {
 					new AlertDialog.Builder(UtworyWykonawcy.this)
 					.setTitle(R.string.text_connection_error_title)
@@ -306,7 +309,9 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			final boolean finalConnectionError = connectionError;
 			final String finalVoteMessage = voteMessage;
 			mainHandler.post(() -> {
-				progressDialogVote.dismiss();
+				if (progressDialogVote != null && progressDialogVote.isShowing()) {
+					progressDialogVote.dismiss();
+				}
 
 				if (finalConnectionError) {
 					new AlertDialog.Builder(UtworyWykonawcy.this)
@@ -379,6 +384,41 @@ public class UtworyWykonawcy extends AppCompatActivity {
 
 		//String localeString = settings.getString("locale",localeDefault);
 		return lc.getLanguage();
+	}
+
+	private AlertDialog createProgressDialog(String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		
+		// Create a simple layout with progress bar and text
+		android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+		layout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+		layout.setPadding(50, 50, 50, 50);
+		
+		ProgressBar progressBar = new ProgressBar(this);
+		progressBar.setIndeterminate(true);
+		android.widget.LinearLayout.LayoutParams progressParams = 
+			new android.widget.LinearLayout.LayoutParams(
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+		progressParams.setMargins(0, 0, 30, 0);
+		progressBar.setLayoutParams(progressParams);
+		
+		TextView textView = new TextView(this);
+		textView.setText(message);
+		textView.setTextSize(16);
+		android.widget.LinearLayout.LayoutParams textParams = 
+			new android.widget.LinearLayout.LayoutParams(
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+		textView.setLayoutParams(textParams);
+		
+		layout.addView(progressBar);
+		layout.addView(textView);
+		
+		builder.setView(layout);
+		builder.setCancelable(false);
+		
+		return builder.create();
 	}
 
 	

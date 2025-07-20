@@ -2,7 +2,6 @@ package com.grandline.toplistadiscopolo;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -14,10 +13,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -94,8 +97,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
     String language;
     String notowanieId;
     String glosTeledysk;
-    ProgressDialog progressDialog;
-    ProgressDialog progressDialogVote;
+    	AlertDialog progressDialog;
+	AlertDialog progressDialogVote;
 	boolean isLoading;
     public ArrayList<HashMap<String, String>> songsList;
     public ArrayList<HashMap<String, String>> songsListPocz;
@@ -307,8 +310,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			} catch (NullPointerException e) {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", "UNKNOWN").replace("LANG", language).replace("ID_GRUPY", idGrupy).replace("TEL_PARAM", teledysk);
 			}
-	        progressDialogVote = new ProgressDialog(ListaPrzebojowDiscoPolo.this);
-	        progressDialogVote.setMessage(getString(R.string.text_voting));
+	        progressDialogVote = createProgressDialog(getString(R.string.text_voting));
 	        progressDialogVote.show();
 			myListType = listType;
 			myIdWykonawcy = idWykonawcy;
@@ -350,8 +352,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
         notowPrzedzialyList = new ArrayList<>();
         listNotowPrzedzialy = new ArrayList<>();
 
-        progressDialog = new ProgressDialog(ListaPrzebojowDiscoPolo.this);
-        progressDialog.setMessage(getString(R.string.text_refresh_list));
+        progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
         progressDialog.show();
         refreshListInBackground();
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
@@ -1014,7 +1015,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
     	
-    	if (progressDialog.isShowing()){
+    	if (progressDialog != null && progressDialog.isShowing()){
     		progressDialog.dismiss();
     	}
     }
@@ -1179,6 +1180,41 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 
 				});
+	}
+
+	private AlertDialog createProgressDialog(String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		
+		// Create a simple layout with progress bar and text
+		android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+		layout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+		layout.setPadding(50, 50, 50, 50);
+		
+		ProgressBar progressBar = new ProgressBar(this);
+		progressBar.setIndeterminate(true);
+		android.widget.LinearLayout.LayoutParams progressParams = 
+			new android.widget.LinearLayout.LayoutParams(
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+		progressParams.setMargins(0, 0, 30, 0);
+		progressBar.setLayoutParams(progressParams);
+		
+		TextView textView = new TextView(this);
+		textView.setText(message);
+		textView.setTextSize(16);
+		android.widget.LinearLayout.LayoutParams textParams = 
+			new android.widget.LinearLayout.LayoutParams(
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+		textView.setLayoutParams(textParams);
+		
+		layout.addView(progressBar);
+		layout.addView(textView);
+		
+		builder.setView(layout);
+		builder.setCancelable(false);
+		
+		return builder.create();
 	}
 
 
