@@ -19,7 +19,7 @@ public class Vote {
 	 * @param url string
 	 * */
 	public String setVoteInUrl(String url) throws IOException {
-		String html = "";
+		String html;
 		String info = "";
 		String htmlEnd;
 		HttpURLConnection httpURLConnection = null;

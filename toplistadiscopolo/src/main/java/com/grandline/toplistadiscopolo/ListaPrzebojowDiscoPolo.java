@@ -12,8 +12,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-// Removed deprecated PreferenceManager import
-// Removed Settings import as we no longer use device identifiers
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -22,13 +20,11 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.menu.MenuBuilder;
-import androidx.constraintlayout.solver.ArrayLinkedVariables;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -44,6 +40,13 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.grandline.toplistadiscopolo.adapters.TabPagerAdapter;
+import com.grandline.toplistadiscopolo.fragments.ListaFragment;
+import com.grandline.toplistadiscopolo.fragments.MojaListaFragment;
+import com.grandline.toplistadiscopolo.fragments.NotowaniaFragment;
+import com.grandline.toplistadiscopolo.fragments.NowosciFragment;
+import com.grandline.toplistadiscopolo.fragments.PoczekalniaFragment;
+import com.grandline.toplistadiscopolo.fragments.WykonawcyFragment;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -58,14 +61,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.grandline.toplistadiscopolo.adapters.TabPagerAdapter;
-import com.grandline.toplistadiscopolo.fragments.ListaFragment;
-import com.grandline.toplistadiscopolo.fragments.PoczekalniaFragment;
-import com.grandline.toplistadiscopolo.fragments.NowosciFragment;
-import com.grandline.toplistadiscopolo.fragments.MojaListaFragment;
-import com.grandline.toplistadiscopolo.fragments.WykonawcyFragment;
-import com.grandline.toplistadiscopolo.fragments.NotowaniaFragment;
 
 
 public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
@@ -82,22 +77,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	// ExecutorService and Handler for background tasks
 	private ExecutorService executorService;
 	private Handler mainHandler;
-	
-	// New ViewPager2 and TabLayout
-	private ViewPager2 viewPager;
-	private TabLayout tabLayout;
-	private TabPagerAdapter tabPagerAdapter;
+
+    private TabPagerAdapter tabPagerAdapter;
 	private TabLayoutMediator tabLayoutMediator;
-	
-	// Fragment references
-	private ListaFragment listaFragment;
-	private PoczekalniaFragment poczekalniaFragment;
-	private NowosciFragment nowosciFragment;
-	private MojaListaFragment mojaListaFragment;
-	private WykonawcyFragment wykonawcyFragment;
-	private NotowaniaFragment notowaniaFragment;
-	
-	// Activity result launcher
+
+    // Activity result launcher
 	private ActivityResultLauncher<Intent> activityResultLauncher;
 	
 	ListView wykUtwory;
@@ -381,12 +365,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	// Update all fragment adapters when data changes (replaces direct adapter updates)
 	public void updateAllFragmentAdapters() {
 		// Get fragment references from ViewPager2 adapter
-		listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
-		poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
-		nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
-		mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
-		wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
-		notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
+        // Fragment references
+        ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+        PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
+        NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
+        MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
+        WykonawcyFragment wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
+        NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA_2012);
 		
 		// Update fragment adapters
 		if (listaFragment != null) {
@@ -488,8 +473,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	// Setup TabLayout with ViewPager2 (replaced createTabs)
 	public void setupTabLayoutWithViewPager(){
-		tabLayout = findViewById(R.id.tabLayout);
-		viewPager = findViewById(R.id.viewPager);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+        // New ViewPager2 and TabLayout
+        ViewPager2 viewPager = findViewById(R.id.viewPager);
 		
 		// Initialize TabPagerAdapter
 		tabPagerAdapter = new TabPagerAdapter(this);
@@ -802,14 +788,14 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				Document docmoja = parser.getDomElementMoja(xml_mojalista); // getting DOM element
 				//	Log.i(TAG, "Root moja element: " + xml_mojalista );
 				//	Log.i(TAG, "docmoja element: " + docmoja );
-				NodeList nlmoja = docmoja.getElementsByTagName(Constants.KEY_SONG_MOJA);
-				//	Log.i(TAG, "nlmoja element: " + nlmoja );
+				 nl = docmoja.getElementsByTagName(Constants.KEY_SONG_MOJA);
+				//	Log.i(TAG, "nl element: " + nl );
 
 				// looping through all song nodes <song>
-				for (int i = 0; i < nlmoja.getLength(); i++) {
+				for (int i = 0; i < nl.getLength(); i++) {
 					// creating new HashMap
 					HashMap<String, String> map = new HashMap<>();
-					Element e = (Element) nlmoja.item(i);
+					Element e = (Element) nl.item(i);
 					// adding each child node to HashMap key => value
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
@@ -869,7 +855,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			el = (Element) nlInfo.item(0);
 			info2012 = parser.getValue(el, Constants.KEY_INFO);
 
-			votesProgress = 0 ;
+			votesProgress =0 ;
 			maxVotes = 0;
 			currentVotes = 0 ;
 			
@@ -890,7 +876,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			
 			
 			
-			//lista2012
+			//notowania
 			nl = doc.getElementsByTagName(Constants.KEY_SONG);
 			
 			// looping through all song nodes <song>

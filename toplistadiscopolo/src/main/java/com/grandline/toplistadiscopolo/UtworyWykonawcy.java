@@ -1,6 +1,5 @@
 package com.grandline.toplistadiscopolo;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -9,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-// Removed Settings import as we no longer use device identifiers
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -21,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.grandline.toplistadiscopolo.adapters.LazyAdapter;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -35,8 +34,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.grandline.toplistadiscopolo.adapters.LazyAdapter;
 
 public class UtworyWykonawcy extends AppCompatActivity {
 

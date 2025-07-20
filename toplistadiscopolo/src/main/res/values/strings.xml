@@ -43,7 +43,7 @@
     <string name="text_connection_error">No active internet connection! Turn on internet connection and choose Refresh from menu.</string>
     <string name="text_connection_error_title">Connection error!</string>
     <string name="text_exit_app">Press Back again to exit</string>
-    <string name="text_too_many_votes">You have recently voted on this song. You can vote for each song only once per VOTES_INTERVAL minutes.</string>
+    <string name="text_too_many_votes">You have recently voted on this song. You can vote once per VOTES_INTERVAL minutes.</string>
     <string name="text_zmiana_jezyka">Changes will be visible after application restart</string>
 
     <string name="text_awans">Up</string>

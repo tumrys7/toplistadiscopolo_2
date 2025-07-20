@@ -42,7 +42,7 @@
     <string name="text_connection_error">Brak aktywnego połączenia internetowego! Włącz dostęp do internetu i wybierz Odśwież w menu.</string>
     <string name="text_connection_error_title">Błąd połączenia!</string>
     <string name="text_exit_app">Aby wyjść z aplikacji naciśnij ponownie Wstecz</string>
-    <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Na każdy utwór można głosować tylko raz na VOTES_INTERVAL minut.</string>
+    <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Głosuj co VOTES_INTERVAL minut.</string>
     <string name="text_zmiana_jezyka">Zmiany będą widoczne po restarcie aplikacji</string>
         
     <string name="text_awans">Awans</string>

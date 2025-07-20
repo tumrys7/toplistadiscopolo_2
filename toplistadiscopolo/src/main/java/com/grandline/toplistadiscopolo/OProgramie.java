@@ -8,8 +8,6 @@ import android.widget.TextView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 public class OProgramie extends Activity {
-    // [START declare_analytics]
-    private FirebaseAnalytics mFirebaseAnalytics;
     // [END declare_analytics]
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -17,7 +15,8 @@ public class OProgramie extends Activity {
         setContentView(R.layout.o_programie);
         // [START shared_app_measurement]
         // Obtain the FirebaseAnalytics instance.
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        // [START declare_analytics]
+        FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         // [END shared_app_measurement]
         String versionName;
         try {

@@ -15,15 +15,15 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.nio.charset.StandardCharsets;
 
 public class XMLParser {
-	private android.util.Log Log;
-	// constructor
+    // constructor
 	public XMLParser() {
 
 	}
@@ -153,7 +153,7 @@ public class XMLParser {
 		        doc = db.parse(is);
 
 		} catch (ParserConfigurationException | SAXException | IOException e) {
-			Log.e("Error xx: ", e.getMessage());
+			android.util.Log.e("Error xx: ", Objects.requireNonNull(e.getMessage()));
 			return null;
 		}
 	        return doc;
