@@ -23,7 +23,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class XMLParser {
-    // constructor
+	private android.util.Log Log;
+	// constructor
 	public XMLParser() {
 
 	}
@@ -35,7 +36,7 @@ public class XMLParser {
 	public String getXmlFromUrl(String url) throws IOException {
 		String xml = null;
 		HttpURLConnection httpURLConnection = null;
-		
+
 		try {
 			URL requestURL = new URL(url);
 			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
@@ -43,7 +44,7 @@ public class XMLParser {
 			httpURLConnection.setConnectTimeout(30000); // 30 seconds
 			httpURLConnection.setReadTimeout(30000); // 30 seconds
 			httpURLConnection.setRequestProperty("User-Agent", "Android App");
-			
+
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
@@ -71,7 +72,7 @@ public class XMLParser {
 	public String getXmlFromUrl2(String url2) throws IOException {
 		String xml_nowosci = null;
 		HttpURLConnection httpURLConnection = null;
-		
+
 		try {
 			URL requestURL = new URL(url2);
 			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
@@ -79,7 +80,7 @@ public class XMLParser {
 			httpURLConnection.setConnectTimeout(30000); // 30 seconds
 			httpURLConnection.setReadTimeout(30000); // 30 seconds
 			httpURLConnection.setRequestProperty("User-Agent", "Android App");
-			
+
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
@@ -107,7 +108,7 @@ public class XMLParser {
 	public String getXmlFromUrlMoja(String urlmoja) throws IOException {
 		String xml_mojalista = null;
 		HttpURLConnection httpURLConnection = null;
-		
+
 		try {
 			URL requestURL = new URL(urlmoja);
 			httpURLConnection = (HttpURLConnection) requestURL.openConnection();
@@ -115,7 +116,7 @@ public class XMLParser {
 			httpURLConnection.setConnectTimeout(30000); // 30 seconds
 			httpURLConnection.setReadTimeout(30000); // 30 seconds
 			httpURLConnection.setRequestProperty("User-Agent", "Android App");
-			
+
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));

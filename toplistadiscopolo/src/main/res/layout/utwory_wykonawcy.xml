@@ -1,32 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFAFAFA"
-    android:orientation="vertical" >
+    android:background="@color/md_theme_onPrimaryContainer"
+    android:orientation="vertical"
+    android:textColor="@android:color/black"
+    tools:theme="@style/AppTheme"
+    android:id="@+id/root">
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/utwory_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id">
-    </com.google.android.gms.ads.AdView>
+        android:layout_height="?attr/actionBarSize"
+        android:minHeight="?attr/actionBarSize"
+        android:backgroundTint="@color/md_theme_primary"
+        android:background="#696969"
+        app:tabTextColor="@android:color/white"
+        app:layout_scrollFlags="scroll|enterAlways"
+        app:navigationIconTint="@android:color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/title_activity_utwory_wykonawcy"
+            android:textColor="@android:color/white"
+            android:textAppearance="?attr/textAppearanceHeadline6" />
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <ListView
         android:id="@+id/wykUtwory"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-    </ListView>
+        android:layout_height="match_parent"
+        android:dividerHeight="1dp" />
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adViewNative"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_exnative_ad_unit_id">
-    </com.google.android.gms.ads.AdView>
 
 </LinearLayout>

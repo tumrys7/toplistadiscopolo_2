@@ -18,21 +18,22 @@ public interface Constants {
 	String UTWORY_WYK_URL = "http://toplista.gline.webd.pl/gen_xml_utw_wyk_mobile.php?wyk_id=AUTH_ID&groupid=3";
 	String FACEBOOK_URL = "https://www.facebook.com/discopololista";
 	String POLICY_URL = "https://www.google.com/about/company/user-consent-policy.html";
-    
+
 	String VALUE_START_NOTOWANIE_ID = "START_NOTOWANIE_ID";
 
+	
 	// XML node keys
-    String KEY_INFO = "info";
+	String KEY_INFO = "info";
 	String KEY_LISTA = "lista";
 	String KEY_MOJALISTA = "mojalista";
 	String KEY_POCZEKALNIA = "poczekalnia";
 	String KEY_NOWOSCI = "nowosci";
-	String KEY_LISTA_NOTOWANIA = "y2012";
+	String KEY_LISTA_NOTOWANIA = "notowania";
 	String KEY_UTW_WYKONAWCY = "utw_wykonawcy";
 	String KEY_SONG = "rec"; // parent node for list
 	String KEY_SONG_POCZ = "recp"; // parent node for poczekalnia
 	String KEY_SONG_NOWOSCI="recnew"; // parent node for nowosci
-	String KEY_SONG_MOJA="recmoja"; // parent node for nowosci
+	String KEY_SONG_MOJA="recmoja"; // parent node for moja
 	String KEY_ID = "id_listy";
 	String KEY_ID_GRUPY = "id_grupy";
 	String KEY_TITLE = "tytul";
@@ -47,7 +48,7 @@ public interface Constants {
 	//old public final String KEY_AD_UNIT_ID = "ca-app-pub-9534304538332188/9715986154";
   //  String KEY_AD_UNIT_ID = "ca-app-pub-9534304538332188/7239850955";
 	String KEY_FULLAD_UNIT_ID = "ca-app-pub-9534304538332188/4908744158";
-//	String KEY_NATIVEAD_UNIT_ID = "ca-app-pub-9534304538332188/1117672957";
+	String KEY_NATIVEAD_UNIT_ID = "ca-app-pub-9534304538332188/7039312538";
 	String KEY_VIDEO_UNIT_ID ="ca-app-pub-9534304538332188/8329857998";
 	String KEY_ADMOB_APP_ID = "ca-app-pub-9534304538332188~6762519752";
 	String KEY_WYKONAWCY = "wykonawcy";
@@ -61,7 +62,7 @@ public interface Constants {
 	String KEY_NOTOWANIE_NAZWA = "nazwa_notowania";
 	
 	//arrow types
-    String KEY_ARROW_TYPE = "arrow_type";
+	String KEY_ARROW_TYPE = "arrow_type";
 	String KEY_ARROW_UP = "arrow_up";
 	String KEY_ARROW_DOWN = "arrow_down";
 	String KEY_ARROW_NO_CHANGE = "arrow_no_change";
@@ -73,15 +74,15 @@ public interface Constants {
     String EMAIL_TO = "discopololista@gline.webd.pl";
 
 	//votes interval in minutes (for the same song)
-    int VOTES_INTERVAL = 5;
+	int VOTES_INTERVAL = 5;
 	
 	//informations
-    String TEXT_VOTE_INFO="<p class=\"INFO\">";
+	String TEXT_VOTE_INFO="<p class=\"INFO\">";
 	String TEXT_VOTE_ERROR="<p class=\"ERROR\">";
 	
 	//text separator between key values
-    String TEXT_SEPARATOR = " | ";
+	String TEXT_SEPARATOR = " | ";
 	
 	String PREFS_NAME = "PrefsFile";
-
+	
 }

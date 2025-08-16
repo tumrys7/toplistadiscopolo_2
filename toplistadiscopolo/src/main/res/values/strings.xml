@@ -31,7 +31,8 @@
     <string name="teledysk">Video</string>
     <string name="spotify">Play music</string>
     <string name="utwory_wykonawcy">Artist\'s songs</string>
-
+    <string name="spotify_go_to_app">Go to Spotify:</string>
+    
     <!-- komunikaty -->
     <string name="text_cookie_title">Consent to Use of cookies</string>
     <string name="text_cookie">We use device identifiers to personalise content and ads, to provide social media features and to analyse our traffic. We also share such identifiers and other information from your device with our social media, advertising and analytics partners. <!--  <a href="https://www.google.com/about/company/user-consent-policy.html">See details</a> --> </string>
@@ -57,7 +58,7 @@
     <string name="email_subject">Android: DiscoPoloMusicChart</string>
 
     <string name="title_activity_oprogramie">About program</string>
-    <string name="wersja_programu">Version 1.15</string>
+    <string name="wersja_programu">Version</string>
     <string name="company_name">Grand Line</string>
     <string name="programmer1">Jacek Rodak</string>
     <string name="programmer2">Jarosław Wołoszyn</string>
@@ -65,8 +66,9 @@
     <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
     <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
     <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
-
+    <string name="native_ad_unit_id">ca-app-pub-9534304538332188/7039312538</string>
     <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
     <string name="loading">Please wait&#8230;</string>
+    <string name="ad_cta">Button</string>
 
 </resources>

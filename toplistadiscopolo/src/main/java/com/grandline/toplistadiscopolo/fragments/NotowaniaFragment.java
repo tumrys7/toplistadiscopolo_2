@@ -1,6 +1,9 @@
 package com.grandline.toplistadiscopolo.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,10 +29,6 @@ public class NotowaniaFragment extends Fragment {
     private ListaPrzebojowDiscoPolo parentActivity;
     private boolean isSpinnerInitialized = false;
 
-    public static NotowaniaFragment newInstance() {
-        return new NotowaniaFragment();
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,24 +44,33 @@ public class NotowaniaFragment extends Fragment {
         
         listNotowania = view.findViewById(R.id.listNotowania);
         spinnerNotowaniaPrzedzialy = view.findViewById(R.id.spinnerNotowaniaPrzedzialy);
-        
+
         return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        
+
         if (parentActivity != null && getActivity() != null) {
             adapterNotowania = new LazyAdapter(getActivity(), parentActivity.notowaniaList);
             listNotowania.setAdapter(adapterNotowania);
-            
+
             adapterNotowPrzedzialy = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, parentActivity.listNotowPrzedzialy);
             adapterNotowPrzedzialy.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerNotowaniaPrzedzialy.setAdapter(adapterNotowPrzedzialy);
-            
-            listNotowania.setOnItemClickListener((parent, clickedView, position, id) ->
-                parentActivity.showSongMenu(position, Constants.KEY_LISTA_NOTOWANIA));
+
+            listNotowania.setOnItemClickListener((parent, clickedView, position, id) -> {
+                // Validate position before calling showSongMenu
+                if (parentActivity != null && parentActivity.notowaniaList != null && 
+                    position >= 0 && position < parentActivity.notowaniaList.size()) {
+                    parentActivity.showSongMenu(position, Constants.KEY_LISTA_NOTOWANIA);
+                } else {
+                    Log.e("NotowaniaFragment", "Invalid click position " + position + 
+                          " for list size " + (parentActivity != null && parentActivity.notowaniaList != null ? 
+                          parentActivity.notowaniaList.size() : 0));
+                }
+            });
 
             spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
@@ -83,18 +91,84 @@ public class NotowaniaFragment extends Fragment {
                     // TODO Auto-generated method stub
                 }
             });
+            
+            // Notify parent activity that this fragment is ready for updates
+            Log.i("NotowaniaFragment", "Fragment is ready, notifying parent activity");
+            parentActivity.onFragmentReady("NotowaniaFragment");
         }
     }
 
     public void updateAdapter() {
-        if (adapterNotowania != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterNotowania.safeNotifyDataSetChanged();
+        if (isAdded() && !isRemoving() && getView() != null && listNotowania != null) {
+            try {
+                // Log data size for debugging
+                int dataSize = (parentActivity != null && parentActivity.notowaniaList != null) ? 
+                    parentActivity.notowaniaList.size() : 0;
+                Log.i("NotowaniaFragment", "Updating adapter with " + dataSize + " items");
+                Log.i("NotowaniaFragment", "Fragment state - isAdded: " + isAdded() + ", adapter exists: " + (adapterNotowania != null) + 
+                    ", list exists: " + (listNotowania != null) + ", parentActivity exists: " + (parentActivity != null));
+                
+                if (dataSize > 0) {
+                    if (adapterNotowania != null) {
+                        Log.i("NotowaniaFragment", "Notifying existing adapter of data changes");
+                        adapterNotowania.safeNotifyDataSetChanged();
+                    } else {
+                        // Recreate adapter if it's null but we have data
+                        Log.i("NotowaniaFragment", "Recreating adapter with " + dataSize + " items");
+                        adapterNotowania = new LazyAdapter(getActivity(), parentActivity.notowaniaList);
+                        listNotowania.setAdapter(adapterNotowania);
+                    }
+                } else {
+                    Log.w("NotowaniaFragment", "No data available to display (dataSize: " + dataSize + ")");
+                    // Still try to notify adapter in case data was cleared
+                    if (adapterNotowania != null) {
+                        adapterNotowania.safeNotifyDataSetChanged();
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("NotowaniaFragment", "Error updating adapter: " + e.getMessage(), e);
+            }
+        } else {
+            Log.w("NotowaniaFragment", "Cannot update adapter - Fragment state - isAdded: " + isAdded() + 
+                ", isRemoving: " + isRemoving() + ", hasView: " + (getView() != null) + 
+                ", hasList: " + (listNotowania != null));
         }
     }
 
     public void updateSpinnerAdapter() {
         if (adapterNotowPrzedzialy != null && isAdded() && !isRemoving() && getView() != null) {
-            adapterNotowPrzedzialy.notifyDataSetChanged();
+            safeNotifySpinnerDataSetChanged();
+        }
+    }
+
+    // Method to recreate adapter when data structure changes
+    public void refreshAdapter() {
+        if (parentActivity != null && parentActivity.notowaniaList != null && listNotowania != null &&
+                isAdded() && !isRemoving() && getView() != null) {
+            Log.i("NotowaniaFragment", "Force refreshing adapter");
+            assert getActivity() != null;
+            adapterNotowania = new LazyAdapter(getActivity(), parentActivity.notowaniaList);
+            listNotowania.setAdapter(adapterNotowania);
+        }
+    }
+    
+    /**
+     * Safely notify spinner adapter data set changed on the main UI thread
+     */
+    private void safeNotifySpinnerDataSetChanged() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            // Already on main thread
+            if (adapterNotowPrzedzialy != null) {
+                adapterNotowPrzedzialy.notifyDataSetChanged();
+            }
+        } else {
+            // Post to main thread
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> {
+                if (adapterNotowPrzedzialy != null) {
+                    adapterNotowPrzedzialy.notifyDataSetChanged();
+                }
+            });
         }
     }
 
@@ -126,12 +200,6 @@ public class NotowaniaFragment extends Fragment {
         }
     }
 
-    public void refreshWithAdReward() {
-        if (parentActivity != null) {
-            parentActivity.refreshNotowaniaWithAdReward();
-        }
-    }
-
     @Override
     public void onDestroyView() {
         cleanupViews();
@@ -153,7 +221,7 @@ public class NotowaniaFragment extends Fragment {
             listNotowania.setOnScrollListener(null);
             listNotowania.setAdapter(null);
         }
-        
+
         if (spinnerNotowaniaPrzedzialy != null) {
             spinnerNotowaniaPrzedzialy.setOnItemSelectedListener(null);
             spinnerNotowaniaPrzedzialy.setAdapter(null);

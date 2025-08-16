@@ -31,7 +31,7 @@ public class Vote {
 			httpURLConnection.setConnectTimeout(30000); // 30 seconds
 			httpURLConnection.setReadTimeout(30000); // 30 seconds
 			httpURLConnection.setRequestProperty("User-Agent", "Android App");
-			
+
 			int responseCode = httpURLConnection.getResponseCode();
 			if (responseCode == HttpURLConnection.HTTP_OK) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), StandardCharsets.UTF_8));
@@ -42,7 +42,7 @@ public class Vote {
 				}
 				reader.close();
 				html = result.toString();
-				
+
 				if (html.indexOf(Constants.TEXT_VOTE_INFO)==0){
 					htmlEnd = html.substring(html.indexOf(Constants.TEXT_VOTE_ERROR)+Constants.TEXT_VOTE_ERROR.length());
 				}else{
@@ -58,5 +58,5 @@ public class Vote {
 		// return info
 		return info;
 	}
-	
+
 }

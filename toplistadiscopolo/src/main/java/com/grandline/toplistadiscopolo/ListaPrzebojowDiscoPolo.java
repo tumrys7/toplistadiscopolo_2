@@ -8,16 +8,18 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsetsController;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -31,6 +33,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
+import androidx.activity.EdgeToEdge;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.graphics.Insets;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -60,8 +66,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,119 +79,136 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	private static final String TAG = "MyActivity";
 	private boolean adReward;
 	private RewardedAd rewardedAd;
-   // RewardedVideoAd mAdRewarded;
+	// RewardedVideoAd mAdRewarded;
 	AdView adView;
 	AdView mAdView;
 	boolean adError;
 	AdRequest adRequest;
-	
+
 	// ExecutorService and Handler for background tasks
 	private ExecutorService executorService;
 	private Handler mainHandler;
+	private volatile boolean isDataLoading = false; // Prevent concurrent data loading
 
-    private TabPagerAdapter tabPagerAdapter;
+	private TabPagerAdapter tabPagerAdapter;
 	private TabLayoutMediator tabLayoutMediator;
 
-    // Activity result launcher
+	// Activity result launcher
 	private ActivityResultLauncher<Intent> activityResultLauncher;
-	
+
 	ListView wykUtwory;
-    String teledysk;
+	String teledysk;
 	String spotify;
-    String androidId;
-    String myListType;
-    String myIdWykonawcy;
-    String votingListId;
-    String language;
-    String notowanieId;
-    String glosTeledysk;
-    	AlertDialog progressDialog;
+	String androidId;
+	String myListType;
+	String myIdWykonawcy;
+	String votingListId;
+	String language;
+	String notowanieId;
+	String glosTeledysk;
+	AlertDialog progressDialog;
 	AlertDialog progressDialogVote;
 	boolean isLoading;
-    public ArrayList<HashMap<String, String>> songsList;
-    public ArrayList<HashMap<String, String>> songsListPocz;
+	public ArrayList<HashMap<String, String>> songsList;
+	public ArrayList<HashMap<String, String>> songsListPocz;
 	public ArrayList<HashMap<String, String>> songsListNowosci;
 	public ArrayList<HashMap<String, String>> songsListMojalista;
-    public ArrayList<HashMap<String, String>> wykonList;
-    public ArrayList<HashMap<String, String>> filteredWykonList;
-    //public ArrayList<HashMap<String, String>> swiateczneList;
-    public ArrayList<HashMap<String, String>> notowaniaList;
-    public ArrayList<HashMap<String, String>> notowPrzedzialyList;
-    public ArrayList<String> listNotowPrzedzialy;
-    public String info;
-    public String info2012;
-    public String voteMessage;
-    public boolean CheckboxPreference;
-    
-    private Toast toast;
-    private long lastBackPressTime = 0;
-    boolean connectionError = false;
+	public ArrayList<HashMap<String, String>> wykonList;
+	public ArrayList<HashMap<String, String>> filteredWykonList;
+	//public ArrayList<HashMap<String, String>> swiateczneList;
+	public ArrayList<HashMap<String, String>> notowaniaList;
+	public ArrayList<HashMap<String, String>> notowPrzedzialyList;
+	public ArrayList<String> listNotowPrzedzialy;
+	public String info;
+	public String info2012;
+	public boolean CheckboxPreference;
 
-    int spinnerPosition = -1;
+	private Toast toast;
+	private long lastBackPressTime = 0;
+
+	int spinnerPosition = -1;
 	// [START declare_analytics]
 	private FirebaseAnalytics mFirebaseAnalytics;
 	// [END declare_analytics]
 
 
 	// Włączenie na android >=7 Dangerous permission zapis okładek w pamięci urządzenia
-    // Copyright Jarek Wołoszyn 04-11-2017 r
-    // Storage Permissions variables
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static final String[] PERMISSIONS_STORAGE = {
-            "android.permission.WRITE_EXTERNAL_STORAGE",
-            "android.permission.READ_EXTERNAL_STORAGE"
-    };
-    //persmission method.
-    public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have read or write permission
-        int writePermission = ActivityCompat.checkSelfPermission(activity, "android.permission.WRITE_EXTERNAL_STORAGE");
-        int readPermission = ActivityCompat.checkSelfPermission(activity, "android.permission.READ_EXTERNAL_STORAGE");
+	// Copyright Jarek Wołoszyn 04-11-2017 r
+	// Storage Permissions variables
+	private static final int REQUEST_EXTERNAL_STORAGE = 1;
+	private static final String[] PERMISSIONS_STORAGE = {
+			"android.permission.WRITE_EXTERNAL_STORAGE",
+			"android.permission.READ_EXTERNAL_STORAGE"
+	};
+	//persmission method.
+	public static void verifyStoragePermissions(Activity activity) {
+		// Check if we have read or write permission
+		int writePermission = ActivityCompat.checkSelfPermission(activity, "android.permission.WRITE_EXTERNAL_STORAGE");
+		int readPermission = ActivityCompat.checkSelfPermission(activity, "android.permission.READ_EXTERNAL_STORAGE");
 
-        if (writePermission != PackageManager.PERMISSION_GRANTED || readPermission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
-    }
+		if (writePermission != PackageManager.PERMISSION_GRANTED || readPermission != PackageManager.PERMISSION_GRANTED) {
+			// We don't have permission so prompt the user
+			ActivityCompat.requestPermissions(
+					activity,
+					PERMISSIONS_STORAGE,
+					REQUEST_EXTERNAL_STORAGE
+			);
+		}
+	}
 
-    @Override
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		//FacebookSdk.sdkInitialize(getApplicationContext());
 		//AppEventsLogger.activateApp(this);
-		
+
+		// Enable edge-to-edge and manage system bar insets
+		EdgeToEdge.enable(this);
+
 		// Initialize ExecutorService and Handler
 		executorService = Executors.newFixedThreadPool(3);
 		mainHandler = new Handler(Looper.getMainLooper());
-		
+
 		// Initialize ActivityResultLauncher
 		activityResultLauncher = registerForActivityResult(
-			new ActivityResultContracts.StartActivityForResult(),
-			result -> {
-				if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-					Bundle conData = result.getData().getExtras();
-					if (conData != null) {
-						boolean voted = conData.getBoolean("param_return", false);
-						if (voted) {
-							refreshListBackground();
+				new ActivityResultContracts.StartActivityForResult(),
+				result -> {
+					if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+						Bundle conData = result.getData().getExtras();
+						if (conData != null) {
+							boolean voted = conData.getBoolean("param_return", false);
+							if (voted) {
+								refreshListBackground();
+							}
 						}
 					}
 				}
-			}
 		);
-		
+
 		language = getLocaleSettings();
-		notowanieId = Constants.VALUE_START_NOTOWANIE_ID; 
+		notowanieId = Constants.VALUE_START_NOTOWANIE_ID;
 		//setLocale(language);
 		setContentView(R.layout.main);
 
+		// Wywołanie metody, ustawiającej czarne ikony i przezroczyste paski systemowe
+		getWindow().getDecorView().post(() -> setLightSystemBars(getWindow(), true, true));
+
+		final View root = findViewById(R.id.root);
+		if (root != null) {
+			ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+				Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+				v.setPadding(v.getPaddingLeft(), sysBars.top, v.getPaddingRight(), sysBars.bottom);
+				return WindowInsetsCompat.CONSUMED;
+			});
+		}
+
 		// Włączenie na android >=7 Dangerous permission: zapis okładek w pamięci urządzenia
-        verifyStoragePermissions(this);
+		verifyStoragePermissions(this);
 
-
+		// Remove deprecated system UI light status bar flag usage; rely on theme for contrast
+		// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+		// 	getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+		// }
 
 		// Using a more privacy-friendly approach instead of device identifier
 		SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
@@ -215,6 +240,51 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	}
 
+	public void setLightSystemBars(Window window, boolean lightStatusBar, boolean lightNavigationBar) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // API 30+
+			WindowInsetsController insetsController = window.getInsetsController();
+			if (insetsController != null) {
+				int appearance = 0;
+				int mask = 0;
+
+				if (lightStatusBar) {
+					appearance |= WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+					mask |= WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+				}
+				if (lightNavigationBar) {
+					appearance |= WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+					mask |= WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+				}
+
+				insetsController.setSystemBarsAppearance(appearance, mask);
+
+				// Set transparent background for system bars if needed
+				window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+				window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+			}
+		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			// Fallback to deprecated method for API 23-29
+			int flags = window.getDecorView().getSystemUiVisibility();
+			if (lightStatusBar) {
+				flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+			} else {
+				flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+			}
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				if (lightNavigationBar) {
+					flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+				} else {
+					flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+				}
+			}
+			window.getDecorView().setSystemUiVisibility(flags);
+			window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+			}
+		}
+	}
+
 	public void onStart () {
 		super.onStart();
 		final SharedPreferences settings =
@@ -231,34 +301,93 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 
 	@Override
-	  public void onDestroy() {
-	    if (adView != null) {
-	      adView.destroy();
-	    }
-	    // Clean up dialogs to prevent window leaks
-	    if (progressDialog != null && progressDialog.isShowing()) {
-	    	progressDialog.dismiss();
-	    	progressDialog = null;
-	    }
-	    if (progressDialogVote != null && progressDialogVote.isShowing()) {
-	    	progressDialogVote.dismiss();
-	    	progressDialogVote = null;
-	    }
-	    // Clean up TabLayoutMediator
-	    if (tabLayoutMediator != null) {
-	    	tabLayoutMediator.detach();
-	    }
-	    // Clean up ExecutorService to prevent memory leaks
-	    if (executorService != null && !executorService.isShutdown()) {
-	    	executorService.shutdown();
-	    }
-	    super.onDestroy();
-	  }
+	public void onDestroy() {
+		try {
+			// Clean up ads to prevent input channel issues
+			if (adView != null) {
+				adView.destroy();
+				adView = null;
+			}
+			if (mAdView != null) {
+				mAdView.destroy();
+				mAdView = null;
+			}
+			
+			// Clean up dialogs to prevent window leaks
+			if (progressDialog != null && progressDialog.isShowing()) {
+				progressDialog.dismiss();
+				progressDialog = null;
+			}
+			if (progressDialogVote != null && progressDialogVote.isShowing()) {
+				progressDialogVote.dismiss();
+				progressDialogVote = null;
+			}
+			
+			// Clean up TabLayoutMediator
+			if (tabLayoutMediator != null) {
+				tabLayoutMediator.detach();
+				tabLayoutMediator = null;
+			}
+			
+			// Clean up ViewPager2 and adapter
+			ViewPager2 viewPager = findViewById(R.id.viewPager);
+			if (viewPager != null) {
+				viewPager.setAdapter(null);
+			}
+			if (tabPagerAdapter != null) {
+				tabPagerAdapter = null;
+			}
+			
+			// Clean up rewarded ad
+			if (rewardedAd != null) {
+				rewardedAd.setFullScreenContentCallback(null);
+				rewardedAd = null;
+			}
+			
+			// Clear focus and input connections
+			if (getCurrentFocus() != null) {
+				getCurrentFocus().clearFocus();
+			}
+			
+			// Clean up ExecutorService to prevent memory leaks
+			if (executorService != null && !executorService.isShutdown()) {
+				executorService.shutdown();
+				try {
+					if (!executorService.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS)) {
+						executorService.shutdownNow();
+					}
+				} catch (InterruptedException e) {
+					executorService.shutdownNow();
+				}
+				executorService = null;
+			}
+			
+			// Clean up handler
+			if (mainHandler != null) {
+				mainHandler.removeCallbacksAndMessages(null);
+				mainHandler = null;
+			}
+			
+		} catch (Exception e) {
+			Log.e("InputCleanup", "Error in onDestroy cleanup: " + e.getMessage());
+		}
+		
+		super.onDestroy();
+	}
 
 	@Override
 	public void onResume() {
-		//rewardedAd.resume(this);
+		///rewardedAd.getAdMetadata();
 		super.onResume();
+		
+		// Resume ads safely
+		try {
+			if (mAdView != null) {
+				mAdView.resume();
+			}
+		} catch (Exception e) {
+			Log.e("InputCleanup", "Error resuming ads: " + e.getMessage());
+		}
 	}
 
 	@Override
@@ -266,17 +395,73 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		//rewardedAd.pause(this);
 		super.onPause();
 	}
-	
+
+	@Override
+	public void onStop() {
+		// Clean up input channels and prevent window leaks
+		try {
+			// Pause ads to prevent input channel issues
+			if (mAdView != null) {
+				mAdView.pause();
+			}
+			
+			// Clear focus from any focused views
+			if (getCurrentFocus() != null) {
+				getCurrentFocus().clearFocus();
+			}
+			
+		} catch (Exception e) {
+			Log.e("InputCleanup", "Error in onStop cleanup: " + e.getMessage());
+		}
+		super.onStop();
+	}
+
+	@Override
+	public void finish() {
+		// Clear focus before finishing to prevent input channel issues
+		try {
+			if (getCurrentFocus() != null) {
+				getCurrentFocus().clearFocus();
+			}
+			
+			// Hide any showing dialogs
+			if (progressDialog != null && progressDialog.isShowing()) {
+				progressDialog.dismiss();
+			}
+			if (progressDialogVote != null && progressDialogVote.isShowing()) {
+				progressDialogVote.dismiss();
+			}
+			
+		} catch (Exception e) {
+			Log.e("InputCleanup", "Error in finish cleanup: " + e.getMessage());
+		}
+		
+		super.finish();
+	}
+
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		// Clear focus during configuration changes to prevent input channel issues
+		try {
+			if (getCurrentFocus() != null) {
+				getCurrentFocus().clearFocus();
+			}
+		} catch (Exception e) {
+			Log.e("InputCleanup", "Error in configuration change: " + e.getMessage());
+		}
+	}
+
 	public void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
 		super.onActivityResult(requestCode, resultCode, data);
 
-	     boolean voted = data.getBooleanExtra("param_return",false);
-	     if (voted){
-	    	 if (CheckboxPreference){
-	    		 refreshListBackground();
-	    	 }
-	     }
+		boolean voted = data.getBooleanExtra("param_return",false);
+		if (voted){
+			if (CheckboxPreference){
+				refreshListBackground();
+			}
+		}
 	}
 
 	//funkcja podwojnego nacisniecia wstecz aby wyjsc z aplikacji
@@ -301,11 +486,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.menu, menu);
-	    return true;
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu, menu);
+		return true;
 	}
-	
+
 	private void zaglosuj(String idUtworu, String listType, String idWykonawcy, String idGrupy, String teledysk) {
 		if (canUserVotes(idUtworu)){
 			// Using the same privacy-friendly user ID
@@ -317,12 +502,19 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			} catch (NullPointerException e) {
 				url = Constants.VOTE_URL.replace("ID_LISTY", idUtworu).replace("DEV_ID", "UNKNOWN").replace("LANG", language).replace("ID_GRUPY", idGrupy).replace("TEL_PARAM", teledysk);
 			}
-	        progressDialogVote = createProgressDialog(getString(R.string.text_voting));
-	        progressDialogVote.show();
+					// Safely create and show vote progress dialog
+		try {
+			progressDialogVote = createProgressDialog(getString(R.string.text_voting));
+			if (progressDialogVote != null && !isFinishing() && !isDestroyed()) {
+				progressDialogVote.show();
+			}
+		} catch (Exception e) {
+			Log.e("DialogShow", "Error showing vote progress dialog: " + e.getMessage());
+		}
 			myListType = listType;
 			myIdWykonawcy = idWykonawcy;
-	        votingListId = idUtworu;
-	        voteInBackground(url, listType);
+			votingListId = idUtworu;
+			voteInBackground(url, listType);
 			// [START image_view_event]
 			Bundle bundle = new Bundle();
 			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, idUtworu);
@@ -341,8 +533,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 
 	}
-	
+
 	public void refreshListBackground(){
+		// Prevent concurrent data loading to avoid threading issues
+		if (isDataLoading) {
+			return;
+		}
+		
+		// Check if activity is still valid
+		if (isFinishing() || isDestroyed()) {
+			return;
+		}
+		
+		isDataLoading = true;
+		
 		MobileAds.initialize(this, initializationStatus -> {
 		});
 
@@ -351,102 +555,287 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		// Clear existing data lists instead of creating new instances
 		// This preserves the adapter references
 		if (songsList == null) songsList = new ArrayList<>();
-		else songsList.clear();
-		
-		if (songsListPocz == null) songsListPocz = new ArrayList<>();
-		else songsListPocz.clear();
-		
-		if (songsListNowosci == null) songsListNowosci = new ArrayList<>();
-		else songsListNowosci.clear();
-		
-		if (songsListMojalista == null) songsListMojalista = new ArrayList<>();
-		else songsListMojalista.clear();
-		
-		if (wykonList == null) wykonList = new ArrayList<>();
-		else wykonList.clear();
-		
-		if (filteredWykonList == null) filteredWykonList = new ArrayList<>();
-		else filteredWykonList.clear();
-		
-		if (notowaniaList == null) notowaniaList = new ArrayList<>();
-		else notowaniaList.clear();
-		
-		if (notowPrzedzialyList == null) notowPrzedzialyList = new ArrayList<>();
-		else notowPrzedzialyList.clear();
-		
-		if (listNotowPrzedzialy == null) listNotowPrzedzialy = new ArrayList<>();
-		else listNotowPrzedzialy.clear();
+		else synchronized(songsList) { songsList.clear(); }
 
-		progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
-		progressDialog.show();
+		if (songsListPocz == null) songsListPocz = new ArrayList<>();
+		else synchronized(songsListPocz) { songsListPocz.clear(); }
+
+		if (songsListNowosci == null) songsListNowosci = new ArrayList<>();
+		else synchronized(songsListNowosci) { songsListNowosci.clear(); }
+
+		if (songsListMojalista == null) songsListMojalista = new ArrayList<>();
+		else synchronized(songsListMojalista) { songsListMojalista.clear(); }
+
+		if (wykonList == null) wykonList = new ArrayList<>();
+		else synchronized(wykonList) { wykonList.clear(); }
+
+		if (filteredWykonList == null) filteredWykonList = new ArrayList<>();
+		else synchronized(filteredWykonList) { filteredWykonList.clear(); }
+
+		if (notowaniaList == null) notowaniaList = new ArrayList<>();
+		else synchronized(notowaniaList) { notowaniaList.clear(); }
+
+		if (notowPrzedzialyList == null) notowPrzedzialyList = new ArrayList<>();
+		else synchronized(notowPrzedzialyList) { notowPrzedzialyList.clear(); }
+
+		if (listNotowPrzedzialy == null) listNotowPrzedzialy = new ArrayList<>();
+		else synchronized(listNotowPrzedzialy) { listNotowPrzedzialy.clear(); }
+
+		// Safely create and show progress dialog
+		try {
+			progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
+			if (progressDialog != null && !isFinishing() && !isDestroyed()) {
+				progressDialog.show();
+			}
+		} catch (Exception e) {
+			Log.e("DialogShow", "Error showing progress dialog: " + e.getMessage());
+		}
 		refreshListInBackground();
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
 			if (adError){
 				adView.loadAd(adRequest);
 			}
 		}
-		
+
 	}
-	
+
 	// Update all fragment adapters when data changes (replaces direct adapter updates)
 	public void updateAllFragmentAdapters() {
-		// Ensure we're on the main UI thread
-		if (Looper.myLooper() != Looper.getMainLooper()) {
-			mainHandler.post(this::updateAllFragmentAdapters);
-			return;
-		}
-		
-		// Get fragment references from ViewPager2 adapter
-        // Fragment references
-        ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
-        PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
-        NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
-        MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
-        WykonawcyFragment wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
-        NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
-		
-		// Update fragment adapters
-		if (listaFragment != null) {
-			listaFragment.updateAdapter();
-		}
-		if (poczekalniaFragment != null) {
-			poczekalniaFragment.updateAdapter();
-		}
-		if (nowosciFragment != null) {
-			nowosciFragment.updateAdapter();
-		}
-		if (mojaListaFragment != null) {
-			mojaListaFragment.updateAdapter();
-		}
-		if (wykonawcyFragment != null) {
-			wykonawcyFragment.updateAdapter();
-		}
-		if (notowaniaFragment != null) {
-			notowaniaFragment.updateAdapter();
-			// Handle spinner for NotowaniaFragment
-			notowaniaFragment.updateSpinnerAdapter();
-			if (spinnerPosition != -1) {
-				notowaniaFragment.setSpinnerSelection(spinnerPosition);
-			}
-		}
+		updateAllFragmentAdapters(0);
 	}
 	
+	// Overloaded method with retry count for improved fragment update handling
+	private void updateAllFragmentAdapters(int retryCount) {
+		// Ensure we're on the main UI thread
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			if (mainHandler != null) {
+				mainHandler.post(() -> updateAllFragmentAdapters(retryCount));
+			}
+			return;
+		}
+
+		// Check if activity is still valid
+		if (isFinishing() || isDestroyed()) {
+			Log.w("FragmentUpdate", "Activity is finishing or destroyed, skipping adapter updates");
+			return;
+		}
+
+		try {
+			Log.i("FragmentUpdate", "Starting updateAllFragmentAdapters (attempt " + (retryCount + 1) + ")");
+			
+			// Debug ViewPager2 state
+			debugViewPagerState();
+			
+			// Get fragment references directly on main thread to avoid timing issues
+			ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+			PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
+			NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
+			MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
+			WykonawcyFragment wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
+			NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
+
+			Log.i("FragmentUpdate", "Fragment references - Lista: " + (listaFragment != null) + 
+				", Poczekalnia: " + (poczekalniaFragment != null) + 
+				", Nowosci: " + (nowosciFragment != null) + 
+				", MojaLista: " + (mojaListaFragment != null) + 
+				", Wykonawcy: " + (wykonawcyFragment != null) + 
+				", Notowania: " + (notowaniaFragment != null));
+
+			int updatedFragments = 0;
+
+			// Update fragment adapters immediately on main thread
+			try {
+				if (listaFragment != null && listaFragment.isAdded() && listaFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating ListaFragment adapter");
+					listaFragment.updateAdapter();
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "ListaFragment is null or not added");
+				}
+				
+				if (poczekalniaFragment != null && poczekalniaFragment.isAdded() && poczekalniaFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating PoczekalniaFragment adapter");
+					poczekalniaFragment.updateAdapter();
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "PoczekalniaFragment is null or not added");
+				}
+				
+				if (nowosciFragment != null && nowosciFragment.isAdded() && nowosciFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating NowosciFragment adapter");
+					nowosciFragment.updateAdapter();
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "NowosciFragment is null or not added");
+				}
+				
+				if (mojaListaFragment != null && mojaListaFragment.isAdded() && mojaListaFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating MojaListaFragment adapter");
+					mojaListaFragment.updateAdapter();
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "MojaListaFragment is null or not added");
+				}
+				
+				if (wykonawcyFragment != null && wykonawcyFragment.isAdded() && wykonawcyFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating WykonawcyFragment adapter");
+					wykonawcyFragment.updateAdapter();
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "WykonawcyFragment is null or not added");
+				}
+				
+				if (notowaniaFragment != null && notowaniaFragment.isAdded() && notowaniaFragment.getView() != null) {
+					Log.i("FragmentUpdate", "Updating NotowaniaFragment adapter");
+					notowaniaFragment.updateAdapter();
+					// Handle spinner for NotowaniaFragment
+					notowaniaFragment.updateSpinnerAdapter();
+					if (spinnerPosition != -1) {
+						notowaniaFragment.setSpinnerSelection(spinnerPosition);
+					}
+					updatedFragments++;
+				} else {
+					Log.w("FragmentUpdate", "NotowaniaFragment is null or not added");
+				}
+				
+				Log.i("FragmentUpdate", "Completed updateAllFragmentAdapters successfully. Updated " + updatedFragments + " fragments.");
+				
+				// If no fragments were found and we haven't retried too many times, schedule a retry
+				// This handles ViewPager2 lazy fragment creation with exponential backoff
+				if (updatedFragments == 0 && retryCount < 5) { // Increased retry count
+					int delay = (int) Math.pow(2, retryCount) * 250; // 250ms, 500ms, 1000ms, 2000ms, 4000ms
+					Log.w("FragmentUpdate", "No fragments found, scheduling retry " + (retryCount + 1) + " in " + delay + "ms");
+					
+					// On the first retry, try to ensure fragments are created
+					if (retryCount == 0) {
+						Log.i("FragmentUpdate", "First retry - attempting to ensure fragments are created");
+						ensureFragmentsCreated();
+					}
+					
+					if (mainHandler != null) {
+						mainHandler.postDelayed(() -> updateAllFragmentAdapters(retryCount + 1), delay);
+					}
+				} else if (updatedFragments == 0) {
+					Log.e("FragmentUpdate", "Failed to update any fragments after " + (retryCount + 1) + " attempts");
+					// As a last resort, try the force refresh method
+					Log.w("FragmentUpdate", "Attempting force refresh as last resort");
+					forceRefreshAllFragmentAdapters();
+				}
+			} catch (Exception e) {
+				Log.e("FragmentUpdate", "Error updating fragment adapters: " + e.getMessage(), e);
+			}
+		} catch (Exception e) {
+			Log.e("FragmentUpdate", "Error in updateAllFragmentAdapters: " + e.getMessage(), e);
+		}
+	}
+
+	// Force refresh all fragment adapters by recreating them
+	public void forceRefreshAllFragmentAdapters() {
+		// Ensure we're on the main UI thread
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			if (mainHandler != null) {
+				mainHandler.post(this::forceRefreshAllFragmentAdapters);
+			}
+			return;
+		}
+
+		// Check if activity is still valid
+		if (isFinishing() || isDestroyed()) {
+			Log.w("FragmentUpdate", "Activity is finishing or destroyed, skipping forced adapter refresh");
+			return;
+		}
+
+		try {
+			Log.i("FragmentUpdate", "Force refreshing all fragment adapters");
+			
+			// Get fragment references
+			ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+			PoczekalniaFragment poczekalniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_POCZEKALNIA);
+			NowosciFragment nowosciFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOWOSCI);
+			MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
+			WykonawcyFragment wykonawcyFragment = getFragmentByPosition(TabPagerAdapter.TAB_WYKONAWCY);
+			NotowaniaFragment notowaniaFragment = getFragmentByPosition(TabPagerAdapter.TAB_NOTOWANIA);
+
+			// Force refresh fragment adapters
+			if (listaFragment != null && listaFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing ListaFragment adapter");
+				listaFragment.refreshAdapter();
+			}
+			if (poczekalniaFragment != null && poczekalniaFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing PoczekalniaFragment adapter");
+				poczekalniaFragment.refreshAdapter();
+			}
+			if (nowosciFragment != null && nowosciFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing NowosciFragment adapter");
+				nowosciFragment.refreshAdapter();
+			}
+			if (mojaListaFragment != null && mojaListaFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing MojaListaFragment adapter");
+				mojaListaFragment.refreshAdapter();
+			}
+			if (wykonawcyFragment != null && wykonawcyFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing WykonawcyFragment adapter");
+				wykonawcyFragment.refreshAdapter();
+			}
+			if (notowaniaFragment != null && notowaniaFragment.isAdded()) {
+				Log.i("FragmentUpdate", "Force refreshing NotowaniaFragment adapter");
+				notowaniaFragment.refreshAdapter();
+			}
+			
+			Log.i("FragmentUpdate", "Completed force refresh of all fragment adapters");
+		} catch (Exception e) {
+			Log.e("FragmentUpdate", "Error in forceRefreshAllFragmentAdapters: " + e.getMessage(), e);
+		}
+	}
+
 	// Helper method to get fragment by position
 	@SuppressWarnings("unchecked")
 	private <T extends Fragment> T getFragmentByPosition(int position) {
 		if (tabPagerAdapter != null) {
-			// ViewPager2 with FragmentStateAdapter uses different tagging
-			// The tag format is: "f" + viewPagerId + ":" + position
 			ViewPager2 viewPager = findViewById(R.id.viewPager);
 			if (viewPager != null) {
-				String fragmentTag = "f" + viewPager.getId() + ":" + position;
-				Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
-				return (T) fragment;
+				// For ViewPager2 with FragmentStateAdapter, the correct tag format is "f" + itemId
+				// Since we override getItemId() to return position, the tag will be "f" + position
+				String correctTag = "f" + position;
+				
+				Fragment fragment = getSupportFragmentManager().findFragmentByTag(correctTag);
+				if (fragment != null) {
+					Log.d("FragmentRetrieval", "Found fragment at position " + position + " with tag: " + correctTag);
+					return (T) fragment;
+				}
+				
+				// If fragment not found by tag, try to force creation by accessing the ViewPager2 adapter
+				try {
+					// Force ViewPager2 to create the fragment if it hasn't been created yet
+					if (position >= 0 && position < TabPagerAdapter.NUM_TABS) {
+						// Trigger fragment creation by briefly setting current item if needed
+						int currentItem = viewPager.getCurrentItem();
+						if (Math.abs(currentItem - position) > viewPager.getOffscreenPageLimit()) {
+							Log.d("FragmentRetrieval", "Fragment at position " + position + " not in offscreen limit, forcing creation");
+							viewPager.setCurrentItem(position, false);
+							viewPager.post(() -> {
+								// Restore original position after fragment creation
+								viewPager.setCurrentItem(currentItem, false);
+							});
+						}
+						
+						// Try finding the fragment again after potential creation
+						fragment = getSupportFragmentManager().findFragmentByTag(correctTag);
+						if (fragment != null) {
+							Log.d("FragmentRetrieval", "Found fragment at position " + position + " after forced creation with tag: " + correctTag);
+							return (T) fragment;
+						}
+					}
+				} catch (Exception e) {
+					Log.e("FragmentRetrieval", "Error forcing fragment creation: " + e.getMessage(), e);
+				}
+				
+				Log.w("FragmentRetrieval", "Fragment at position " + position + " not found with tag: " + correctTag);
 			}
 		}
 		return null;
 	}
-	
+
 	// Handle spinner selection for NotowaniaFragment
 	public void handleSpinnerSelection(String notowanieId, int position) {
 		this.notowanieId = notowanieId;
@@ -454,62 +843,68 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		// Instead of refreshing all data, only refresh notowania data
 		refreshNotowaniaDataBackground();
 	}
-	
+
 	// New method to refresh only notowania data for the selected period
 	private void refreshNotowaniaDataBackground() {
 		// Show progress dialog for notowania refresh
-		if (progressDialog == null || !progressDialog.isShowing()) {
-			progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
-			progressDialog.show();
+		try {
+			if (progressDialog == null || !progressDialog.isShowing()) {
+				progressDialog = createProgressDialog(getString(R.string.text_refresh_list));
+				if (progressDialog != null && !isFinishing() && !isDestroyed()) {
+					progressDialog.show();
+				}
+			}
+		} catch (Exception e) {
+			Log.e("DialogShow", "Error showing notowania progress dialog: " + e.getMessage());
 		}
-		
+
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
+
 				// Clear only notowania related data
-				notowaniaList.clear();
-				
+				synchronized(notowaniaList) { notowaniaList.clear(); }
+
 				String xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
 				Document doc = parser.getDomElement(xml);
-				
+
 				// Update info for notowania
 				NodeList nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
 				Element el = (Element) nlInfo.item(0);
 				info2012 = parser.getValue(el, Constants.KEY_INFO);
-				
-				int votesProgress = 0;
+
+				int votesProgress;
 				int maxVotes = 0;
-				int currentVotes = 0;
-				
+				int currentVotes;
+
 				// Load notowania songs for the selected period
 				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
-				
+
 				for (int i = 0; i < nl.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
-					
+
 					// Add all required fields for notowania
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
 					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
 					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
-					
+
 					// Only for PRO Version
 					if (adReward) {
 						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
 					}
-					
+
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
 					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
-					
+
 					// Calculate votes progress
 					if (i == 0) {
 						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
@@ -517,19 +912,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 							maxVotes = 1;
 						}
 					}
-					
+
 					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-					
-					notowaniaList.add(map);
+
+					synchronized(notowaniaList) { notowaniaList.add(map); }
+					Log.i(TAG, "notowaniaList refresh element: " + notowaniaList );
 				}
-				
+
 			} catch (IOException e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread - only update NotowaniaFragment
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
@@ -538,9 +934,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (notowaniaFragment != null) {
 					notowaniaFragment.updateAdapter();
 				}
-				
+
 				progressDialog.dismiss();
-				
+
 				if (finalConnectionError) {
 					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
 						.setTitle(R.string.text_connection_error_title)
@@ -550,7 +946,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			});
 		});
 	}
-	
+
 	// Filter wykonawcy method (moved from old implementation)
 	public void filterWykonawcy(ArrayList<HashMap<String, String>> wykonList, CharSequence searchText) {
 		synchronized(filteredWykonList) { filteredWykonList.clear(); }
@@ -560,61 +956,65 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			String searchString = searchText.toString().toLowerCase();
 			for (HashMap<String, String> item : wykonList) {
 				String wykonawca = item.get(Constants.KEY_WYKONAWCA);
-							if (wykonawca != null && wykonawca.toLowerCase().contains(searchString)) {
-				synchronized(filteredWykonList) { filteredWykonList.add(item); }
-			}
+				if (wykonawca != null && wykonawca.toLowerCase().contains(searchString)) {
+					synchronized(filteredWykonList) { filteredWykonList.add(item); }
+				}
 			}
 		}
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle item selection using if-else instead of switch for resource IDs
-	    int itemId = item.getItemId();
-	    if (itemId == R.id.odswiez) {
-	        refreshListBackground();
-	        return true;
-	    } else if (itemId == R.id.policy) {
-	        Intent browserIntent2 = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.POLICY_URL));
-	        startActivity(browserIntent2);
-	        return true;
-	    } else if (itemId == R.id.kontakt) {
-	        Intent email = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Constants.EMAIL_TO + "?subject=" +
-	                Uri.encode(getString(R.string.email_subject)) + "&body="));
-	        startActivity(email);
-	        return true;
-	    } else if (itemId == R.id.jezyk) {
-	        showLanguageMenu();
-	        return true;
-	    } else if (itemId == R.id.oProgramie) {
-	        Intent intentAbout = new Intent(Intent.ACTION_VIEW);
-	        	intentAbout.setClassName(this, OProgramie.class.getName());
-	        	startActivity(intentAbout);
-	        	return true;
-	    } else if (itemId == R.id.facebook) {
-	        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.FACEBOOK_URL));
-	        startActivity(browserIntent);
-	        return true;
-	    } else if (itemId == R.id.ustawienia) {
-	        Intent settingsIntent = new Intent(getBaseContext(),Preferences.class);
-	        startActivity(settingsIntent);
-	        return true;
-	    } else {
-	        return super.onOptionsItemSelected(item);
-	    }
+		// Handle item selection using if-else instead of switch for resource IDs
+		int itemId = item.getItemId();
+		if (itemId == R.id.odswiez) {
+			refreshListBackground();
+			return true;
+		} else if (itemId == R.id.policy) {
+			Intent browserIntent2 = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.POLICY_URL));
+			startActivity(browserIntent2);
+			return true;
+		} else if (itemId == R.id.kontakt) {
+			Intent email = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Constants.EMAIL_TO + "?subject=" +
+					Uri.encode(getString(R.string.email_subject)) + "&body="));
+			startActivity(email);
+			return true;
+		} else if (itemId == R.id.jezyk) {
+			showLanguageMenu();
+			return true;
+		} else if (itemId == R.id.oProgramie) {
+			Intent intentAbout = new Intent(Intent.ACTION_VIEW);
+			intentAbout.setClassName(this, OProgramie.class.getName());
+			startActivity(intentAbout);
+			return true;
+		} else if (itemId == R.id.facebook) {
+			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.FACEBOOK_URL));
+			startActivity(browserIntent);
+			return true;
+		} else if (itemId == R.id.ustawienia) {
+			Intent settingsIntent = new Intent(getBaseContext(),Preferences.class);
+			startActivity(settingsIntent);
+			return true;
+		} else {
+			return super.onOptionsItemSelected(item);
+		}
 	}
-	
+
 
 	// Setup TabLayout with ViewPager2 (replaced createTabs)
 	public void setupTabLayoutWithViewPager(){
-        TabLayout tabLayout = findViewById(R.id.tabLayout);
-        // New ViewPager2 and TabLayout
-        ViewPager2 viewPager = findViewById(R.id.viewPager);
-		
+		TabLayout tabLayout = findViewById(R.id.tabLayout);
+		// New ViewPager2 and TabLayout
+		ViewPager2 viewPager = findViewById(R.id.viewPager);
+
 		// Initialize TabPagerAdapter
 		tabPagerAdapter = new TabPagerAdapter(this);
 		viewPager.setAdapter(tabPagerAdapter);
 		
+		// Set offscreen page limit to ensure all fragments are created immediately
+		// This prevents the "fragments are null" issue when updateAllFragmentAdapters is called
+		viewPager.setOffscreenPageLimit(TabPagerAdapter.NUM_TABS - 1);
+
 		// Create TabLayoutMediator with tab configuration
 		tabLayoutMediator = new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
 			switch (position) {
@@ -639,60 +1039,215 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
 		});
 		tabLayoutMediator.attach();
+		
+		// Ensure fragments are created by triggering ViewPager2 to create them
+		// This is done after a short delay to allow the ViewPager2 to be fully initialized
+		if (mainHandler != null) {
+			mainHandler.postDelayed(this::ensureFragmentsCreated, 100);
+		}
 	}
 	
+	// Method to ensure all fragments are created in ViewPager2
+	private void ensureFragmentsCreated() {
+		ViewPager2 viewPager = findViewById(R.id.viewPager);
+		if (viewPager != null && tabPagerAdapter != null) {
+			Log.i("FragmentCreation", "Ensuring all fragments are created");
+			
+			// Since we set offscreen page limit to NUM_TABS - 1, all fragments should be created automatically
+			// Wait for ViewPager2 to initialize and create fragments
+			mainHandler.postDelayed(() -> {
+				int createdFragments = 0;
+				for (int i = 0; i < TabPagerAdapter.NUM_TABS; i++) {
+					Fragment fragment = getFragmentByPosition(i);
+					if (fragment != null) {
+						createdFragments++;
+						Log.d("FragmentCreation", "Fragment at position " + i + " created successfully with tag: f" + i);
+					} else {
+						Log.w("FragmentCreation", "Fragment at position " + i + " still null after creation attempt");
+					}
+				}
+				Log.i("FragmentCreation", "Fragment creation verification completed. Created: " + createdFragments + "/" + TabPagerAdapter.NUM_TABS);
+				
+				// If fragments are still not created, try alternative approach
+				if (createdFragments == 0) {
+					Log.w("FragmentCreation", "No fragments created, trying alternative approach");
+					forceCreateAllFragments();
+				}
+			}, 500); // Give more time for ViewPager2 to create fragments
+			
+			Log.i("FragmentCreation", "Fragment creation process initiated");
+		}
+	}
+	
+	// Debug method to log ViewPager2 state and fragment information
+	private void debugViewPagerState() {
+		ViewPager2 viewPager = findViewById(R.id.viewPager);
+		if (viewPager != null) {
+			Log.d("ViewPagerDebug", "ViewPager2 ID: " + viewPager.getId() + " (R.id.viewPager: " + R.id.viewPager + ")");
+			Log.d("ViewPagerDebug", "Current item: " + viewPager.getCurrentItem());
+			Log.d("ViewPagerDebug", "Offscreen page limit: " + viewPager.getOffscreenPageLimit());
+			Log.d("ViewPagerDebug", "Adapter: " + (viewPager.getAdapter() != null ? viewPager.getAdapter().getClass().getSimpleName() : "null"));
+			
+			// Log all fragments in FragmentManager
+			Log.d("ViewPagerDebug", "All fragments in FragmentManager:");
+			for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+				if (fragment != null) {
+					Log.d("ViewPagerDebug", "Fragment: " + fragment.getClass().getSimpleName() + 
+						", Tag: " + fragment.getTag() + 
+						", Added: " + fragment.isAdded() + 
+						", Visible: " + fragment.isVisible());
+				}
+			}
+		} else {
+			Log.w("ViewPagerDebug", "ViewPager2 is null!");
+		}
+	}
+	
+	// Alternative method to force fragment creation
+	private void forceCreateAllFragments() {
+		Log.i("FragmentCreation", "Force creating all fragments using alternative method");
+		ViewPager2 viewPager = findViewById(R.id.viewPager);
+		if (viewPager != null && tabPagerAdapter != null) {
+			// Set a very high offscreen page limit to force all fragments to be created
+			int originalLimit = viewPager.getOffscreenPageLimit();
+			viewPager.setOffscreenPageLimit(6);
+			// Trigger adapter refresh
+			viewPager.getAdapter().notifyDataSetChanged();
+			
+			// Give time for fragments to be created
+			mainHandler.postDelayed(() -> {
+				// Restore original offscreen limit
+				viewPager.setOffscreenPageLimit(originalLimit);
+				
+				// Verify again
+				int createdFragments = 0;
+				for (int i = 0; i < TabPagerAdapter.NUM_TABS; i++) {
+					Fragment fragment = getFragmentByPosition(i);
+					if (fragment != null) {
+						createdFragments++;
+					}
+				}
+				Log.i("FragmentCreation", "Alternative creation method result: " + createdFragments + "/" + TabPagerAdapter.NUM_TABS + " fragments created");
+			}, 300);
+		}
+	}
+	
+	// Callback method for fragments to notify when they are ready
+	public void onFragmentReady(String fragmentName) {
+		Log.i("FragmentReadiness", "Fragment " + fragmentName + " is ready");
+		readyFragments.add(fragmentName);
+		
+		// Check if we have pending data updates and all fragments are ready
+		if (pendingFragmentUpdate && dataLoadCompleted) {
+			checkAndUpdateFragments();
+		}
+	}
+	
+	// Check if we can update fragments and do so if ready
+	private void checkAndUpdateFragments() {
+		if (readyFragments.size() >= 6) { // All 6 fragments are ready
+			Log.i("FragmentReadiness", "All fragments are ready, updating adapters");
+			pendingFragmentUpdate = false;
+			updateAllFragmentAdapters();
+		} else {
+			Log.i("FragmentReadiness", "Waiting for more fragments. Ready: " + readyFragments.size() + "/6");
+		}
+	}
+
 	//reklama
 	public void createAd(){
 		mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
+		AdRequest adRequest = new AdRequest.Builder().build();
+		mAdView.loadAd(adRequest);
 	}
 
-	
+
 	public void showAuthSongs(String authId){
 		Intent intent = new Intent();
-			Bundle bun = new Bundle();
+		Bundle bun = new Bundle();
 
 		bun.putString("param_auth_id", authId);
 		bun.putBoolean("param_ad_reward", adReward);
 
 		intent.setClass(this, UtworyWykonawcy.class);
 		intent.putExtras(bun);
-		activityResultLauncher.launch(intent); 
+		activityResultLauncher.launch(intent);
 	}
 
-	
-	
-	@SuppressWarnings({ "unchecked" })
-	public void showSongMenu(int position, String listType){
-        HashMap<String, String> o = new HashMap<>();
 
-		if (Objects.equals(listType, Constants.KEY_LISTA)) {
-			o = songsList.get(position);
+
+
+	public void showSongMenu(int position, String listType){
+		HashMap<String, String> o = new HashMap<>();
+
+		try {
+			if (Objects.equals(listType, Constants.KEY_LISTA)) {
+				if (songsList != null && position >= 0 && position < songsList.size()) {
+					o = songsList.get(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for songsList (size: " + (songsList != null ? songsList.size() : 0) + ")");
+					return;
+				}
+			}
+			if (Objects.equals(listType, Constants.KEY_POCZEKALNIA)) {
+				if (songsListPocz != null && position >= 0 && position < songsListPocz.size()) {
+					o = songsListPocz.get(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for songsListPocz (size: " + (songsListPocz != null ? songsListPocz.size() : 0) + ")");
+					return;
+				}
+			}
+			if (Objects.equals(listType, Constants.KEY_NOWOSCI)) {
+				if (songsListNowosci != null && position >= 0 && position < songsListNowosci.size()) {
+					o = songsListNowosci.get(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for songsListNowosci (size: " + (songsListNowosci != null ? songsListNowosci.size() : 0) + ")");
+					return;
+				}
+			}
+			if (Objects.equals(listType, Constants.KEY_MOJALISTA)) {
+				if (songsListMojalista != null && position >= 0 && position < songsListMojalista.size()) {
+					o = songsListMojalista.get(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for songsListMojalista (size: " + (songsListMojalista != null ? songsListMojalista.size() : 0) + ")");
+					return;
+				}
+			}
+			if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
+				if (wykUtwory != null && position >= 0 && position < wykUtwory.getCount()) {
+					o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for wykUtwory (count: " + (wykUtwory != null ? wykUtwory.getCount() : 0) + ")");
+					return;
+				}
+			}
+			if (Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
+				if (notowaniaList != null && position >= 0 && position < notowaniaList.size()) {
+					o = notowaniaList.get(position);
+				} else {
+					Log.e(TAG, "Invalid position " + position + " for notowaniaList (size: " + (notowaniaList != null ? notowaniaList.size() : 0) + ")");
+					return;
+				}
+			}
+		} catch (Exception e) {
+			Log.e(TAG, "Error accessing list at position " + position + " for listType " + listType + ": " + e.getMessage());
+			return;
 		}
-		if (Objects.equals(listType, Constants.KEY_POCZEKALNIA)) {
-			o = songsListPocz.get(position);
-		}
-		if (Objects.equals(listType, Constants.KEY_NOWOSCI)) {
-			o = songsListNowosci.get(position);
-		}
-		if (Objects.equals(listType, Constants.KEY_MOJALISTA)) {
-			o = songsListMojalista.get(position);
-		}
-		if (Objects.equals(listType, Constants.KEY_UTW_WYKONAWCY)) {
-			o = (HashMap<String, String>) wykUtwory.getItemAtPosition(position);
-		}
-		if (Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
-			o = notowaniaList.get(position);
+
+		// Additional safety check - ensure we have valid data
+		if (o == null || o.isEmpty()) {
+			Log.e(TAG, "No valid data found at position " + position + " for listType " + listType);
+			return;
 		}
 
 
 		final String idListy = o.get(Constants.KEY_ID);
-        final String idWykonawcy = o.get(Constants.KEY_ARTIST_ID);
-        final String idGrupy = o.get(Constants.KEY_ID_GRUPY);
-        String title = o.get(Constants.KEY_TITLE);
+		final String idWykonawcy = o.get(Constants.KEY_ARTIST_ID);
+		final String idGrupy = o.get(Constants.KEY_ID_GRUPY);
+		String title = o.get(Constants.KEY_TITLE);
 		teledysk = o.get(Constants.KEY_VIDEO);
 		spotify = o.get(Constants.KEY_SPOTIFY);
+		String artist = o.get(Constants.KEY_ARTIST);
 
 		final CharSequence[] RewardItems = {getString(R.string.zaglosuj),getString(R.string.liczba_glosow), getString(R.string.teledysk), getString(R.string.spotify), getString(R.string.utwory_wykonawcy)};
 		final CharSequence[] items = {getString(R.string.zaglosuj), getString(R.string.teledysk), getString(R.string.spotify), getString(R.string.utwory_wykonawcy)};
@@ -710,21 +1265,28 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 					} else if (RewardItems[item] == getString(R.string.liczba_glosow)) {
-							if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
-								showRewardedVideo();
-							}
+						if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
+							showRewardedVideo();
+						}
 					} else if (RewardItems[item] == getString(R.string.utwory_wykonawcy)) {
 						finish();
 						showAuthSongs(idWykonawcy);
 					} else if (RewardItems[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-						startActivity(browserIntent);
-					}else if (RewardItems[item] == getString(R.string.spotify)) {
-						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(spotify));
-						startActivity(browserIntent);
-					}
+						try {
+							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
+							startActivity(browserIntent);
+						} catch (Exception e) {
+							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
+						}
+					                    }else if (RewardItems[item] == getString(R.string.spotify)) {
+                        Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
+                        intent.putExtra("spotify_url", spotify);
+                        intent.putExtra("title", title);
+                        intent.putExtra("artist", artist);
+                        startActivity(intent);
+                    }
 				});
 			} else {
 				builder.setItems(items, (dialog, item) -> {
@@ -738,15 +1300,22 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					} else if (items[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-						startActivity(browserIntent);
-					}else if (items[item] == getString(R.string.spotify)) {
-						Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(spotify));
-						startActivity(browserIntent);
-					}
+						try {
+							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
+							startActivity(browserIntent);
+						} catch (Exception e) {
+							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
+						}
+					                    }else if (items[item] == getString(R.string.spotify)) {
+                        Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
+                        intent.putExtra("spotify_url", spotify);
+                        intent.putExtra("title", title);
+                        intent.putExtra("artist", artist);
+                        startActivity(intent);
+                    }
 				});
 			}
-        }
+		}
 
 		if (Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
 			//	finish();
@@ -764,26 +1333,29 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
 					startActivity(browserIntent);
 				}
-				else if(wykItems[item]==getString(R.string.spotify)){
-					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(spotify));
-					startActivity(browserIntent);
-				}
+				                else if(wykItems[item]==getString(R.string.spotify)){
+                    Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
+                    intent.putExtra("spotify_url", spotify);
+                    intent.putExtra("title", title);
+                    intent.putExtra("artist", artist);
+                    startActivity(intent);
+                }
 			});
-        }
+		}
 
 		if (!Objects.equals(listType, Constants.KEY_LISTA_NOTOWANIA)) {
-        	AlertDialog alert = builder.create();
-        	alert.show();
-	}
+			AlertDialog alert = builder.create();
+			alert.show();
+		}
 
 	}
 	private void refreshListInBackground() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
+
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language)); // getting XML from URL
 			// Log.e(TAG, "Root xml element: " + xml );
 				Document doc = parser.getDomElement(xml); // getting DOM element
@@ -837,57 +1409,59 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					} else {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
 					}
-					
+
 					if(i==0){
 						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 						if (maxVotes==0){
 							maxVotes = 1;
 						}
-					} 
+					}
 					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					votesProgress = (currentVotes * 100) / maxVotes ;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-					
-					//showing or not showing progress bar 
-					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
-		
-									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-				synchronized(songsList) { songsList.add(map); }
-				}
-	        
-	        //poczekalnia
-	        
-	        nl = doc.getElementsByTagName(Constants.KEY_SONG_POCZ);
-				//	Log.i(TAG, "nl element: " + nl );
-			// looping through all song nodes <song>
-			for (int i = 0; i < nl.getLength(); i++) {
-				// creating new HashMap
-				HashMap<String, String> map = new HashMap<>();
-				Element e = (Element) nl.item(i);
-				// adding each child node to HashMap key => value
-				map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
-				map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
-				map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
-				map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
-				map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
-				if (adReward) {
-					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
-		 		}
-				map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
-				map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
-				map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
-				map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
-				map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-				//setting votes progress
-				currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
-				votesProgress = (currentVotes * 100) / maxVotes ;
-				map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-				//showing or not showing progress bar 
-				map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 
-							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-			synchronized(songsListPocz) { songsListPocz.add(map); }
-			}
+					//showing or not showing progress bar
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
+
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(songsList) { songsList.add(map); }
+					Log.i(TAG, "songsList element: " + songsList );
+				}
+
+				//poczekalnia
+
+				nl = doc.getElementsByTagName(Constants.KEY_SONG_POCZ);
+					Log.i(TAG, "nl pocz element: " + nl );
+				// looping through all song nodes <song>
+				for (int i = 0; i < nl.getLength(); i++) {
+					// creating new HashMap
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					// adding each child node to HashMap key => value
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					if (adReward) {
+						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					}
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+					//setting votes progress
+					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					votesProgress = (currentVotes * 100) / maxVotes ;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+					//showing or not showing progress bar
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
+
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(songsListPocz) { songsListPocz.add(map); }
+					Log.i(TAG, "songsListPocz element: " + songsListPocz );
+				}
 
 				//nowości
 				String xml_nowosci = parser.getXmlFromUrl2(Constants.URL_NOWOSCI.replace("LANG", language)); // getting XML from URL
@@ -916,8 +1490,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-				synchronized(songsListNowosci) { songsListNowosci.add(map); }
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(songsListNowosci) { songsListNowosci.add(map); }
+					Log.i(TAG, "songsListNowosci element: " + songsListNowosci );
 				}
 
 
@@ -962,140 +1537,211 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					//showing or not showing progress bar
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
 
-									// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-				synchronized(songsListMojalista) { songsListMojalista.add(map); }
-					//	Log.i(TAG, "songsListMojalista element: " + songsListMojalista );
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(songsListMojalista) { songsListMojalista.add(map); }
+						Log.i(TAG, "songsListMojalista element: " + songsListMojalista );
 				}
 
 
-	            xml = parser.getXmlFromUrl(Constants.WYK_URL); // getting XML from URL
-			
+				xml = parser.getXmlFromUrl(Constants.WYK_URL); // getting XML from URL
+
 				Document doc1 = parser.getDomElement(xml); // getting DOM element
-				
-		        
-			//wykonawcy
-	        
+
+
+				//wykonawcy
+
 				nl = doc1.getElementsByTagName(Constants.KEY_WYKON);
-			
-			// looping through all song nodes <song>
-			for (int i = 0; i < nl.getLength(); i++) {
-				// creating new HashMap
-				HashMap<String, String> map = new HashMap<>();
-				Element e = (Element) nl.item(i);
-				// adding each child node to HashMap key => value
-				map.put(Constants.KEY_ID_WYKON, parser.getValue(e, Constants.KEY_ID_WYKON));
-				map.put(Constants.KEY_WYKONAWCA, parser.getValue(e, Constants.KEY_WYKONAWCA));
-							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-			synchronized(wykonList) { wykonList.add(map); }
-				//filteredWykonList.add(map);
-			}    
-			//filteredWykonList=wykonList;
-			filterWykonawcy(wykonList, "");
-			
-			xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId)); // getting XML from URL
-			
-			doc = parser.getDomElement(xml); // getting DOM element
-			
-			nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
-			el = (Element) nlInfo.item(0);
-			info2012 = parser.getValue(el, Constants.KEY_INFO);
 
-			votesProgress =0 ;
-			maxVotes = 0;
-			currentVotes = 0 ;
-			
-			//notowania_przedzialy
-			nl = doc.getElementsByTagName(Constants.KEY_NOTOWANIE_PRZEDZIAL);
-			// looping through all records
-			for (int i = 0; i < nl.getLength(); i++) {
-				// creating new HashMap
-				HashMap<String, String> map = new HashMap<>();
-				Element e = (Element) nl.item(i);
-				// adding each child node to HashMap key => value
-				map.put(Constants.KEY_NOTOWANIE_ZA, parser.getValue(e, Constants.KEY_NOTOWANIE_ZA));
-				map.put(Constants.KEY_NOTOWANIE_NAZWA, parser.getValue(e, Constants.KEY_NOTOWANIE_NAZWA));
-				// adding HashList to ArrayList
-				notowPrzedzialyList.add(map);
-				listNotowPrzedzialy.add(map.get(Constants.KEY_NOTOWANIE_NAZWA));
-			}    
-			
-			
-			
-			//notowania
-			nl = doc.getElementsByTagName(Constants.KEY_SONG);
-			
-			// looping through all song nodes <song>
-			for (int i = 0; i < nl.getLength(); i++) {
-				// creating new HashMap
-				HashMap<String, String> map = new HashMap<>();
-				Element e = (Element) nl.item(i);
-				// adding each child node to HashMap key => value
-				map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
-				map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
-				map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
-				map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
-				map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
-				//only for PRO Version
-				if (adReward) {
-					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+				// looping through all song nodes <song>
+				for (int i = 0; i < nl.getLength(); i++) {
+					// creating new HashMap
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					// adding each child node to HashMap key => value
+					map.put(Constants.KEY_ID_WYKON, parser.getValue(e, Constants.KEY_ID_WYKON));
+					map.put(Constants.KEY_WYKONAWCA, parser.getValue(e, Constants.KEY_WYKONAWCA));
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(wykonList) { wykonList.add(map); }
+					Log.i(TAG, "wykonList element: " + wykonList );
+
+					//filteredWykonList.add(map);
 				}
-				map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
-				map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
-				map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
-				map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
-				map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-				//map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
-				//if ((parser.getValue(e, Constants.KEY_PLACE_CHANGE).indexOf(getString(R.string.text_awans)))>=0) {
-				//	map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
-				//} else if ((parser.getValue(e, Constants.KEY_PLACE_CHANGE).indexOf(getString(R.string.text_spadek)))>=0) {
-				//	map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
-				//} else {
-					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
-				//}
-				
-				if(i==0){
-					maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
-					if (maxVotes==0){
-						maxVotes = 1;
-					}
-				} 
-				currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
-				votesProgress = (currentVotes * 100) / maxVotes ;
-				map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-				
-				//showing or not showing progress bar 
-				map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
-	
-							// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
-			synchronized(notowaniaList) { notowaniaList.add(map); }
-			}
+				//filteredWykonList=wykonList;
+				filterWykonawcy(wykonList, "");
 
-			
+				// First, get the notowania XML to populate notowPrzedzialyList and set the correct notowanieId
+				xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId)); // getting XML from URL
+
+				doc = parser.getDomElement(xml); // getting DOM element
+
+				nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
+				el = (Element) nlInfo.item(0);
+				info2012 = parser.getValue(el, Constants.KEY_INFO);
+
+//				votesProgress =0 ;
+				maxVotes = 0;
+//				currentVotes = 0 ;
+
+				//notowania_przedzialy
+				nl = doc.getElementsByTagName(Constants.KEY_NOTOWANIE_PRZEDZIAL);
+				// looping through all records
+				for (int i = 0; i < nl.getLength(); i++) {
+					// creating new HashMap
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					// adding each child node to HashMap key => value
+					map.put(Constants.KEY_NOTOWANIE_ZA, parser.getValue(e, Constants.KEY_NOTOWANIE_ZA));
+					map.put(Constants.KEY_NOTOWANIE_NAZWA, parser.getValue(e, Constants.KEY_NOTOWANIE_NAZWA));
+					// adding HashList to ArrayList
+					notowPrzedzialyList.add(map);
+					Log.i(TAG, "notowPrzedzialyList element: " + notowPrzedzialyList );
+					listNotowPrzedzialy.add(map.get(Constants.KEY_NOTOWANIE_NAZWA));
+				}
+				
+				// Set the initial notowanieId to the first valid value if it's still the placeholder
+				if (notowanieId.equals(Constants.VALUE_START_NOTOWANIE_ID) && !notowPrzedzialyList.isEmpty()) {
+					String firstNotowanieId = notowPrzedzialyList.get(0).get(Constants.KEY_NOTOWANIE_ZA);
+					if (firstNotowanieId != null && !firstNotowanieId.isEmpty()) {
+						notowanieId = firstNotowanieId;
+						Log.i(TAG, "Set initial notowanieId to: " + notowanieId);
+						
+						// Now fetch the notowania data with the correct notowanieId
+						xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
+						doc = parser.getDomElement(xml);
+						Log.i(TAG, "Refetched notowania XML with correct notowanieId: " + notowanieId);
+					}
+				}
+
+
+
+				//notowania
+				nl = doc.getElementsByTagName(Constants.KEY_SONG);
+
+				// looping through all song nodes <song>
+				for (int i = 0; i < nl.getLength(); i++) {
+					// creating new HashMap
+					HashMap<String, String> map = new HashMap<>();
+					Element e = (Element) nl.item(i);
+					// adding each child node to HashMap key => value
+					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+					//only for PRO Version
+					if (adReward) {
+						map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+					}
+					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+
+					if(i==0){
+						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+						if (maxVotes==0){
+							maxVotes = 1;
+						}
+					}
+					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					votesProgress = (currentVotes * 100) / maxVotes ;
+					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+
+					//showing or not showing progress bar
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS,"TRUE");
+
+					// adding HashList to ArrayList - synchronized to prevent UI thread conflicts
+					synchronized(notowaniaList) { notowaniaList.add(map); }
+					Log.i(TAG, "notowaniaList element: " + notowaniaList );
+				}
+
+
 			} catch (IOException e){
 				connectionError = true;
+				Log.e("DataLoading", "IOException loading data: " + e.getMessage(), e);
+				
+				// Ensure data structures are initialized even on error
+				if (songsList == null) songsList = new ArrayList<>();
+				if (songsListPocz == null) songsListPocz = new ArrayList<>();
+				if (songsListNowosci == null) songsListNowosci = new ArrayList<>();
+				if (songsListMojalista == null) songsListMojalista = new ArrayList<>();
+			} catch (Exception e){
+				connectionError = true;
+				Log.e("DataLoading", "General exception loading data: " + e.getMessage(), e);
+				
+				// Ensure data structures are initialized even on error
+				if (songsList == null) songsList = new ArrayList<>();
+				if (songsListPocz == null) songsListPocz = new ArrayList<>();
+				if (songsListNowosci == null) songsListNowosci = new ArrayList<>();
+				if (songsListMojalista == null) songsListMojalista = new ArrayList<>();
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
-				// Update all fragment adapters with new data
-				updateAllFragmentAdapters();
-				progressDialog.dismiss();
-				if (finalConnectionError) {
-					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
-					.setTitle(R.string.text_connection_error_title)
-					.setMessage(getString(R.string.text_connection_error))
-					.setNeutralButton("Ok",	null).show();
+				try {
+					// Safely dismiss progress dialog
+					if (progressDialog != null && progressDialog.isShowing()) {
+						progressDialog.dismiss();
+						progressDialog = null;
+					}
+					
+					// Log data loading results for debugging
+					Log.i("DataLoading", "Data loaded - songsList: " + (songsList != null ? songsList.size() : 0) + 
+						", songsListPocz: " + (songsListPocz != null ? songsListPocz.size() : 0) +
+						", songsListNowosci: " + (songsListNowosci != null ? songsListNowosci.size() : 0) +
+						", songsListMojalista: " + (songsListMojalista != null ? songsListMojalista.size() : 0));
+					
+					// Validate data before updating UI
+					boolean hasData = (songsList != null && !songsList.isEmpty()) ||
+									  (songsListPocz != null && !songsListPocz.isEmpty()) ||
+									  (songsListNowosci != null && !songsListNowosci.isEmpty()) ||
+									  (songsListMojalista != null && !songsListMojalista.isEmpty()) ||
+									  (notowaniaList != null && !notowaniaList.isEmpty()) ||
+									  (filteredWykonList != null && !filteredWykonList.isEmpty());
+					
+					Log.i("DataLoading", "Has data to display: " + hasData);
+					
+					// Mark data loading as completed
+					dataLoadCompleted = true;
+					pendingFragmentUpdate = true;
+					
+					// Try to update fragments if they are ready, otherwise wait for fragment callbacks
+					checkAndUpdateFragments();
+					
+					// Schedule a force refresh as fallback in case normal update didn't work
+					if (mainHandler != null) {
+						mainHandler.postDelayed(() -> {
+							Log.i("DataLoading", "Performing fallback force refresh of adapters");
+							forceRefreshAllFragmentAdapters();
+						}, 2000); // Increased delay to allow for fragment readiness
+					}
+					
+					isDataLoading = false; // Reset loading flag
+					
+					if (finalConnectionError) {
+						// Ensure activity is still valid before showing dialog
+						if (!isFinishing() && !isDestroyed()) {
+							new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
+									.setTitle(R.string.text_connection_error_title)
+									.setMessage(getString(R.string.text_connection_error))
+									.setNeutralButton("Ok", null).show();
+						}
+					}
+				} catch (Exception e) {
+					Log.e("DialogDismiss", "Error dismissing dialog: " + e.getMessage());
+					isDataLoading = false; // Reset loading flag even on error
 				}
 			});
 		});
 	}
-	
+
 	private void voteInBackground(String url, String listType) {
 		executorService.execute(() -> {
 			boolean connectionError = false;
 			String voteMessage;
-			
+
 			Vote vote = new Vote();
 			try{
 				voteMessage = vote.setVoteInUrl(url);
@@ -1103,12 +1749,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				connectionError = true;
 				voteMessage = getString(R.string.text_voting_error);
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			final String finalVoteMessage = voteMessage;
 			mainHandler.post(() -> {
-				progressDialogVote.dismiss();
+				// Safely dismiss vote progress dialog
+				try {
+					if (progressDialogVote != null && progressDialogVote.isShowing()) {
+						progressDialogVote.dismiss();
+						progressDialogVote = null;
+					}
+				} catch (Exception e) {
+					Log.e("DialogDismiss", "Error dismissing vote dialog: " + e.getMessage());
+				}
 
 				if (finalConnectionError) {
 					new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this)
@@ -1122,9 +1776,12 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						//   Snackbar snackbar = make(ListaPrzebojowDiscoPolo.this.getCurrentFocus(), voteMessage, Snackbar.LENGTH_LONG);
 						//   snackbar.show();
 					}
-					if (Objects.equals(myListType, Constants.KEY_LISTA) || Objects.equals(myListType, Constants.KEY_POCZEKALNIA) || Objects.equals(myListType, Constants.KEY_NOWOSCI) || Objects.equals(myListType, Constants.KEY_MOJALISTA)|| Objects.equals(myListType, Constants.KEY_WYKONAWCY)) {
-						if (CheckboxPreference){
+					if (Objects.equals(myListType, Constants.KEY_LISTA) || Objects.equals(myListType, Constants.KEY_POCZEKALNIA) || Objects.equals(myListType, Constants.KEY_NOWOSCI) || Objects.equals(myListType, Constants.KEY_MOJALISTA) || Objects.equals(myListType, Constants.KEY_WYKONAWCY)) {
+						// Execute refreshListBackground on main thread to prevent threading issues
+						if (Looper.myLooper() == Looper.getMainLooper()) {
 							refreshListBackground();
+						} else {
+							mainHandler.post(this::refreshListBackground);
 						}
 					}
 					if (Objects.equals(myListType, Constants.KEY_UTW_WYKONAWCY)) {
@@ -1134,19 +1791,19 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			});
 		});
 	}
-	
+
 	public boolean canUserVotes(String idListy) {
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
-	    SimpleDateFormat lastVoteDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat lastVoteDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String lastVoteDateString = settings.getString(idListy, lastVoteDate.format(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)));
-	    
-	    try {
-            return Objects.requireNonNull(lastVoteDate.parse(lastVoteDateString)).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
+
+		try {
+			return Objects.requireNonNull(lastVoteDate.parse(lastVoteDateString)).getTime() / (1000) <= (System.currentTimeMillis() - (Constants.VOTES_INTERVAL * 60 * 1000)) / (1000);
 		} catch (ParseException e) {
 			return true;
 		}
 	}
-	
+
 	public void setUserVote(String idListy){
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
 		SimpleDateFormat newVoteDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -1155,16 +1812,16 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		editor.apply();
 	}
 
-	protected void onSaveInstanceState(Bundle outState) {
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		super.onSaveInstanceState(outState);
-    	
-    	if (progressDialog != null && progressDialog.isShowing()){
-    		progressDialog.dismiss();
-    	}
-    }
-	
+
+		if (progressDialog != null && progressDialog.isShowing()){
+			progressDialog.dismiss();
+		}
+	}
+
 	private void showLanguageMenu() {
-		
+
 		String localeString = getLocaleSettings();
 		AlertDialog.Builder builder = new AlertDialog.Builder(ListaPrzebojowDiscoPolo.this);
         builder.setTitle(R.string.menu_jezyk);
@@ -1192,7 +1849,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
         alert.show();		
 		
 	}
-	
+
 	public String getLocaleSettings() {
 		//SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
 		Locale lc = Locale.getDefault();
@@ -1201,29 +1858,29 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		return localeDefault;
 	}
 	public void setLocaleSettings(String localeString){
-		
+
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
 		SharedPreferences.Editor editor = settings.edit();
-	    editor.putString("locale",localeString);
-	    editor.apply();
+		editor.putString("locale",localeString);
+		editor.apply();
 	}
 	public void setLocale(String localeString){
 		Locale locale = new Locale(localeString);
 		Resources res = getResources();
 		DisplayMetrics dm = res.getDisplayMetrics();
-		
+
 		Configuration config = new Configuration();
 		config.locale = locale;
 		res.updateConfiguration(config, dm);
 	}
 
-	
-    private void getPrefs() {
-        // Get the xml/preferences.xml preferences using modern approach
-        SharedPreferences prefs = androidx.preference.PreferenceManager
-                        .getDefaultSharedPreferences(getBaseContext());
-        CheckboxPreference = prefs.getBoolean("example_checkbox", false);
-    }
+
+	private void getPrefs() {
+		// Get the xml/preferences.xml preferences using modern approach
+		SharedPreferences prefs = androidx.preference.PreferenceManager
+				.getDefaultSharedPreferences(getBaseContext());
+		CheckboxPreference = prefs.getBoolean("example_checkbox", false);
+	}
 
 
 
@@ -1311,9 +1968,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					// Refresh all fragments with adReward = true
 					refreshListaWithAdReward();
 					refreshPoczekalniaWithAdReward();
-					refreshNotowaniaWithAdReward();
 					refreshMojaListaWithAdReward();
+					refreshNotowaniaWithAdReward();
 					refreshNowosciWithAdReward();
+
 					// [START image_view_event]
 					Bundle bundlereward = new Bundle();
 					bundlereward.putString(FirebaseAnalytics.Param.ITEM_ID, androidId);
@@ -1327,74 +1985,93 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					// [END image_view_event]
 
 
-				});
+				}
+		);
 	}
 
 	private AlertDialog createProgressDialog(String message) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		// Check if activity is still valid
+		if (isFinishing() || isDestroyed()) {
+			return null;
+		}
 		
-		// Create a simple layout with progress bar and text
-		android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
-		layout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-		layout.setPadding(50, 50, 50, 50);
-		
-		ProgressBar progressBar = new ProgressBar(this);
-		progressBar.setIndeterminate(true);
-		android.widget.LinearLayout.LayoutParams progressParams = 
-			new android.widget.LinearLayout.LayoutParams(
-				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
-				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-		progressParams.setMargins(0, 0, 30, 0);
-		progressBar.setLayoutParams(progressParams);
-		
-		TextView textView = new TextView(this);
-		textView.setText(message);
-		textView.setTextSize(16);
-		android.widget.LinearLayout.LayoutParams textParams = 
-			new android.widget.LinearLayout.LayoutParams(
-				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
-				android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-		textView.setLayoutParams(textParams);
-		
-		layout.addView(progressBar);
-		layout.addView(textView);
-		
-		builder.setView(layout);
-		builder.setCancelable(false);
-		
-		return builder.create();
+		try {
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+			// Create a simple layout with progress bar and text
+			android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+			layout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+			layout.setPadding(50, 50, 50, 50);
+
+			ProgressBar progressBar = new ProgressBar(this);
+			progressBar.setIndeterminate(true);
+			android.widget.LinearLayout.LayoutParams progressParams =
+					new android.widget.LinearLayout.LayoutParams(
+							android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+							android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+			progressParams.setMargins(0, 0, 30, 0);
+			progressBar.setLayoutParams(progressParams);
+
+			TextView textView = new TextView(this);
+			textView.setText(message);
+			textView.setTextSize(16);
+			android.widget.LinearLayout.LayoutParams textParams =
+					new android.widget.LinearLayout.LayoutParams(
+							android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+							android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+			textView.setLayoutParams(textParams);
+
+			layout.addView(progressBar);
+			layout.addView(textView);
+
+			builder.setView(layout);
+			builder.setCancelable(false);
+			
+			AlertDialog dialog = builder.create();
+			
+			// Set window flags to prevent input channel issues
+			if (dialog.getWindow() != null) {
+				dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION);
+			}
+
+			return dialog;
+		} catch (Exception e) {
+			Log.e("DialogCreate", "Error creating progress dialog: " + e.getMessage());
+			return null;
+		}
 	}
 
 	// Refresh MojaLista with adReward = true
 	public void refreshMojaListaWithAdReward() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
-							// Clear and reload mojalista data with adReward = true
-			synchronized(songsListMojalista) { songsListMojalista.clear(); }
-				
+
+				// Build a new list first; only swap on success to avoid clearing UI on failure
+				ArrayList<HashMap<String, String>> newSongsListMojalista = new ArrayList<>();
+
 				String xml_mojalista = parser.getXmlFromUrlMoja(Constants.URL_MOJALISTA.replace("LANG", language).replace("ANDROIDID", androidId));
 				Document docmoja = parser.getDomElementMoja(xml_mojalista);
 				NodeList nl = docmoja.getElementsByTagName(Constants.KEY_SONG_MOJA);
-				
-				// Calculate max votes for progress
-				int maxVotes = 0;
-				if (songsList != null && !songsList.isEmpty()) {
-					try {
-						maxVotes = Integer.parseInt(songsList.get(0).get(Constants.KEY_VOTES).replaceAll("[^0-9]", ""));
+
+				// Calculate max votes for progress from the freshly fetched data
+				int maxVotes = 1; // default to 1 to avoid division by zero
+				try {
+					if (nl != null && nl.getLength() > 0) {
+						Element first = (Element) nl.item(0);
+						maxVotes = Integer.parseInt(parser.getValue(first, Constants.KEY_VOTES));
 						if (maxVotes == 0) maxVotes = 1;
-					} catch (Exception e) {
-						maxVotes = 1;
 					}
+				} catch (Exception ignore) {
+					maxVotes = 1;
 				}
-				
+
 				for (int i = 0; i < nl.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
-					
+
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
@@ -1407,57 +2084,66 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					
+
 					// Setting votes progress
 					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					int votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-				
-				synchronized(songsListMojalista) { songsListMojalista.add(map); }
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+
+					newSongsListMojalista.add(map);
 				}
-				
+
+				// Only swap the data if parsing fetched something
+				if (nl != null && nl.getLength() > 0) {
+					synchronized(songsListMojalista) {
+						songsListMojalista.clear();
+						songsListMojalista.addAll(newSongsListMojalista);
+					}
+					Log.i(TAG, "songsListMojalista refreshed: size=" + songsListMojalista.size());
+				} else {
+					Log.w(TAG, "songsListMojalista refresh returned empty; keeping existing data");
+				}
+
 			} catch (Exception e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
 				MojaListaFragment mojaListaFragment = getFragmentByPosition(TabPagerAdapter.TAB_MOJALISTA);
 				if (mojaListaFragment != null) {
 					mojaListaFragment.updateAdapter();
-				} else {
-					// Fragment not found, try to refresh all adapters as fallback
-					updateAllFragmentAdapters();
 				}
-				
+
 				if (finalConnectionError) {
 					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
 				}
 			});
+
 		});
 	}
-	
+
 	// Refresh Nowosci with adReward = true
 	public void refreshNowosciWithAdReward() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
-							// Clear and reload nowosci data with adReward = true
-			synchronized(songsListNowosci) { songsListNowosci.clear(); }
-				
+
+				// Clear and reload nowosci data with adReward = true
+				synchronized(songsListNowosci) {  songsListNowosci.clear(); }
+
 				String xml_nowosci = parser.getXmlFromUrl2(Constants.URL_NOWOSCI.replace("LANG", language));
 				Document doc2 = parser.getDomElement2(xml_nowosci);
 				NodeList nl2 = doc2.getElementsByTagName(Constants.KEY_SONG_NOWOSCI);
-				
+
 				for (int i = 0; i < nl2.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl2.item(i);
-					
+
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
@@ -1468,15 +2154,16 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
 					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
-									map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-				
-				synchronized(songsListNowosci) { songsListNowosci.add(map); }
+					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+
+					synchronized(songsListNowosci) { songsListNowosci.add(map); }
+					Log.i(TAG, "songsListNowosci element: " + songsListNowosci );
 				}
-				
+
 			} catch (Exception e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
@@ -1484,7 +2171,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (nowosciFragment != null) {
 					nowosciFragment.updateAdapter();
 				}
-				
+
 				if (finalConnectionError) {
 					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
 				}
@@ -1496,29 +2183,29 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	public void refreshListaWithAdReward() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
-							// Clear and reload lista data with adReward = true
-			synchronized(songsList) { songsList.clear(); }
-				
+
+				// Clear and reload lista data with adReward = true
+				synchronized(songsList) { songsList.clear(); }
+
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
 				Document doc = parser.getDomElement(xml);
 				NodeList nlInfo = doc.getElementsByTagName(Constants.KEY_INFO);
 				Element el = (Element) nlInfo.item(0);
 				info = parser.getValue(el, Constants.KEY_INFO);
-				
+
 				int votesProgress;
 				int maxVotes = 0;
 				int currentVotes;
-				
+
 				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
-				
+
 				for (int i = 0; i < nl.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
-					
+
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
@@ -1532,7 +2219,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
 					map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
-					
+
 					if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_awans))) {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
 					} else if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_spadek))) {
@@ -1540,7 +2227,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					} else {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
 					}
-					
+
 					if (i == 0) {
 						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 						if (maxVotes == 0) {
@@ -1550,15 +2237,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-				
-				synchronized(songsList) { songsList.add(map); }
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+
+					synchronized(songsList) { songsList.add(map); }
+					Log.i(TAG, "songsList element: " + songsList );
+
 				}
-				
+
 			} catch (Exception e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
@@ -1566,45 +2255,46 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (listaFragment != null) {
 					listaFragment.updateAdapter();
 				}
-				
+
 				if (finalConnectionError) {
 					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
 				}
 			});
 		});
 	}
-	
+
 	// Refresh Poczekalnia with adReward = true
 	public void refreshPoczekalniaWithAdReward() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
-							// Clear and reload poczekalnia data with adReward = true
-			synchronized(songsListPocz) { songsListPocz.clear(); }
-				
+
+				// Clear and reload poczekalnia data with adReward = true
+				synchronized(songsListPocz) { songsListPocz.clear(); }
+
 				String xml = parser.getXmlFromUrl(Constants.URL.replace("LANG", language));
 				Document doc = parser.getDomElement(xml);
-				
-				// Calculate max votes for progress
-				int maxVotes = 0;
-				if (songsList != null && !songsList.isEmpty()) {
-					try {
-						maxVotes = Integer.parseInt(songsList.get(0).get(Constants.KEY_VOTES).replaceAll("[^0-9]", ""));
-						if (maxVotes == 0) maxVotes = 1;
-					} catch (Exception e) {
-						maxVotes = 1;
-					}
-				}
-				
+
 				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG_POCZ);
-				
+
+				// Calculate max votes for progress from the freshly fetched data
+				int maxVotes = 1; // default to 1 to avoid division by zero
+				try {
+					if (nl != null && nl.getLength() > 0) {
+						Element first = (Element) nl.item(0);
+						maxVotes = Integer.parseInt(parser.getValue(first, Constants.KEY_VOTES));
+						if (maxVotes == 0) maxVotes = 1;
+					}
+				} catch (Exception ignore) {
+					maxVotes = 1;
+				}
+
 				for (int i = 0; i < nl.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
-					
+
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
@@ -1617,20 +2307,21 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					
+
 					// Setting votes progress
 					int currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 					int votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-									map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-				
-				synchronized(songsListPocz) { songsListPocz.add(map); }
+					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+
+					synchronized(songsListPocz) { songsListPocz.add(map); }
+					Log.i(TAG, "songsListPocz element: " + songsListPocz );
 				}
-				
+
 			} catch (Exception e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
@@ -1641,38 +2332,38 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					// Fragment not found, try to refresh all adapters as fallback
 					updateAllFragmentAdapters();
 				}
-				
+
 				if (finalConnectionError) {
 					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
 				}
 			});
 		});
 	}
-	
+
 	// Refresh Notowania with adReward = true
 	public void refreshNotowaniaWithAdReward() {
 		executorService.execute(() -> {
 			boolean connectionError = false;
-			
+
 			try {
 				XMLParser parser = new XMLParser();
-				
-							// Clear and reload notowania data with adReward = true
-			synchronized(notowaniaList) { notowaniaList.clear(); }
-				
+
+				// Clear and reload notowania data with adReward = true
+				synchronized(notowaniaList) { notowaniaList.clear(); }
+
 				String xml = parser.getXmlFromUrl(Constants.URL_NOTOWANIA.replace("LANG", language).replace("START_NOTOWANIE_ID", notowanieId));
 				Document doc = parser.getDomElement(xml);
-				
-				int votesProgress = 0;
+
+				int votesProgress;
 				int maxVotes = 0;
-				int currentVotes = 0;
-				
+				int currentVotes;
+
 				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
-				
+
 				for (int i = 0; i < nl.getLength(); i++) {
 					HashMap<String, String> map = new HashMap<>();
 					Element e = (Element) nl.item(i);
-					
+
 					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
 					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
 					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
@@ -1686,7 +2377,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
 					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
-					
+
 					if (i == 0) {
 						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
 						if (maxVotes == 0) {
@@ -1697,14 +2388,15 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					votesProgress = (currentVotes * 100) / maxVotes;
 					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
 					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-					
+
 					synchronized(notowaniaList) { notowaniaList.add(map); }
+					Log.i(TAG, "notowaniaList element: " + notowaniaList );
 				}
-				
+
 			} catch (Exception e) {
 				connectionError = true;
 			}
-			
+
 			// Update UI on main thread
 			final boolean finalConnectionError = connectionError;
 			mainHandler.post(() -> {
@@ -1712,7 +2404,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (notowaniaFragment != null) {
 					notowaniaFragment.updateAdapter();
 				}
-				
+
 				if (finalConnectionError) {
 					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
 				}
@@ -1720,4 +2412,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		});
 	}
 
-}	
+	// Fragment readiness tracking
+	private final Set<String> readyFragments = new HashSet<>();
+	private boolean dataLoadCompleted = false;
+	private boolean pendingFragmentUpdate = false;
+
+}

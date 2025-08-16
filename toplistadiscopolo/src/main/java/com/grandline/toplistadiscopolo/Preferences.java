@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-// Updated to use androidx.preference.PreferenceManager
+import android.preference.PreferenceManager;
 
 import java.util.List;
 

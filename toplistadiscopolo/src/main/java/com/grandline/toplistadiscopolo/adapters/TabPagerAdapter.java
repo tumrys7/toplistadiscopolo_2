@@ -22,7 +22,7 @@ public class TabPagerAdapter extends FragmentStateAdapter {
     public static final int TAB_WYKONAWCY = 4;
     public static final int TAB_NOTOWANIA = 5;
     
-    private static final int TAB_COUNT = 6;
+    public static final int NUM_TABS = 6;
 
     public TabPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
         super(fragmentActivity);
@@ -32,24 +32,35 @@ public class TabPagerAdapter extends FragmentStateAdapter {
     @Override
     public Fragment createFragment(int position) {
         switch (position) {
-            case TAB_LISTA:
-            default:
-                return ListaFragment.newInstance();
             case TAB_POCZEKALNIA:
-                return PoczekalniaFragment.newInstance();
+                return new PoczekalniaFragment();
             case TAB_NOWOSCI:
-                return NowosciFragment.newInstance();
+                return new NowosciFragment();
             case TAB_MOJALISTA:
-                return MojaListaFragment.newInstance();
+                return new MojaListaFragment();
             case TAB_WYKONAWCY:
-                return WykonawcyFragment.newInstance();
+                return new WykonawcyFragment();
             case TAB_NOTOWANIA:
-                return NotowaniaFragment.newInstance();
+                return new NotowaniaFragment();
+            default:
+                return new ListaFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return TAB_COUNT;
+        return NUM_TABS;
+    }
+    
+    // Override getItemId to ensure proper fragment identification for ViewPager2
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+    
+    // Override containsItem to work with getItemId for proper fragment management
+    @Override
+    public boolean containsItem(long itemId) {
+        return itemId >= 0 && itemId < NUM_TABS;
     }
 }

@@ -30,6 +30,7 @@
     <string name="teledysk">Teledysk</string>
     <string name="spotify">Posłuchaj</string>
     <string name="utwory_wykonawcy">Utwory wykonawcy</string>
+    <string name="spotify_go_to_app">Przejdź do Spotify:</string>
     
     <!-- komunikaty -->
     <string name="text_cookie_title">Zgoda na używanie plików cookie</string>
@@ -42,7 +43,7 @@
     <string name="text_connection_error">Brak aktywnego połączenia internetowego! Włącz dostęp do internetu i wybierz Odśwież w menu.</string>
     <string name="text_connection_error_title">Błąd połączenia!</string>
     <string name="text_exit_app">Aby wyjść z aplikacji naciśnij ponownie Wstecz</string>
-    <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Głosuj co VOTES_INTERVAL minut.</string>
+    <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Głosuj raz na VOTES_INTERVAL minut.</string>
     <string name="text_zmiana_jezyka">Zmiany będą widoczne po restarcie aplikacji</string>
         
     <string name="text_awans">Awans</string>
@@ -50,13 +51,13 @@
     <string name="text_glosow">Głosów:</string>
     <string name="text_na_liscie_od">Na liście od:</string>
     <string name="menu_settings">Ustawienia</string>
-
+    
     <string name="title_activity_utwory_wykonawcy">Utwory wykonawcy</string>
     
     <string name="email_subject">Android: DiscoPoloMuzycznaToplista</string>
     
     <string name="title_activity_oprogramie">O programie</string>
-    <string name="wersja_programu">Wersja 1.15</string>
+    <string name="wersja_programu">Wersja</string>
     <string name="company_name">Grand Line</string>
     <string name="programmer1">Jacek Rodak</string>
     <string name="programmer2">Jarosław Wołoszyn</string>
@@ -64,7 +65,9 @@
     <!-- <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7239850955</string> -->
     <string name="banner_ad_unit_id">ca-app-pub-9534304538332188/7835804093</string>
     <string name="banner_exnative_ad_unit_id">ca-app-pub-9534304538332188/1557608346</string>
+    <string name="native_ad_unit_id">ca-app-pub-9534304538332188/7039312538</string>
 
     <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
     <string name="loading">Proszę czekać&#8230;</string>
+    <string name="ad_cta">Button</string>
 </resources>

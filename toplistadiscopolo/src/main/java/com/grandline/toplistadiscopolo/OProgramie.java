@@ -27,7 +27,6 @@ public class OProgramie extends Activity {
 		}
         TextView verName= findViewById(R.id.verName);
         verName.setText(getString(R.string.wersja_programu) + " " + versionName);
-
         // [START info_o_autorach_aplikacji_event]
         Bundle bundle = new Bundle();
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, versionName);

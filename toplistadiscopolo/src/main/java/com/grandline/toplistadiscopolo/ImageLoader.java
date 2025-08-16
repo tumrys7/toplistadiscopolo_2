@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -22,17 +23,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ImageLoader {
-    
+
     MemoryCache memoryCache=new MemoryCache();
     FileCache fileCache;
     private final Map<ImageView, String> imageViews=Collections.synchronizedMap(new WeakHashMap<>());
-    ExecutorService executorService; 
-    
+    ExecutorService executorService;
+
     public ImageLoader(Context context){
         fileCache=new FileCache(context);
         executorService=Executors.newFixedThreadPool(5);
     }
-    
+
     final int stub_id = R.drawable.ic_launcher;
     public void DisplayImage(String url, ImageView imageView)
     {
@@ -46,73 +47,53 @@ public class ImageLoader {
             imageView.setImageResource(stub_id);
         }
     }
-        
+
     private void queuePhoto(String url, ImageView imageView)
     {
         PhotoToLoad p= new PhotoToLoad(url, imageView);
         executorService.submit(new PhotosLoader(p));
     }
-    
-    private Bitmap getBitmap(String url) 
+
+    private Bitmap getBitmap(String url)
     {
         File f=fileCache.getFile(url);
-        
+
         //from SD cache
         Bitmap b = decodeFile(f);
         if(b!=null)
             return b;
-        
+
         //from web
-        HttpURLConnection conn = null;
-        InputStream is = null;
-        OutputStream os = null;
         try {
             Bitmap bitmap;
             URL imageUrl = new URL(url);
-            conn = (HttpURLConnection)imageUrl.openConnection();
+            HttpURLConnection conn = (HttpURLConnection)imageUrl.openConnection();
             conn.setConnectTimeout(30000);
             conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(true);
-            is = conn.getInputStream();
-            os = Files.newOutputStream(f.toPath());
+            InputStream is=conn.getInputStream();
+            OutputStream os = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                os = Files.newOutputStream(f.toPath());
+            }
             Utils.CopyStream(is, os);
+            assert os != null;
+            os.close();
             bitmap = decodeFile(f);
             return bitmap;
         } catch (Exception ex){
-           Log.e("ImageLoader", "Error loading image: " + url, ex);
-           return null;
-        } finally {
-            // Close resources properly
-            try {
-                if (os != null) {
-                    os.close();
-                }
-            } catch (Exception e) {
-                Log.e("ImageLoader", "Error closing OutputStream", e);
-            }
-            try {
-                if (is != null) {
-                    is.close();
-                }
-            } catch (Exception e) {
-                Log.e("ImageLoader", "Error closing InputStream", e);
-            }
-            if (conn != null) {
-                conn.disconnect();
-            }
+            Log.e("ImageLoader", "Error loading image: " + url, ex);
+            return null;
         }
     }
 
     //decodes image and scales it to reduce memory consumption
     private Bitmap decodeFile(File f){
-        FileInputStream fis1 = null;
-        FileInputStream fis2 = null;
         try {
             //decode image size
             BitmapFactory.Options o = new BitmapFactory.Options();
             o.inJustDecodeBounds = true;
-            fis1 = new FileInputStream(f);
-            BitmapFactory.decodeStream(fis1, null, o);
+            BitmapFactory.decodeStream(new FileInputStream(f),null,o);
 
             //Find the correct scale value. It should be the power of 2.
             final int REQUIRED_SIZE=70;
@@ -127,46 +108,28 @@ public class ImageLoader {
             //decode with inSampleSize
             BitmapFactory.Options o2 = new BitmapFactory.Options();
             o2.inSampleSize=scale;
-            fis2 = new FileInputStream(f);
-            return BitmapFactory.decodeStream(fis2, null, o2);
-        } catch (FileNotFoundException ignored) {
-            return null;
-        } finally {
-            // Close FileInputStream resources properly
-            try {
-                if (fis1 != null) {
-                    fis1.close();
-                }
-            } catch (Exception e) {
-                Log.e("ImageLoader", "Error closing first FileInputStream", e);
-            }
-            try {
-                if (fis2 != null) {
-                    fis2.close();
-                }
-            } catch (Exception e) {
-                Log.e("ImageLoader", "Error closing second FileInputStream", e);
-            }
-        }
+            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+        } catch (FileNotFoundException ignored) {}
+        return null;
     }
-    
+
     //Task for the queue
     private static class PhotoToLoad
     {
         public String url;
         public ImageView imageView;
         public PhotoToLoad(String u, ImageView i){
-            url=u; 
+            url=u;
             imageView=i;
         }
     }
-    
+
     class PhotosLoader implements Runnable {
         PhotoToLoad photoToLoad;
         PhotosLoader(PhotoToLoad photoToLoad){
             this.photoToLoad=photoToLoad;
         }
-        
+
         public void run() {
             if(imageViewReused(photoToLoad))
                 return;
@@ -179,12 +142,12 @@ public class ImageLoader {
             a.runOnUiThread(bd);
         }
     }
-    
+
     boolean imageViewReused(PhotoToLoad photoToLoad){
         String tag=imageViews.get(photoToLoad.imageView);
         return tag == null || !tag.equals(photoToLoad.url);
     }
-    
+
     //Used to display bitmap in the UI thread
     class BitmapDisplayer implements Runnable
     {

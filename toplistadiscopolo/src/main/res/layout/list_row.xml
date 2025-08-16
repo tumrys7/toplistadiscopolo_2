@@ -38,7 +38,6 @@
             android:layout_width="66dip"
             android:layout_height="50dip"
             android:src="@drawable/rihanna" />
-
     </LinearLayout>
 
     <!-- Title Of Song -->
@@ -101,8 +100,8 @@
         android:id="@+id/zmiana"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/id_listy"
         android:layout_alignStart="@+id/artist"
+        android:layout_below="@+id/id_listy"
         android:text="Awans o 3 | "
         android:textColor="#343434"
         android:textSize="11sp"
@@ -129,6 +128,11 @@
         android:textColor="#343434"
         android:textSize="11sp"
         tools:ignore="TextSizeCheck" />
+
+
+
+
+
 
 
 <ProgressBar
