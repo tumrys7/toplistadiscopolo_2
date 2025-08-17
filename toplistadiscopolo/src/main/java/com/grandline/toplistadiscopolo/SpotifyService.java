@@ -156,13 +156,16 @@ public class SpotifyService {
         }
         
         // Convert track ID to Spotify URI if needed
+        final String finalSpotifyUri;
         if (!spotifyUri.startsWith("spotify:track:")) {
-            spotifyUri = "spotify:track:" + spotifyUri;
+            finalSpotifyUri = "spotify:track:" + spotifyUri;
+        } else {
+            finalSpotifyUri = spotifyUri;
         }
         
         mSpotifyAppRemote.getPlayerApi()
-                .play(spotifyUri)
-                .setResultCallback(empty -> Log.d(TAG, "Playing track: " + spotifyUri))
+                .play(finalSpotifyUri)
+                .setResultCallback(empty -> Log.d(TAG, "Playing track: " + finalSpotifyUri))
                 .setErrorCallback(throwable -> {
                     Log.e(TAG, "Error playing track", throwable);
                     if (playerListener != null) {
