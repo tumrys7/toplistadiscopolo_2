@@ -85,12 +85,20 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         Log.d(TAG, "Initializing bottom sheet");
         
         try {
-            // Inflate the bottom sheet layout directly (without CoordinatorLayout wrapper)
-            LayoutInflater inflater = LayoutInflater.from(context);
-            bottomSheet = (LinearLayout) inflater.inflate(R.layout.spotify_bottom_sheet_content, rootView, false);
-            
-            // Add the bottom sheet to the root CoordinatorLayout
-            rootView.addView(bottomSheet);
+            // Check if bottom sheet already exists in the view hierarchy
+            View existingBottomSheet = rootView.findViewById(R.id.spotify_bottom_sheet);
+            if (existingBottomSheet != null) {
+                Log.d(TAG, "Bottom sheet already exists, using existing view");
+                bottomSheet = (LinearLayout) existingBottomSheet;
+            } else {
+                // Inflate the bottom sheet layout directly (without CoordinatorLayout wrapper)
+                LayoutInflater inflater = LayoutInflater.from(context);
+                bottomSheet = (LinearLayout) inflater.inflate(R.layout.spotify_bottom_sheet_content, rootView, false);
+                
+                // Add the bottom sheet to the root CoordinatorLayout
+                rootView.addView(bottomSheet);
+                Log.d(TAG, "Bottom sheet inflated and added to view hierarchy");
+            }
             
             // For compatibility, set bottomSheetContainer to rootView since we're not using a separate container
             bottomSheetContainer = (CoordinatorLayout) rootView;
@@ -103,6 +111,8 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             bottomSheetBehavior.setHideable(true);
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             bottomSheetBehavior.setSkipCollapsed(false);
+            
+            Log.d(TAG, "Bottom sheet behavior configured - state: " + getStateString(bottomSheetBehavior.getState()));
             
             // Initialize UI elements
             initializeMiniPlayer();
@@ -125,6 +135,16 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         miniPlayPauseButton = bottomSheet.findViewById(R.id.mini_play_pause_button);
         miniCloseButton = bottomSheet.findViewById(R.id.mini_close_button);
         loadingIndicator = bottomSheet.findViewById(R.id.loading_indicator);
+        
+        // Log which views were found
+        Log.d(TAG, "Mini player views initialized: " +
+            "miniPlayer=" + (miniPlayer != null) +
+            ", miniAlbumArt=" + (miniAlbumArt != null) +
+            ", miniTrackTitle=" + (miniTrackTitle != null) +
+            ", miniTrackArtist=" + (miniTrackArtist != null) +
+            ", miniPlayPauseButton=" + (miniPlayPauseButton != null) +
+            ", miniCloseButton=" + (miniCloseButton != null) +
+            ", loadingIndicator=" + (loadingIndicator != null));
     }
     
     private void initializeExpandedPlayer() {
@@ -239,57 +259,74 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             // Show loading state while connecting
             showLoadingState(true);
             
-            // Check if we already have a connection listener set up
+            // Always set up the connection listener to ensure we handle the pending track
+            Log.d(TAG, "Setting up connection listener for pending track");
+            
+            // Set up connection listener for when connection completes
+            spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+                @Override
+                public void onConnected() {
+                    Log.d(TAG, "Spotify connected callback - checking for pending track");
+                    // Hide loading state
+                    showLoadingState(false);
+                    
+                    // Play the pending track if we have one
+                    if (hasPendingTrack && pendingTrackId != null) {
+                        Log.d(TAG, "Playing pending track: " + pendingTrackId);
+                        spotifyService.playTrack(pendingTrackId);
+                        hasPendingTrack = false;
+                        pendingTrackId = null;
+                        pendingTrackTitle = null;
+                        pendingTrackArtist = null;
+                    }
+                }
+                
+                @Override
+                public void onConnectionFailed(Throwable error) {
+                    Log.e(TAG, "Failed to connect to Spotify", error);
+                    // Hide loading state and show error
+                    showLoadingState(false);
+                    hasPendingTrack = false;
+                    
+                    // Keep the track info displayed even if connection failed
+                    // This way users can still see what track they tried to play
+                    
+                    // Show appropriate error message to the user
+                    String errorMessage = error != null ? error.getMessage() : "Unknown error";
+                    if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
+                        updateTrackInfo("Spotify Not Installed", "Install Spotify app to play: " + (pendingTrackTitle != null ? pendingTrackTitle : "this track"));
+                    } else if (errorMessage.contains("UserNotAuthorizedException") || errorMessage.contains("not authorized")) {
+                        updateTrackInfo("Authorization Required", "Please authorize the app in Spotify");
+                    } else if (errorMessage.contains("OfflineException") || errorMessage.contains("offline")) {
+                        updateTrackInfo("Spotify Offline", "Please check your connection and try again");
+                    } else {
+                        updateTrackInfo("Connection Failed", "Unable to connect. Track: " + (pendingTrackTitle != null ? pendingTrackTitle : ""));
+                    }
+                    
+                    // Clear pending track data after displaying the error
+                    pendingTrackId = null;
+                    pendingTrackTitle = null;
+                    pendingTrackArtist = null;
+                }
+                
+                @Override
+                public void onDisconnected() {
+                    Log.d(TAG, "Spotify disconnected");
+                    // Handle disconnection
+                    showLoadingState(false);
+                    hasPendingTrack = false;
+                    pendingTrackId = null;
+                    pendingTrackTitle = null;
+                    pendingTrackArtist = null;
+                }
+            });
+            
+            // Check if we need to start a new connection
             if (!spotifyService.isConnecting()) {
-                Log.d(TAG, "Setting up new connection listener");
-                
-                // Set up connection listener for when connection completes
-                spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
-                    @Override
-                    public void onConnected() {
-                        Log.d(TAG, "Spotify connected callback - checking for pending track");
-                        // Hide loading state
-                        showLoadingState(false);
-                        
-                        // Play the pending track if we have one
-                        if (hasPendingTrack && pendingTrackId != null) {
-                            Log.d(TAG, "Playing pending track: " + pendingTrackId);
-                            spotifyService.playTrack(pendingTrackId);
-                            hasPendingTrack = false;
-                        }
-                    }
-                    
-                    @Override
-                    public void onConnectionFailed(Throwable error) {
-                        Log.e(TAG, "Failed to connect to Spotify", error);
-                        // Hide loading state and show error
-                        showLoadingState(false);
-                        hasPendingTrack = false;
-                        
-                        // Show appropriate error message to the user
-                        String errorMessage = error.getMessage();
-                        if (errorMessage != null && errorMessage.contains("not installed")) {
-                            updateTrackInfo("Spotify Not Installed", "Please install Spotify app to play music");
-                        } else {
-                            updateTrackInfo("Connection Failed", "Unable to connect to Spotify. Please try again.");
-                        }
-                    }
-                    
-                    @Override
-                    public void onDisconnected() {
-                        Log.d(TAG, "Spotify disconnected");
-                        // Handle disconnection
-                        showLoadingState(false);
-                        hasPendingTrack = false;
-                    }
-                });
-                
-                // Start the connection
                 Log.d(TAG, "Starting new Spotify connection");
                 spotifyService.connect();
             } else {
                 Log.d(TAG, "Spotify is already connecting, track will be played when connection completes");
-                // Connection is already in progress, the pending track will be played when it completes
             }
         }
     }
@@ -431,10 +468,34 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     }
     
     private void updateTrackInfo(String title, String artist) {
-        miniTrackTitle.setText(title != null ? title : context.getString(R.string.no_track_playing));
-        miniTrackArtist.setText(artist != null ? artist : "");
-        expandedTrackTitle.setText(title != null ? title : context.getString(R.string.no_track_playing));
-        expandedTrackArtist.setText(artist != null ? artist : "");
+        Log.d(TAG, "Updating track info - Title: " + title + ", Artist: " + artist);
+        
+        String displayTitle = title != null ? title : context.getString(R.string.no_track_playing);
+        String displayArtist = artist != null ? artist : "";
+        
+        if (miniTrackTitle != null) {
+            miniTrackTitle.setText(displayTitle);
+        } else {
+            Log.w(TAG, "miniTrackTitle is null!");
+        }
+        
+        if (miniTrackArtist != null) {
+            miniTrackArtist.setText(displayArtist);
+        } else {
+            Log.w(TAG, "miniTrackArtist is null!");
+        }
+        
+        if (expandedTrackTitle != null) {
+            expandedTrackTitle.setText(displayTitle);
+        } else {
+            Log.w(TAG, "expandedTrackTitle is null!");
+        }
+        
+        if (expandedTrackArtist != null) {
+            expandedTrackArtist.setText(displayArtist);
+        } else {
+            Log.w(TAG, "expandedTrackArtist is null!");
+        }
     }
     
     private void updatePlayPauseButtons(boolean playing) {
