@@ -32,6 +32,8 @@
     <string name="spotify">Play music</string>
     <string name="utwory_wykonawcy">Artist\'s songs</string>
     <string name="spotify_go_to_app">Go to Spotify:</string>
+    <string name="connecting_spotify">Connecting to Spotify...</string>
+    <string name="connection_failed">Connection failed</string>
     
     <!-- komunikaty -->
     <string name="text_cookie_title">Consent to Use of cookies</string>

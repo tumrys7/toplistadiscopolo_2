@@ -15,6 +15,15 @@
     app:behavior_hideable="true"
     app:behavior_skipCollapsed="false">
 
+    <!-- Loading Indicator -->
+    <ProgressBar
+        android:id="@+id/loading_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="20dp"
+        android:visibility="gone" />
+
     <!-- Mini Player (Collapsed State) -->
     <LinearLayout
         android:id="@+id/mini_player"
