@@ -1380,10 +1380,15 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
 					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
 					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
-					if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_awans))) {
+					
+					// Format the place change text with arrow and number
+					String originalChangeText = parser.getValue(e, Constants.KEY_PLACE_CHANGE);
+					String formattedChangeText = formatPlaceChangeText(originalChangeText);
+					map.put(Constants.KEY_PLACE_CHANGE, formattedChangeText + Constants.TEXT_SEPARATOR);
+					
+					if (originalChangeText.contains(getString(R.string.text_awans))) {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
-					} else if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_spadek))) {
+					} else if (originalChangeText.contains(getString(R.string.text_spadek))) {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
 					} else {
 						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
@@ -2182,65 +2187,69 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				NodeList nl = doc.getElementsByTagName(Constants.KEY_SONG);
 
 				for (int i = 0; i < nl.getLength(); i++) {
-					HashMap<String, String> map = new HashMap<>();
-					Element e = (Element) nl.item(i);
+									HashMap<String, String> map = new HashMap<>();
+				Element e = (Element) nl.item(i);
 
-					map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
-					map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
-					map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
-					map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
-					map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
-					// Show votes since adReward is true
-					map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
-					map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
-					map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
-					map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
-					map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
-					map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
-					map.put(Constants.KEY_PLACE_CHANGE, parser.getValue(e, Constants.KEY_PLACE_CHANGE) + Constants.TEXT_SEPARATOR);
+				map.put(Constants.KEY_ID, parser.getValue(e, Constants.KEY_ID));
+				map.put(Constants.KEY_ID_GRUPY, parser.getValue(e, Constants.KEY_ID_GRUPY));
+				map.put(Constants.KEY_TITLE, parser.getValue(e, Constants.KEY_TITLE));
+				map.put(Constants.KEY_ARTIST, parser.getValue(e, Constants.KEY_ARTIST));
+				map.put(Constants.KEY_ARTIST_ID, parser.getValue(e, Constants.KEY_ARTIST_ID));
+				// Show votes since adReward is true
+				map.put(Constants.KEY_VOTES, " | " + getString(R.string.text_glosow) + " " + parser.getValue(e, Constants.KEY_VOTES));
+				map.put(Constants.KEY_THUMB_URL, parser.getValue(e, Constants.KEY_THUMB_URL));
+				map.put(Constants.KEY_CREATE_DATE, " " + parser.getValue(e, Constants.KEY_CREATE_DATE));
+				map.put(Constants.KEY_POSITION, parser.getValue(e, Constants.KEY_POSITION));
+				map.put(Constants.KEY_VIDEO, parser.getValue(e, Constants.KEY_VIDEO));
+				map.put(Constants.KEY_SPOTIFY, parser.getValue(e, Constants.KEY_SPOTIFY));
+				
+				// Format the place change text with arrow and number
+				String originalChangeText = parser.getValue(e, Constants.KEY_PLACE_CHANGE);
+				String formattedChangeText = formatPlaceChangeText(originalChangeText);
+				map.put(Constants.KEY_PLACE_CHANGE, formattedChangeText + Constants.TEXT_SEPARATOR);
 
-					if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_awans))) {
-						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
-					} else if (parser.getValue(e, Constants.KEY_PLACE_CHANGE).contains(getString(R.string.text_spadek))) {
-						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
-					} else {
-						map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
-					}
-
-					if (i == 0) {
-						maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
-						if (maxVotes == 0) {
-							maxVotes = 1;
-						}
-					}
-					currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
-					votesProgress = (currentVotes * 100) / maxVotes;
-					map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
-					map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
-
-					synchronized(songsList) { songsList.add(map); }
-					Log.i(TAG, "songsList element: " + songsList );
-
+				if (originalChangeText.contains(getString(R.string.text_awans))) {
+					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_UP);
+				} else if (originalChangeText.contains(getString(R.string.text_spadek))) {
+					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_DOWN);
+				} else {
+					map.put(Constants.KEY_ARROW_TYPE, Constants.KEY_ARROW_NO_CHANGE);
 				}
 
-			} catch (Exception e) {
-				connectionError = true;
+				if (i == 0) {
+					maxVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+					if (maxVotes == 0) {
+						maxVotes = 1;
+					}
+				}
+				currentVotes = Integer.parseInt(parser.getValue(e, Constants.KEY_VOTES));
+				votesProgress = (currentVotes * 100) / maxVotes;
+				map.put(Constants.KEY_VOTES_PROGRESS, Integer.toString(votesProgress));
+				map.put(Constants.KEY_SHOW_VOTES_PROGRESS, "TRUE");
+
+				synchronized(songsList) { songsList.add(map); }
+				Log.i(TAG, "songsList element: " + songsList );
+
 			}
 
-			// Update UI on main thread
-			final boolean finalConnectionError = connectionError;
-			mainHandler.post(() -> {
-				ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
-				if (listaFragment != null) {
-					listaFragment.updateAdapter();
-				}
+		} catch (Exception e) {
+			connectionError = true;
+		}
 
-				if (finalConnectionError) {
-					Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
-				}
-			});
+		// Update UI on main thread
+		final boolean finalConnectionError = connectionError;
+		mainHandler.post(() -> {
+			ListaFragment listaFragment = getFragmentByPosition(TabPagerAdapter.TAB_LISTA);
+			if (listaFragment != null) {
+				listaFragment.updateAdapter();
+			}
+
+			if (finalConnectionError) {
+				Toast.makeText(ListaPrzebojowDiscoPolo.this, getString(R.string.text_connection_error), Toast.LENGTH_SHORT).show();
+			}
 		});
-	}
+	});
+}
 
 	// Refresh Poczekalnia with adReward = true
 	public void refreshPoczekalniaWithAdReward() {
@@ -2395,5 +2404,53 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	private final Set<String> readyFragments = new HashSet<>();
 	private boolean dataLoadCompleted = false;
 	private boolean pendingFragmentUpdate = false;
+
+	/**
+	 * Formats the place change text to display with arrow and number
+	 * e.g., "Awans o 1" becomes "↑ +1", "Spadek o 3" becomes "↓ -3"
+	 * @param changeText The original change text from XML
+	 * @return Formatted text with arrow and number
+	 */
+	private String formatPlaceChangeText(String changeText) {
+		if (changeText == null || changeText.isEmpty()) {
+			return "";
+		}
+		
+		// Check if it's an increase (Awans)
+		if (changeText.contains("Awans")) {
+			// Extract the number from text like "Awans o 1"
+			String[] parts = changeText.split("\\s+");
+			for (int i = 0; i < parts.length; i++) {
+				if (parts[i].equals("o") && i + 1 < parts.length) {
+					try {
+						int changeValue = Integer.parseInt(parts[i + 1]);
+						return "↑ +" + changeValue;
+					} catch (NumberFormatException e) {
+						// If parsing fails, return original text
+						return changeText;
+					}
+				}
+			}
+		}
+		// Check if it's a decrease (Spadek)
+		else if (changeText.contains("Spadek")) {
+			// Extract the number from text like "Spadek o 3"
+			String[] parts = changeText.split("\\s+");
+			for (int i = 0; i < parts.length; i++) {
+				if (parts[i].equals("o") && i + 1 < parts.length) {
+					try {
+						int changeValue = Integer.parseInt(parts[i + 1]);
+						return "↓ -" + changeValue;
+					} catch (NumberFormatException e) {
+						// If parsing fails, return original text
+						return changeText;
+					}
+				}
+			}
+		}
+		
+		// For other cases (no change, new entry, etc.), return original text
+		return changeText;
+	}
 
 }
