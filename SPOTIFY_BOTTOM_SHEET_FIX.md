@@ -1,97 +1,79 @@
-# Spotify Bottom Sheet Fix Summary
+# Spotify Bottom Sheet Fix - Alert Dialog Dismissal Issue
 
-## Problem
-When users clicked on "Posłuchaj" (Listen) with Spotify option in the Alert Dialog, the Spotify Bottom Sheet was not appearing immediately. The logs showed that the connection was being established but the bottom sheet remained hidden until the connection completed.
+## Problem Description
+When clicking on "Posłuchaj" (Listen) option in the Alert Dialog, the Spotify Bottom Sheet was not showing properly. The logs indicated that:
+1. The Alert Dialog was being dismissed immediately after the click
+2. The bottom sheet tried to show but wasn't visible
+3. Spotify connection was still in progress when trying to play
 
-## Root Cause
-The `playTrack` method in `SpotifyBottomSheetController` was only showing the bottom sheet after Spotify was successfully connected. This created a poor user experience where:
-1. User clicks on Spotify option
-2. Alert Dialog dismisses
-3. Nothing visible happens (but connection is happening in background)
-4. Bottom sheet suddenly appears when connection completes (could be several seconds later)
+## Root Causes
+1. **UI Conflict**: The Alert Dialog dismissal was happening simultaneously with the bottom sheet display, causing a UI conflict
+2. **Connection Timing**: Multiple rapid clicks could overwrite the connection listener, causing only the last track to play
+3. **State Management**: The bottom sheet state change wasn't properly queued after dialog dismissal
 
 ## Solution Implemented
 
-### 1. Immediate Bottom Sheet Display
-Modified the `playTrack` method to show the bottom sheet immediately when called, regardless of connection status:
+### 1. Added Delay After Dialog Dismissal
+**File**: `ListaPrzebojowDiscoPolo.java`
 ```java
-// Show bottom sheet immediately for user feedback
-showBottomSheet(true);
+// Add a small delay to ensure the Alert Dialog is fully dismissed
+new Handler(Looper.getMainLooper()).postDelayed(() -> {
+    spotifyBottomSheetController.playTrack(spotifyTrackId, title, artist);
+}, 100); // 100ms delay
 ```
 
-### 2. Loading State Implementation
-Added a loading indicator to provide visual feedback while connecting:
+### 2. Improved Connection Management
+**File**: `SpotifyBottomSheetController.java`
+- Added pending track mechanism to queue tracks while connecting
+- Prevent overwriting connection listeners
+- Store pending track info to play after connection
 
-#### Layout Changes (spotify_bottom_sheet_content.xml)
-- Added a ProgressBar widget at the top of the bottom sheet layout
-- Initially hidden (`visibility="gone"`)
-- Centered horizontally for better visibility
+### 3. Enhanced Bottom Sheet Display
+**File**: `SpotifyBottomSheetController.java`
+- Use `bringToFront()` to ensure visibility
+- Request focus for interactivity
+- Use `post()` for state changes to queue after UI operations
 
-#### Controller Changes (SpotifyBottomSheetController.java)
-- Added `ProgressBar loadingIndicator` field
-- Implemented `showLoadingState(boolean show)` method that:
-  - Shows/hides the loading indicator
-  - Disables/enables playback controls during loading
-  - Updates track info to show "Connecting to Spotify..." message
+## Testing Scenarios
 
-### 3. Connection State Handling
-Enhanced the connection flow to properly manage UI states:
-- Show loading state when starting connection
-- Hide loading state when connection succeeds
-- Hide loading state and show error message when connection fails
-- Properly handle disconnection events
+### Test 1: Single Track Selection
+1. Open the app
+2. Click on any track to open Alert Dialog
+3. Click "Posłuchaj" (Spotify option)
+4. **Expected**: Bottom sheet should appear with the track loading
 
-### 4. String Resources
-Added new string resources for better user feedback:
-- English: "Connecting to Spotify..." / "Connection failed"
-- Polish: "Łączenie ze Spotify..." / "Połączenie nieudane"
+### Test 2: Rapid Multiple Selections
+1. Open Alert Dialog for Track A
+2. Click "Posłuchaj"
+3. Quickly open Alert Dialog for Track B
+4. Click "Posłuchaj" again
+5. **Expected**: Bottom sheet should play Track B (last selected)
 
-## Files Modified
+### Test 3: Connection Already Established
+1. Play a track successfully
+2. Open Alert Dialog for another track
+3. Click "Posłuchaj"
+4. **Expected**: New track should play immediately
 
-1. **SpotifyBottomSheetController.java**
-   - Modified `playTrack()` method to show bottom sheet immediately
-   - Added `showLoadingState()` method
-   - Added loading indicator field and initialization
-   - Enhanced connection callbacks to manage loading state
+### Test 4: No Internet Connection
+1. Disable internet
+2. Try to play a track
+3. **Expected**: Error message should appear in bottom sheet
 
-2. **spotify_bottom_sheet_content.xml**
-   - Added ProgressBar widget for loading indication
+## Key Improvements
+1. **Reliability**: Bottom sheet now shows consistently after dialog dismissal
+2. **User Experience**: Smooth transition from dialog to bottom sheet
+3. **Error Handling**: Better handling of connection failures
+4. **Performance**: Prevents multiple connection attempts
 
-3. **strings.xml** (both English and Polish)
-   - Added strings for connection states
+## Debug Logging
+Enhanced logging has been added to track:
+- Dialog dismissal timing
+- Bottom sheet state changes
+- Connection status
+- Track queueing
 
-## Expected Behavior After Fix
-
-1. User clicks "Posłuchaj" (Spotify option) in Alert Dialog
-2. Bottom sheet appears immediately with:
-   - Track title and artist displayed
-   - Loading indicator visible
-   - Playback controls disabled
-3. While Spotify connects:
-   - Loading indicator animates
-   - User sees "Connecting to Spotify..." if no track info available
-4. When connection succeeds:
-   - Loading indicator disappears
-   - Playback controls become enabled
-   - Track starts playing
-5. If connection fails:
-   - Loading indicator disappears
-   - Error message displayed
-   - User can retry or dismiss
-
-## Testing Recommendations
-
-1. Test with Spotify app not installed
-2. Test with Spotify app installed but not logged in
-3. Test with Spotify app installed and logged in
-4. Test rapid clicking on multiple tracks
-5. Test network disconnection scenarios
-6. Test dismissing bottom sheet during connection
-
-## Benefits
-
-1. **Immediate Feedback**: Users see the bottom sheet right away, confirming their action was received
-2. **Clear Status**: Loading indicator clearly shows that connection is in progress
-3. **Better UX**: No confusion about whether the app is working or frozen
-4. **Error Handling**: Users are informed if connection fails
-5. **Consistent Behavior**: Bottom sheet behavior is predictable and responsive
+Monitor logs with tag filters:
+- `SpotifyDebug` - Main activity operations
+- `SpotifyBottomSheet` - Bottom sheet controller
+- `SpotifyService` - Spotify connection service

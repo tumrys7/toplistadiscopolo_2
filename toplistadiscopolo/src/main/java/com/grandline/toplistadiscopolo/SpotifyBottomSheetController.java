@@ -66,6 +66,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private String currentTrackTitle;
     private String currentTrackArtist;
     
+    // Track to play after connection
+    private String pendingTrackId;
+    private String pendingTrackTitle;
+    private String pendingTrackArtist;
+    private boolean hasPendingTrack = false;
+    
     public SpotifyBottomSheetController(Context context, ViewGroup rootView) {
         this.context = context;
         this.rootView = rootView;
@@ -218,48 +224,62 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             // Already connected, play immediately
             spotifyService.playTrack(spotifyTrackId);
         } else {
-            Log.d(TAG, "Spotify not connected, setting up connection listener");
+            Log.d(TAG, "Spotify not connected, setting up connection");
+            
+            // Store the pending track info
+            this.pendingTrackId = spotifyTrackId;
+            this.pendingTrackTitle = title;
+            this.pendingTrackArtist = artist;
+            this.hasPendingTrack = true;
             
             // Show loading state while connecting
             showLoadingState(true);
             
-            // Set up connection listener for when connection completes
-            // This will be called even if connection is already in progress
-            spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
-                @Override
-                public void onConnected() {
-                    Log.d(TAG, "Spotify connected callback - playing track: " + spotifyTrackId);
-                    // Hide loading state
-                    showLoadingState(false);
-                    // Play track after connection
-                    spotifyService.playTrack(spotifyTrackId);
-                }
+            // Check if we already have a connection listener set up
+            if (!spotifyService.isConnecting()) {
+                Log.d(TAG, "Setting up new connection listener");
                 
-                @Override
-                public void onConnectionFailed(Throwable error) {
-                    Log.e(TAG, "Failed to connect to Spotify", error);
-                    // Hide loading state and show error
-                    showLoadingState(false);
-                    // Optionally show an error message to the user
-                    updateTrackInfo(context.getString(R.string.connection_failed), error.getMessage());
-                }
+                // Set up connection listener for when connection completes
+                spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+                    @Override
+                    public void onConnected() {
+                        Log.d(TAG, "Spotify connected callback - checking for pending track");
+                        // Hide loading state
+                        showLoadingState(false);
+                        
+                        // Play the pending track if we have one
+                        if (hasPendingTrack && pendingTrackId != null) {
+                            Log.d(TAG, "Playing pending track: " + pendingTrackId);
+                            spotifyService.playTrack(pendingTrackId);
+                            hasPendingTrack = false;
+                        }
+                    }
+                    
+                    @Override
+                    public void onConnectionFailed(Throwable error) {
+                        Log.e(TAG, "Failed to connect to Spotify", error);
+                        // Hide loading state and show error
+                        showLoadingState(false);
+                        hasPendingTrack = false;
+                        // Show error message to the user
+                        updateTrackInfo(context.getString(R.string.connection_failed), error.getMessage());
+                    }
+                    
+                    @Override
+                    public void onDisconnected() {
+                        Log.d(TAG, "Spotify disconnected");
+                        // Handle disconnection
+                        showLoadingState(false);
+                        hasPendingTrack = false;
+                    }
+                });
                 
-                @Override
-                public void onDisconnected() {
-                    Log.d(TAG, "Spotify disconnected");
-                    // Handle disconnection
-                    showLoadingState(false);
-                }
-            });
-            
-            // If already connecting, the listener above will be called when connection completes
-            // If not connecting, this will start a new connection
-            if (spotifyService.isConnecting()) {
-                Log.d(TAG, "Spotify is already connecting, waiting for connection to complete");
-                // The listener we just set will be called when the ongoing connection completes
-            } else {
+                // Start the connection
                 Log.d(TAG, "Starting new Spotify connection");
                 spotifyService.connect();
+            } else {
+                Log.d(TAG, "Spotify is already connecting, track will be played when connection completes");
+                // Connection is already in progress, the pending track will be played when it completes
             }
         }
     }
@@ -280,14 +300,26 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Ensure the bottom sheet is visible
         bottomSheet.setVisibility(View.VISIBLE);
         
+        // Force the bottom sheet to the front
+        bottomSheet.bringToFront();
+        
+        // Request focus to ensure it's interactive
+        bottomSheet.requestFocus();
+        
+        // Set peek height before changing state
+        bottomSheetBehavior.setPeekHeight(dpToPx(72));
+        
         if (expanded) {
-            bottomSheetBehavior.setPeekHeight(dpToPx(72));
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            Log.d(TAG, "Bottom sheet set to EXPANDED state");
+            // Use post to ensure the state change happens after any pending UI operations
+            bottomSheet.post(() -> {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                Log.d(TAG, "Bottom sheet set to EXPANDED state");
+            });
         } else {
-            bottomSheetBehavior.setPeekHeight(dpToPx(72));
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            Log.d(TAG, "Bottom sheet set to COLLAPSED state");
+            bottomSheet.post(() -> {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                Log.d(TAG, "Bottom sheet set to COLLAPSED state");
+            });
         }
     }
     
