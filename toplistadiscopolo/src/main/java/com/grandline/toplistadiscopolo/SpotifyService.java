@@ -63,7 +63,14 @@ public class SpotifyService {
     
     // Set listeners
     public void setConnectionListener(SpotifyConnectionListener listener) {
+        Log.d(TAG, "Setting connection listener: " + (listener != null ? "not null" : "null"));
         this.connectionListener = listener;
+        
+        // If we're already connected, notify the listener immediately
+        if (isConnected() && listener != null) {
+            Log.d(TAG, "Already connected, notifying new listener immediately");
+            listener.onConnected();
+        }
     }
     
     public void setPlayerListener(SpotifyPlayerListener listener) {
@@ -84,9 +91,10 @@ public class SpotifyService {
     public boolean isSpotifyInstalled() {
         try {
             context.getPackageManager().getPackageInfo("com.spotify.music", 0);
+            Log.d(TAG, "Spotify app is installed");
             return true;
         } catch (Exception e) {
-            Log.w(TAG, "Spotify app is not installed");
+            Log.w(TAG, "Spotify app is not installed: " + e.getMessage());
             return false;
         }
     }
@@ -115,17 +123,22 @@ public class SpotifyService {
         // If already connecting, don't start a new connection
         // The current connectionListener will be called when the ongoing connection completes
         if (isConnecting) {
-            Log.d(TAG, "Already connecting to Spotify");
+            Log.d(TAG, "Already connecting to Spotify - connection listener will be notified when complete");
             return;
         }
         
         isConnecting = true;
         Log.d(TAG, "Attempting to connect to Spotify (attempt " + (connectionRetryCount + 1) + " of " + MAX_CONNECTION_RETRIES + ")");
+        Log.d(TAG, "Using context: " + context.getClass().getName() + ", Package: " + context.getPackageName());
+        
+        Log.d(TAG, "Creating ConnectionParams with CLIENT_ID: " + CLIENT_ID + ", REDIRECT_URI: " + REDIRECT_URI);
         
         ConnectionParams connectionParams = new ConnectionParams.Builder(CLIENT_ID)
                 .setRedirectUri(REDIRECT_URI)
                 .showAuthView(true)
                 .build();
+        
+        Log.d(TAG, "Calling SpotifyAppRemote.connect()");
         
         SpotifyAppRemote.connect(context, connectionParams, new Connector.ConnectionListener() {
             @Override
@@ -133,23 +146,46 @@ public class SpotifyService {
                 mSpotifyAppRemote = spotifyAppRemote;
                 isConnecting = false;
                 connectionRetryCount = 0; // Reset retry count on successful connection
-                Log.d(TAG, "Connected to Spotify");
+                Log.d(TAG, "Successfully connected to Spotify AppRemote");
                 
                 // Subscribe to player state
                 subscribeToPlayerState();
                 
                 if (connectionListener != null) {
+                    Log.d(TAG, "Notifying connection listener of successful connection");
                     connectionListener.onConnected();
+                } else {
+                    Log.w(TAG, "No connection listener set");
                 }
             }
             
             @Override
             public void onFailure(Throwable throwable) {
                 isConnecting = false;
-                Log.e(TAG, "Failed to connect to Spotify (attempt " + (connectionRetryCount + 1) + ")", throwable);
+                Log.e(TAG, "Failed to connect to Spotify (attempt " + (connectionRetryCount + 1) + ") - Error: " + throwable.getMessage(), throwable);
+                
+                // Check the type of error
+                String errorMessage = throwable.getMessage();
+                boolean shouldRetry = true;
+                
+                // Check for specific error types that shouldn't be retried
+                if (errorMessage != null) {
+                    if (errorMessage.contains("CouldNotFindSpotifyApp") || 
+                        errorMessage.contains("Spotify is not installed")) {
+                        Log.e(TAG, "Spotify app not found - not retrying");
+                        shouldRetry = false;
+                    } else if (errorMessage.contains("UserNotAuthorizedException") ||
+                               errorMessage.contains("not authorized")) {
+                        Log.e(TAG, "User not authorized - will retry to show auth view");
+                        // User needs to authorize, retry will show auth view
+                    } else if (errorMessage.contains("OfflineException") ||
+                               errorMessage.contains("offline")) {
+                        Log.e(TAG, "Spotify is offline - will retry");
+                    }
+                }
                 
                 // Check if we should retry
-                if (connectionRetryCount < MAX_CONNECTION_RETRIES - 1) {
+                if (shouldRetry && connectionRetryCount < MAX_CONNECTION_RETRIES - 1) {
                     connectionRetryCount++;
                     Log.d(TAG, "Retrying connection in 2 seconds...");
                     
@@ -159,9 +195,13 @@ public class SpotifyService {
                         connect();
                     }, 2000); // 2 second delay before retry
                 } else {
-                    // Max retries reached, notify listener of failure
+                    // Max retries reached or non-retryable error, notify listener of failure
                     connectionRetryCount = 0; // Reset for next time
-                    Log.e(TAG, "Max connection retries reached. Connection failed.");
+                    if (!shouldRetry) {
+                        Log.e(TAG, "Non-retryable error occurred. Connection failed.");
+                    } else {
+                        Log.e(TAG, "Max connection retries reached. Connection failed.");
+                    }
                     
                     if (connectionListener != null) {
                         connectionListener.onConnectionFailed(throwable);
@@ -210,8 +250,9 @@ public class SpotifyService {
     // Play a track by Spotify URI
     public void playTrack(String spotifyUri) {
         if (!isConnected()) {
-            Log.w(TAG, "Not connected to Spotify");
-            connect();
+            Log.w(TAG, "Not connected to Spotify - track will be played after connection is established");
+            // Don't try to connect here - let the controller handle the connection
+            // The controller will call playTrack again after connection is established
             return;
         }
         
@@ -223,11 +264,15 @@ public class SpotifyService {
             finalSpotifyUri = spotifyUri;
         }
         
+        Log.d(TAG, "Attempting to play track: " + finalSpotifyUri);
+        
         mSpotifyAppRemote.getPlayerApi()
                 .play(finalSpotifyUri)
-                .setResultCallback(empty -> Log.d(TAG, "Playing track: " + finalSpotifyUri))
+                .setResultCallback(empty -> {
+                    Log.d(TAG, "Successfully started playing track: " + finalSpotifyUri);
+                })
                 .setErrorCallback(throwable -> {
-                    Log.e(TAG, "Error playing track", throwable);
+                    Log.e(TAG, "Error playing track: " + finalSpotifyUri, throwable);
                     if (playerListener != null) {
                         playerListener.onError("Failed to play track: " + throwable.getMessage());
                     }
