@@ -2,6 +2,8 @@ package com.grandline.toplistadiscopolo;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.spotify.android.appremote.api.ConnectionParams;
@@ -23,6 +25,9 @@ public class SpotifyService {
     private SpotifyAppRemote mSpotifyAppRemote;
     private Context context;
     private boolean isConnecting = false;
+    private int connectionRetryCount = 0;
+    private static final int MAX_CONNECTION_RETRIES = 3;
+    private Handler retryHandler = new Handler(Looper.getMainLooper());
     
     // Listeners
     private SpotifyConnectionListener connectionListener;
@@ -75,11 +80,32 @@ public class SpotifyService {
         return isConnecting;
     }
     
+    // Check if Spotify app is installed
+    public boolean isSpotifyInstalled() {
+        try {
+            context.getPackageManager().getPackageInfo("com.spotify.music", 0);
+            return true;
+        } catch (Exception e) {
+            Log.w(TAG, "Spotify app is not installed");
+            return false;
+        }
+    }
+    
     // Connect to Spotify
     public void connect() {
+        // Check if Spotify is installed first
+        if (!isSpotifyInstalled()) {
+            Log.e(TAG, "Spotify app is not installed on this device");
+            if (connectionListener != null) {
+                connectionListener.onConnectionFailed(new Exception("Spotify app is not installed. Please install Spotify from the Play Store."));
+            }
+            return;
+        }
+        
         // If already connected, notify listener immediately
         if (isConnected()) {
             Log.d(TAG, "Already connected to Spotify");
+            connectionRetryCount = 0; // Reset retry count on successful connection
             if (connectionListener != null) {
                 connectionListener.onConnected();
             }
@@ -94,6 +120,7 @@ public class SpotifyService {
         }
         
         isConnecting = true;
+        Log.d(TAG, "Attempting to connect to Spotify (attempt " + (connectionRetryCount + 1) + " of " + MAX_CONNECTION_RETRIES + ")");
         
         ConnectionParams connectionParams = new ConnectionParams.Builder(CLIENT_ID)
                 .setRedirectUri(REDIRECT_URI)
@@ -105,6 +132,7 @@ public class SpotifyService {
             public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                 mSpotifyAppRemote = spotifyAppRemote;
                 isConnecting = false;
+                connectionRetryCount = 0; // Reset retry count on successful connection
                 Log.d(TAG, "Connected to Spotify");
                 
                 // Subscribe to player state
@@ -118,10 +146,26 @@ public class SpotifyService {
             @Override
             public void onFailure(Throwable throwable) {
                 isConnecting = false;
-                Log.e(TAG, "Failed to connect to Spotify", throwable);
+                Log.e(TAG, "Failed to connect to Spotify (attempt " + (connectionRetryCount + 1) + ")", throwable);
                 
-                if (connectionListener != null) {
-                    connectionListener.onConnectionFailed(throwable);
+                // Check if we should retry
+                if (connectionRetryCount < MAX_CONNECTION_RETRIES - 1) {
+                    connectionRetryCount++;
+                    Log.d(TAG, "Retrying connection in 2 seconds...");
+                    
+                    // Retry after a delay
+                    retryHandler.postDelayed(() -> {
+                        Log.d(TAG, "Retrying Spotify connection...");
+                        connect();
+                    }, 2000); // 2 second delay before retry
+                } else {
+                    // Max retries reached, notify listener of failure
+                    connectionRetryCount = 0; // Reset for next time
+                    Log.e(TAG, "Max connection retries reached. Connection failed.");
+                    
+                    if (connectionListener != null) {
+                        connectionListener.onConnectionFailed(throwable);
+                    }
                 }
             }
         });
