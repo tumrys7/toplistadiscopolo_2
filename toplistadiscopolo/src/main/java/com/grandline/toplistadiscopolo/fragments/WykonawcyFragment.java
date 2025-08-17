@@ -25,8 +25,7 @@ public class WykonawcyFragment extends Fragment {
 
     private ListView listWykon;
     private WykAdapter adapterWyk;
- //   private EditText inputSearch;
-//    private ImageButton clearButton;
+    private SearchView searchView;
     private ListaPrzebojowDiscoPolo parentActivity;
 
     @Override
@@ -43,6 +42,7 @@ public class WykonawcyFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_wykonawcy, container, false);
 
         listWykon = view.findViewById(R.id.listWykon);
+        searchView = view.findViewById(R.id.search_view);
 
         return view;
     }
@@ -61,35 +61,75 @@ public class WykonawcyFragment extends Fragment {
                 final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
                 parentActivity.showAuthSongs(id_wykonawcy);
             });
-            SearchView search_view = view.findViewById(R.id.search_view);
-            EditText searchEditText = search_view.findViewById(androidx.appcompat.R.id.search_src_text);
-            searchEditText.setHintTextColor(Color.parseColor("#546E7A"));
-
-            // Listener na tekst:
-            search_view.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override
-                public boolean onQueryTextSubmit(String query) {
-                    if (adapterWyk != null) {
-                        adapterWyk.safeNotifyDataSetChanged();
-                    }
-                    return false;
-                }
-                @Override
-                public boolean onQueryTextChange(String newText) {
-                    if (parentActivity != null) {
-                        parentActivity.filterWykonawcy(parentActivity.wykonList, newText);
-                    }
-                    return false;
-                }
-            });
-
-
- //           clearButton.setOnClickListener(arg0 -> inputSearch.setText(""));
+            
+            // Configure SearchView
+            setupSearchView();
             
             // Notify parent activity that this fragment is ready for updates
             Log.i("WykonawcyFragment", "Fragment is ready, notifying parent activity");
             parentActivity.onFragmentReady("WykonawcyFragment");
         }
+    }
+    
+    private void setupSearchView() {
+        if (searchView == null) return;
+        
+        // Make SearchView clickable and focusable
+        searchView.setIconified(false);
+        searchView.setIconifiedByDefault(false);
+        searchView.setFocusable(true);
+        searchView.setClickable(true);
+        
+        // Get the EditText inside SearchView
+        EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
+        if (searchEditText != null) {
+            // Set hint text from resources
+            searchEditText.setHint(getString(R.string.tab_wykonawcy_filtruj));
+            searchEditText.setHintTextColor(Color.parseColor("#546E7A"));
+            searchEditText.setTextColor(getResources().getColor(R.color.md_theme_onPrimary));
+        }
+        
+        // Clear focus initially to prevent keyboard from showing immediately
+        searchView.clearFocus();
+        
+        // Set up click listener to show keyboard when SearchView is clicked
+        searchView.setOnClickListener(v -> {
+            searchView.setIconified(false);
+            searchView.requestFocusFromTouch();
+            if (searchEditText != null) {
+                searchEditText.requestFocus();
+            }
+        });
+        
+        // Set up query text listener for live search
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Hide keyboard on submit
+                searchView.clearFocus();
+                return true;
+            }
+            
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // Filter the list based on search text
+                if (parentActivity != null) {
+                    parentActivity.filterWykonawcy(parentActivity.wykonList, newText);
+                    // Update the adapter after filtering
+                    updateAdapter();
+                }
+                return true;
+            }
+        });
+        
+        // Set up close listener to reset the list when search is cleared
+        searchView.setOnCloseListener(() -> {
+            if (parentActivity != null) {
+                parentActivity.filterWykonawcy(parentActivity.wykonList, "");
+                updateAdapter();
+            }
+            return false;
+        });
     }
 
     public void updateAdapter() {
@@ -162,14 +202,18 @@ public class WykonawcyFragment extends Fragment {
             listWykon.setAdapter(null);
         }
 
-//        if (clearButton != null) {
- //           clearButton.setOnClickListener(null);
- //       }
+        if (searchView != null) {
+            searchView.setOnQueryTextListener(null);
+            searchView.setOnClickListener(null);
+            searchView.setOnCloseListener(null);
+            searchView.clearFocus();
+        }
     }
 
     private void cleanupReferences() {
         adapterWyk = null;
         listWykon = null;
+        searchView = null;
         parentActivity = null;
     }
 }
