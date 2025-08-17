@@ -108,10 +108,18 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
             
             // Configure bottom sheet behavior
-            bottomSheetBehavior.setPeekHeight(0); // Initially hidden
+            bottomSheetBehavior.setPeekHeight(dpToPx(72)); // Peek height for mini player
             bottomSheetBehavior.setHideable(true);
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // Initially hidden until track is played
             bottomSheetBehavior.setSkipCollapsed(false);
+            
+            // Make bottom sheet draggable
+            bottomSheetBehavior.setDraggable(true);
+            
+            // Set the bottom sheet to be above navigation bar
+            CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) bottomSheet.getLayoutParams();
+            params.setMargins(0, 0, 0, getNavigationBarHeight());
+            bottomSheet.setLayoutParams(params);
             
             Log.d(TAG, "Bottom sheet behavior configured - state: " + getStateString(bottomSheetBehavior.getState()));
             
@@ -263,6 +271,18 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Extract track ID from Spotify URL if needed
         String actualTrackId = extractSpotifyTrackId(trackId);
         Log.d(TAG, "Extracted track ID: " + actualTrackId);
+        
+        // Check if trackId is null, empty, or invalid
+        if (actualTrackId == null || actualTrackId.isEmpty() || actualTrackId.equals("null")) {
+            Log.w(TAG, "No valid Spotify track ID available");
+            
+            // Show bottom sheet with "No Song on Spotify" message
+            showNoTrackAvailable(title, artist);
+            return;
+        }
+        
+        // Restore playback controls visibility
+        restorePlaybackControls();
         
         // Store current track info
         currentTrackId = actualTrackId;
@@ -614,6 +634,14 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         return Math.round(dp * density);
     }
     
+    private int getNavigationBarHeight() {
+        int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
+    }
+    
     private void showLoadingState(boolean show) {
         if (loadingIndicator != null) {
             loadingIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
@@ -657,6 +685,71 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                 miniPlayPauseButton.setVisibility(View.VISIBLE);
             }
         }
+    }
+    
+    private void showNoTrackAvailable(String title, String artist) {
+        Log.d(TAG, "Showing 'No Song on Spotify' message");
+        
+        // Update track info with title and artist from the list
+        if (miniTrackTitle != null) {
+            miniTrackTitle.setText(title != null ? title : "");
+        }
+        if (miniTrackArtist != null) {
+            // Show "No Song on Spotify" message instead of artist for mini player
+            miniTrackArtist.setText(context.getString(R.string.no_song_on_spotify));
+        }
+        if (expandedTrackTitle != null) {
+            expandedTrackTitle.setText(title != null ? title : "");
+        }
+        if (expandedTrackArtist != null) {
+            // Show artist and "No Song on Spotify" message for expanded player
+            String message = artist != null ? artist + " - " + context.getString(R.string.no_song_on_spotify) 
+                                             : context.getString(R.string.no_song_on_spotify);
+            expandedTrackArtist.setText(message);
+        }
+        
+        // Use app icon as placeholder
+        if (miniAlbumArt != null) {
+            miniAlbumArt.setImageResource(R.drawable.ic_launcher);
+        }
+        if (expandedAlbumArt != null) {
+            expandedAlbumArt.setImageResource(R.drawable.ic_launcher);
+        }
+        
+        // Hide playback controls
+        if (miniPlayPauseButton != null) {
+            miniPlayPauseButton.setVisibility(View.GONE);
+        }
+        if (playPauseButton != null) {
+            playPauseButton.setVisibility(View.GONE);
+        }
+        if (previousButton != null) {
+            previousButton.setVisibility(View.GONE);
+        }
+        if (nextButton != null) {
+            nextButton.setVisibility(View.GONE);
+        }
+        if (seekBar != null) {
+            seekBar.setVisibility(View.GONE);
+        }
+        if (currentTime != null) {
+            currentTime.setVisibility(View.GONE);
+        }
+        if (totalTime != null) {
+            totalTime.setVisibility(View.GONE);
+        }
+        
+        // Keep close button visible
+        if (miniCloseButton != null) {
+            miniCloseButton.setVisibility(View.VISIBLE);
+        }
+        
+        // Hide loading and retry states
+        showLoadingState(false);
+        showRetryButton(false);
+        
+        // Show the bottom sheet
+        showBottomSheet(false); // Show in collapsed state
     }
     
     /**
@@ -729,5 +822,29 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     public void onDestroy() {
         stopProgressUpdate();
         spotifyService.disconnect();
+    }
+
+    private void restorePlaybackControls() {
+        if (miniPlayPauseButton != null) {
+            miniPlayPauseButton.setVisibility(View.VISIBLE);
+        }
+        if (playPauseButton != null) {
+            playPauseButton.setVisibility(View.VISIBLE);
+        }
+        if (previousButton != null) {
+            previousButton.setVisibility(View.VISIBLE);
+        }
+        if (nextButton != null) {
+            nextButton.setVisibility(View.VISIBLE);
+        }
+        if (seekBar != null) {
+            seekBar.setVisibility(View.VISIBLE);
+        }
+        if (currentTime != null) {
+            currentTime.setVisibility(View.VISIBLE);
+        }
+        if (totalTime != null) {
+            totalTime.setVisibility(View.VISIBLE);
+        }
     }
 }

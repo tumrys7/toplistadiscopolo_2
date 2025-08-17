@@ -31,6 +31,7 @@
     <string name="teledysk">Video</string>
     <string name="spotify">Play music</string>
     <string name="utwory_wykonawcy">Artist\'s songs</string>
+    <string name="no_song_on_spotify">No Song on Spotify</string>
     <string name="spotify_go_to_app">Go to Spotify:</string>
     <string name="connecting_spotify">Connecting to Spotify...</string>
     <string name="connection_failed">Connection failed</string>
