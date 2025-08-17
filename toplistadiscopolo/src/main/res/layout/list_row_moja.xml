@@ -135,4 +135,11 @@
         android:textColor="@color/md_theme_onPrimary"
         android:textSize="11sp" />
 
+    <!-- Hidden Spotify Track ID -->
+    <TextView
+        android:id="@+id/spotify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible" />
+
 </RelativeLayout>

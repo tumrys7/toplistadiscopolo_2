@@ -91,6 +91,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 	private TabPagerAdapter tabPagerAdapter;
 	private TabLayoutMediator tabLayoutMediator;
+	
+	// Spotify Bottom Sheet Controller
+	private SpotifyBottomSheetController spotifyBottomSheetController;
 
 	// Activity result launcher
 	private ActivityResultLauncher<Intent> activityResultLauncher;
@@ -227,6 +230,12 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 
 		setupTabLayoutWithViewPager();
+		
+		// Initialize Spotify Bottom Sheet Controller
+		ViewGroup rootView = findViewById(R.id.root);
+		if (rootView != null) {
+			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+		}
 
 		//only for Free Version
 		if (!Constants.VERSION_PRO_DO_NOT_SHOW_BANNER) {
@@ -1259,11 +1268,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
 						}
 					                    }else if (RewardItems[item] == getString(R.string.spotify)) {
-                        Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
-                        intent.putExtra("spotify_url", spotify);
-                        intent.putExtra("title", title);
-                        intent.putExtra("artist", artist);
-                        startActivity(intent);
+                        // Use Spotify Bottom Sheet instead of PlayActivity
+                        playSpotifyTrack(spotify, title, artist);
                     }
 				});
 			} else {
@@ -1285,11 +1291,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
 						}
 					                    }else if (items[item] == getString(R.string.spotify)) {
-                        Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
-                        intent.putExtra("spotify_url", spotify);
-                        intent.putExtra("title", title);
-                        intent.putExtra("artist", artist);
-                        startActivity(intent);
+                        // Use Spotify Bottom Sheet instead of PlayActivity
+                        playSpotifyTrack(spotify, title, artist);
                     }
 				});
 			}
@@ -1312,11 +1315,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					startActivity(browserIntent);
 				}
 				                else if(wykItems[item]==getString(R.string.spotify)){
-                    Intent intent = new Intent(ListaPrzebojowDiscoPolo.this, PlayActivity.class);
-                    intent.putExtra("spotify_url", spotify);
-                    intent.putExtra("title", title);
-                    intent.putExtra("artist", artist);
-                    startActivity(intent);
+                    // Use Spotify Bottom Sheet instead of PlayActivity
+                    playSpotifyTrack(spotify, title, artist);
                 }
 			});
 		}
@@ -2450,6 +2450,26 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		
 		// For other cases (no change, new entry, etc.), return original text
 		return changeText;
+	}
+	
+	// Public method to play Spotify track from adapters
+	public void playSpotifyTrack(String spotifyTrackId, String title, String artist) {
+		if (spotifyBottomSheetController != null && spotifyTrackId != null && !spotifyTrackId.isEmpty()) {
+			spotifyBottomSheetController.playTrack(spotifyTrackId, title, artist);
+		}
+	}
+	
+	// Get Spotify Bottom Sheet Controller
+	public SpotifyBottomSheetController getSpotifyBottomSheetController() {
+		return spotifyBottomSheetController;
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (spotifyBottomSheetController != null) {
+			spotifyBottomSheetController.onDestroy();
+		}
 	}
 
 }
