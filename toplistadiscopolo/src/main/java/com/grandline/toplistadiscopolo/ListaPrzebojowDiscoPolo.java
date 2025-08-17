@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -354,7 +355,12 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				mainHandler.removeCallbacksAndMessages(null);
 				mainHandler = null;
 			}
-			
+
+				super.onDestroy();
+				if (spotifyBottomSheetController != null) {
+					spotifyBottomSheetController.onDestroy();
+				}
+
 		} catch (Exception e) {
 			Log.e("InputCleanup", "Error in onDestroy cleanup: " + e.getMessage());
 		}
@@ -2463,13 +2469,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	public SpotifyBottomSheetController getSpotifyBottomSheetController() {
 		return spotifyBottomSheetController;
 	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		if (spotifyBottomSheetController != null) {
-			spotifyBottomSheetController.onDestroy();
-		}
-	}
+
 
 }

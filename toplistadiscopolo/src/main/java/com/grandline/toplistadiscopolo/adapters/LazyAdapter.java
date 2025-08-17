@@ -2,7 +2,6 @@ package com.grandline.toplistadiscopolo.adapters;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -15,13 +14,13 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-
 import com.grandline.toplistadiscopolo.Constants;
 import com.grandline.toplistadiscopolo.ImageLoader;
 import com.grandline.toplistadiscopolo.R;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 
 public class LazyAdapter extends BaseAdapter {
 
