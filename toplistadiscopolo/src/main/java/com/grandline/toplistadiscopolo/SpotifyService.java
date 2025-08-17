@@ -16,6 +16,10 @@ import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class SpotifyService {
     private static final String TAG = "SpotifyService";
     private static final String CLIENT_ID = "1ef55d5630814a3dafc946ef58e266b5";
@@ -27,10 +31,12 @@ public class SpotifyService {
     private boolean isConnecting = false;
     private int connectionRetryCount = 0;
     private static final int MAX_CONNECTION_RETRIES = 3;
+    private static final long CONNECTION_TIMEOUT_MS = 10000; // 10 seconds timeout
     private Handler retryHandler = new Handler(Looper.getMainLooper());
+    private Runnable connectionTimeoutRunnable;
     
-    // Listeners
-    private SpotifyConnectionListener connectionListener;
+    // Listeners - Changed to support multiple listeners
+    private final List<SpotifyConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
     private SpotifyPlayerListener playerListener;
     
     // Private constructor for singleton
@@ -63,14 +69,41 @@ public class SpotifyService {
     
     // Set listeners
     public void setConnectionListener(SpotifyConnectionListener listener) {
-        Log.d(TAG, "Setting connection listener: " + (listener != null ? "not null" : "null"));
-        this.connectionListener = listener;
+        addConnectionListener(listener);
+    }
+    
+    // Add connection listener (prevents duplicates)
+    public void addConnectionListener(SpotifyConnectionListener listener) {
+        if (listener == null) {
+            Log.d(TAG, "Attempted to add null connection listener");
+            return;
+        }
+        
+        // Remove existing instance if present to prevent duplicates
+        connectionListeners.remove(listener);
+        connectionListeners.add(listener);
+        
+        Log.d(TAG, "Added connection listener. Total listeners: " + connectionListeners.size());
         
         // If we're already connected, notify the listener immediately
-        if (isConnected() && listener != null) {
+        if (isConnected()) {
             Log.d(TAG, "Already connected, notifying new listener immediately");
             listener.onConnected();
         }
+    }
+    
+    // Remove connection listener
+    public void removeConnectionListener(SpotifyConnectionListener listener) {
+        if (listener != null) {
+            connectionListeners.remove(listener);
+            Log.d(TAG, "Removed connection listener. Total listeners: " + connectionListeners.size());
+        }
+    }
+    
+    // Clear all connection listeners
+    public void clearConnectionListeners() {
+        connectionListeners.clear();
+        Log.d(TAG, "Cleared all connection listeners");
     }
     
     public void setPlayerListener(SpotifyPlayerListener listener) {
@@ -104,8 +137,8 @@ public class SpotifyService {
         // Check if Spotify is installed first
         if (!isSpotifyInstalled()) {
             Log.e(TAG, "Spotify app is not installed on this device");
-            if (connectionListener != null) {
-                connectionListener.onConnectionFailed(new Exception("Spotify app is not installed. Please install Spotify from the Play Store."));
+            if (connectionListeners.size() > 0) {
+                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("Spotify app is not installed. Please install Spotify from the Play Store.")));
             }
             return;
         }
@@ -114,8 +147,8 @@ public class SpotifyService {
         if (isConnected()) {
             Log.d(TAG, "Already connected to Spotify");
             connectionRetryCount = 0; // Reset retry count on successful connection
-            if (connectionListener != null) {
-                connectionListener.onConnected();
+            if (connectionListeners.size() > 0) {
+                connectionListeners.forEach(SpotifyConnectionListener::onConnected);
             }
             return;
         }
@@ -140,9 +173,32 @@ public class SpotifyService {
         
         Log.d(TAG, "Calling SpotifyAppRemote.connect()");
         
+        // Set up connection timeout
+        connectionTimeoutRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isConnecting) {
+                    Log.e(TAG, "Connection timeout after " + CONNECTION_TIMEOUT_MS + "ms");
+                    isConnecting = false;
+                    connectionRetryCount = 0;
+                    
+                    Exception timeoutException = new Exception("Connection timeout - Spotify took too long to respond");
+                    if (connectionListeners.size() > 0) {
+                        connectionListeners.forEach(listener -> listener.onConnectionFailed(timeoutException));
+                    }
+                }
+            }
+        };
+        retryHandler.postDelayed(connectionTimeoutRunnable, CONNECTION_TIMEOUT_MS);
+        
         SpotifyAppRemote.connect(context, connectionParams, new Connector.ConnectionListener() {
             @Override
             public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                // Cancel timeout
+                if (connectionTimeoutRunnable != null) {
+                    retryHandler.removeCallbacks(connectionTimeoutRunnable);
+                }
+                
                 mSpotifyAppRemote = spotifyAppRemote;
                 isConnecting = false;
                 connectionRetryCount = 0; // Reset retry count on successful connection
@@ -151,21 +207,35 @@ public class SpotifyService {
                 // Subscribe to player state
                 subscribeToPlayerState();
                 
-                if (connectionListener != null) {
-                    Log.d(TAG, "Notifying connection listener of successful connection");
-                    connectionListener.onConnected();
+                if (connectionListeners.size() > 0) {
+                    Log.d(TAG, "Notifying connection listeners of successful connection");
+                    connectionListeners.forEach(SpotifyConnectionListener::onConnected);
                 } else {
-                    Log.w(TAG, "No connection listener set");
+                    Log.w(TAG, "No connection listeners set");
                 }
             }
             
             @Override
             public void onFailure(Throwable throwable) {
+                // Cancel timeout
+                if (connectionTimeoutRunnable != null) {
+                    retryHandler.removeCallbacks(connectionTimeoutRunnable);
+                }
+                
                 isConnecting = false;
                 Log.e(TAG, "Failed to connect to Spotify (attempt " + (connectionRetryCount + 1) + ") - Error: " + throwable.getMessage(), throwable);
                 
+                // Log more details about the error
+                if (throwable != null) {
+                    Log.e(TAG, "Error class: " + throwable.getClass().getName());
+                    Log.e(TAG, "Stack trace: ", throwable);
+                    if (throwable.getCause() != null) {
+                        Log.e(TAG, "Cause: " + throwable.getCause().getMessage());
+                    }
+                }
+                
                 // Check the type of error
-                String errorMessage = throwable.getMessage();
+                String errorMessage = throwable != null ? throwable.getMessage() : "";
                 boolean shouldRetry = true;
                 
                 // Check for specific error types that shouldn't be retried
@@ -203,8 +273,8 @@ public class SpotifyService {
                         Log.e(TAG, "Max connection retries reached. Connection failed.");
                     }
                     
-                    if (connectionListener != null) {
-                        connectionListener.onConnectionFailed(throwable);
+                    if (connectionListeners.size() > 0) {
+                        connectionListeners.forEach(listener -> listener.onConnectionFailed(throwable));
                     }
                 }
             }
@@ -217,8 +287,8 @@ public class SpotifyService {
             SpotifyAppRemote.disconnect(mSpotifyAppRemote);
             mSpotifyAppRemote = null;
             
-            if (connectionListener != null) {
-                connectionListener.onDisconnected();
+            if (connectionListeners.size() > 0) {
+                connectionListeners.forEach(SpotifyConnectionListener::onDisconnected);
             }
         }
     }
