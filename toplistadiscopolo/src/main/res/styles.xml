@@ -1,0 +1,5 @@
+<style name="rounded_mask">
+    <item name="cornerFamily">rounded</item>
+    <item name="cornerSize">2dp</item> <!-- lub 4dp na tablecie/du?ym ekranie -->
+</style>
+

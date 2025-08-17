@@ -90,6 +90,7 @@
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            app:iconTint="@color/md_theme_onSecondary"
             app:icon="@drawable/ic_play_arrow"
             app:iconSize="24dp" />
 
@@ -99,6 +100,7 @@
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            app:iconTint="@color/md_theme_onSecondary"
             app:icon="@drawable/ic_close"
             app:iconSize="24dp" />
 
@@ -119,6 +121,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="?attr/selectableItemBackground"
+        android:textColor="?android:attr/textColorSecondary"
         android:padding="24dp">
 
         <!-- Album Art -->
@@ -171,6 +175,9 @@
             android:value="0"
             android:valueFrom="0"
             android:valueTo="100"
+            app:trackColorActive="@color/md_theme_primaryContainer"
+            app:trackColorInactive="@color/md_theme_onSecondary"
+            app:thumbColor="@color/md_theme_primaryContainer"
             app:labelBehavior="gone" />
 
         <!-- Time Labels -->
@@ -216,6 +223,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
+                app:iconTint="@color/md_theme_onSecondary"
                 app:icon="@drawable/ic_skip_previous"
                 app:iconSize="32dp" />
 
@@ -235,6 +243,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
+                app:iconTint="@color/md_theme_onSecondary"
                 app:icon="@drawable/ic_skip_next"
                 app:iconSize="32dp" />
 

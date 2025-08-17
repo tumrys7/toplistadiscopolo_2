@@ -356,7 +356,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				mainHandler = null;
 			}
 
-				super.onDestroy();
 				if (spotifyBottomSheetController != null) {
 					spotifyBottomSheetController.onDestroy();
 				}
@@ -1273,7 +1272,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						} catch (Exception e) {
 							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
 						}
-					                    }else if (RewardItems[item] == getString(R.string.spotify)) {
+											}else if (RewardItems[item] == getString(R.string.spotify)) {
                         // Use Spotify Bottom Sheet instead of PlayActivity
                         playSpotifyTrack(spotify, title, artist);
                     }
