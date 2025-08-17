@@ -43,6 +43,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private MaterialButton miniPlayPauseButton;
     private MaterialButton miniCloseButton;
     private ProgressBar loadingIndicator;
+    private MaterialButton retryButton;
     
     // UI Elements - Expanded Player
     private LinearLayout expandedPlayer;
@@ -135,6 +136,26 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         miniPlayPauseButton = bottomSheet.findViewById(R.id.mini_play_pause_button);
         miniCloseButton = bottomSheet.findViewById(R.id.mini_close_button);
         loadingIndicator = bottomSheet.findViewById(R.id.loading_indicator);
+        retryButton = bottomSheet.findViewById(R.id.retry_button);
+        
+        // If retry button doesn't exist in layout, create it programmatically
+        if (retryButton == null && miniPlayer != null) {
+            retryButton = new MaterialButton(context);
+            retryButton.setId(View.generateViewId());
+            retryButton.setText("Retry");
+            retryButton.setVisibility(View.GONE);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(8, 0, 8, 0);
+            retryButton.setLayoutParams(params);
+            
+            // Add retry button to the mini player layout
+            if (miniPlayer instanceof LinearLayout) {
+                ((LinearLayout) miniPlayer).addView(retryButton);
+            }
+        }
         
         // Log which views were found
         Log.d(TAG, "Mini player views initialized: " +
@@ -144,7 +165,8 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             ", miniTrackArtist=" + (miniTrackArtist != null) +
             ", miniPlayPauseButton=" + (miniPlayPauseButton != null) +
             ", miniCloseButton=" + (miniCloseButton != null) +
-            ", loadingIndicator=" + (loadingIndicator != null));
+            ", loadingIndicator=" + (loadingIndicator != null) +
+            ", retryButton=" + (retryButton != null));
     }
     
     private void initializeExpandedPlayer() {
@@ -174,6 +196,17 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         
         // Close button
         miniCloseButton.setOnClickListener(v -> hideBottomSheet());
+        
+        // Retry button
+        if (retryButton != null) {
+            retryButton.setOnClickListener(v -> {
+                Log.d(TAG, "Retry button clicked");
+                showRetryButton(false);
+                if (currentTrackId != null) {
+                    playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
+                }
+            });
+        }
         
         // Previous/Next buttons
         previousButton.setOnClickListener(v -> spotifyService.skipPrevious());
@@ -294,15 +327,30 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     String errorMessage = error != null ? error.getMessage() : "Unknown error";
                     if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
                         updateTrackInfo("Spotify Not Installed", "Install Spotify app to play: " + (pendingTrackTitle != null ? pendingTrackTitle : "this track"));
-                    } else if (errorMessage.contains("UserNotAuthorizedException") || errorMessage.contains("not authorized")) {
-                        updateTrackInfo("Authorization Required", "Please authorize the app in Spotify");
+                    } else if (errorMessage.contains("Please login to Spotify")) {
+                        updateTrackInfo("Login Required", "Please login to Spotify and try again");
+                        // Add a retry button or action
+                        showRetryButton(true);
+                    } else if (errorMessage.contains("Please authorize")) {
+                        updateTrackInfo("Authorization Required", "Please authorize the app and try again");
+                        showRetryButton(true);
+                    } else if (errorMessage.contains("Connection timeout")) {
+                        updateTrackInfo("Connection Timeout", "Please open Spotify app and try again");
+                        showRetryButton(true);
                     } else if (errorMessage.contains("OfflineException") || errorMessage.contains("offline")) {
                         updateTrackInfo("Spotify Offline", "Please check your connection and try again");
+                        showRetryButton(true);
                     } else {
                         updateTrackInfo("Connection Failed", "Unable to connect. Track: " + (pendingTrackTitle != null ? pendingTrackTitle : ""));
+                        showRetryButton(true);
                     }
                     
-                    // Clear pending track data after displaying the error
+                    // Store the track info for retry
+                    currentTrackId = pendingTrackId;
+                    currentTrackTitle = pendingTrackTitle;
+                    currentTrackArtist = pendingTrackArtist;
+                    
+                    // Clear pending track data after storing
                     pendingTrackId = null;
                     pendingTrackTitle = null;
                     pendingTrackArtist = null;
@@ -591,6 +639,23 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Update text to show loading state
         if (show && currentTrackTitle == null) {
             updateTrackInfo(context.getString(R.string.connecting_spotify), "");
+        }
+    }
+    
+    private void showRetryButton(boolean show) {
+        if (retryButton != null) {
+            retryButton.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        
+        // Hide play button when showing retry
+        if (show) {
+            if (miniPlayPauseButton != null) {
+                miniPlayPauseButton.setVisibility(View.GONE);
+            }
+        } else {
+            if (miniPlayPauseButton != null) {
+                miniPlayPauseButton.setVisibility(View.VISIBLE);
+            }
         }
     }
     
