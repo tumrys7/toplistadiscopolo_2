@@ -70,6 +70,11 @@ public class SpotifyService {
         return mSpotifyAppRemote != null && mSpotifyAppRemote.isConnected();
     }
     
+    // Check if currently connecting
+    public boolean isConnecting() {
+        return isConnecting;
+    }
+    
     // Connect to Spotify
     public void connect() {
         // If already connected, notify listener immediately
@@ -81,10 +86,10 @@ public class SpotifyService {
             return;
         }
         
-        // If already connecting, just log but don't return - allow setting new listener
+        // If already connecting, don't start a new connection
+        // The current connectionListener will be called when the ongoing connection completes
         if (isConnecting) {
             Log.d(TAG, "Already connecting to Spotify");
-            // The connection listener will be called when connection completes
             return;
         }
         
