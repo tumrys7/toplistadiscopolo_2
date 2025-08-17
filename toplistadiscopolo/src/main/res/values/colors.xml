@@ -40,4 +40,8 @@
     <color name="md_theme_dark_neutral">#233032</color>
     <color name="md_theme_light_surfaceTint">#00B8D4</color>
     <color name="md_theme_dark_surfaceTint">#000000</color>
+    
+    <!-- Colors for position changes -->
+    <color name="text_awans_color">#4CAF50</color> <!-- Green for upward movement -->
+    <color name="text_spadek_color">#F44336</color> <!-- Red for downward movement -->
 </resources>

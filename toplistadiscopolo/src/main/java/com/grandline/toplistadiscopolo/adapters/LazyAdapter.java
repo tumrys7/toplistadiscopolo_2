@@ -2,6 +2,7 @@ package com.grandline.toplistadiscopolo.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -11,6 +12,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,9 +32,11 @@ public class LazyAdapter extends BaseAdapter {
     private final Handler mainHandler;
     private final Object dataLock = new Object(); // Synchronization lock for data access
     private volatile int cachedSize; // Cache size to prevent inconsistencies
+    private final Context context;
     
     public LazyAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
         originalData = d;
+        context = a;
         synchronized(dataLock) {
             // Create a defensive copy of the data to prevent external modifications
             workingData = d != null ? new ArrayList<>(d) : new ArrayList<>();
@@ -116,7 +121,25 @@ public class LazyAdapter extends BaseAdapter {
         } else {
         	arrow_image.setImageResource(R.drawable.arrow);
         }
-        placeChange.setText(song.get(Constants.KEY_PLACE_CHANGE));
+        
+        // Set place change text
+        String placeChangeText = song.get(Constants.KEY_PLACE_CHANGE);
+        placeChange.setText(placeChangeText);
+        
+        // Set color based on text content
+        if (placeChangeText != null) {
+            if (placeChangeText.startsWith("↑")) {
+                // Text starts with ↑ (text_awans) - set green color
+                placeChange.setTextColor(ContextCompat.getColor(context, R.color.text_awans_color));
+            } else if (placeChangeText.startsWith("↓")) {
+                // Text starts with ↓ (text_spadek) - set red color
+                placeChange.setTextColor(ContextCompat.getColor(context, R.color.text_spadek_color));
+            } else {
+                // Default color for other cases
+                placeChange.setTextColor(ContextCompat.getColor(context, R.color.md_theme_onPrimary));
+            }
+        }
+        
         if (Objects.equals(song.get(Constants.KEY_SHOW_VOTES_PROGRESS), "TRUE")){
         	votesProgress.setVisibility(View.VISIBLE);//visible  setVisibility(0)
         	//votesProgress.setProgressDrawable((R.drawable.gradient_bg_hover));
