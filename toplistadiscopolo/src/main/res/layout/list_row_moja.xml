@@ -94,7 +94,7 @@
         android:textColor="@color/md_theme_onPrimary"
         android:textSize="11sp"
         android:paddingLeft="10sp"
-        android:paddingRight="10sp"/>
+        android:paddingRight="0sp"/>
 
     <TextView
         android:id="@+id/data_dodania"

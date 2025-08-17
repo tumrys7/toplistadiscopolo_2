@@ -19,24 +19,23 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsetsController;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-import androidx.viewpager2.widget.ViewPager2;
-import androidx.activity.EdgeToEdge;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.graphics.Insets;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -2424,7 +2423,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (parts[i].equals("o") && i + 1 < parts.length) {
 					try {
 						int changeValue = Integer.parseInt(parts[i + 1]);
-						return "↑ +" + changeValue;
+						return "↑ +" + changeValue + " awans" ;
 					} catch (NumberFormatException e) {
 						// If parsing fails, return original text
 						return changeText;
@@ -2440,7 +2439,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				if (parts[i].equals("o") && i + 1 < parts.length) {
 					try {
 						int changeValue = Integer.parseInt(parts[i + 1]);
-						return "↓ -" + changeValue;
+						return "↓ -" + changeValue  + " spadek" ;
 					} catch (NumberFormatException e) {
 						// If parsing fails, return original text
 						return changeText;
