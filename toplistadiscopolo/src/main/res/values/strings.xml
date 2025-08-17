@@ -73,6 +73,8 @@
     
     <!-- Spotify Player -->
     <string name="album_art">Album Art</string>
+    <string name="track_title">Track Title</string>
+    <string name="artist_name">Artist Name</string>
     <string name="no_track_playing">No track playing</string>
     <string name="powered_by_spotify">Powered by Spotify</string>
 
