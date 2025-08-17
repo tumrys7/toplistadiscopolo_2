@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,6 +42,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private TextView miniTrackArtist;
     private MaterialButton miniPlayPauseButton;
     private MaterialButton miniCloseButton;
+    private ProgressBar loadingIndicator;
     
     // UI Elements - Expanded Player
     private LinearLayout expandedPlayer;
@@ -116,6 +118,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         miniTrackArtist = bottomSheet.findViewById(R.id.mini_track_artist);
         miniPlayPauseButton = bottomSheet.findViewById(R.id.mini_play_pause_button);
         miniCloseButton = bottomSheet.findViewById(R.id.mini_close_button);
+        loadingIndicator = bottomSheet.findViewById(R.id.loading_indicator);
     }
     
     private void initializeExpandedPlayer() {
@@ -206,14 +209,19 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Update UI immediately
         updateTrackInfo(title, artist);
         
+        // Show bottom sheet immediately for user feedback
+        showBottomSheet(true);
+        
         // Check if already connected
         if (spotifyService.isConnected()) {
             Log.d(TAG, "Spotify already connected, playing track immediately");
             // Already connected, play immediately
             spotifyService.playTrack(spotifyTrackId);
-            showBottomSheet(true); // Show expanded
         } else {
             Log.d(TAG, "Spotify not connected, setting up connection listener");
+            
+            // Show loading state while connecting
+            showLoadingState(true);
             
             // Set up connection listener for when connection completes
             // This will be called even if connection is already in progress
@@ -221,21 +229,26 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                 @Override
                 public void onConnected() {
                     Log.d(TAG, "Spotify connected callback - playing track: " + spotifyTrackId);
+                    // Hide loading state
+                    showLoadingState(false);
                     // Play track after connection
                     spotifyService.playTrack(spotifyTrackId);
-                    showBottomSheet(true); // Show expanded
                 }
                 
                 @Override
                 public void onConnectionFailed(Throwable error) {
                     Log.e(TAG, "Failed to connect to Spotify", error);
+                    // Hide loading state and show error
+                    showLoadingState(false);
                     // Optionally show an error message to the user
+                    updateTrackInfo(context.getString(R.string.connection_failed), error.getMessage());
                 }
                 
                 @Override
                 public void onDisconnected() {
                     Log.d(TAG, "Spotify disconnected");
                     // Handle disconnection
+                    showLoadingState(false);
                 }
             });
             
@@ -421,6 +434,34 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private int dpToPx(int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+    
+    private void showLoadingState(boolean show) {
+        if (loadingIndicator != null) {
+            loadingIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        
+        // Disable playback controls while loading
+        if (miniPlayPauseButton != null) {
+            miniPlayPauseButton.setEnabled(!show);
+        }
+        if (playPauseButton != null) {
+            playPauseButton.setEnabled(!show);
+        }
+        if (previousButton != null) {
+            previousButton.setEnabled(!show);
+        }
+        if (nextButton != null) {
+            nextButton.setEnabled(!show);
+        }
+        if (seekBar != null) {
+            seekBar.setEnabled(!show);
+        }
+        
+        // Update text to show loading state
+        if (show && currentTrackTitle == null) {
+            updateTrackInfo(context.getString(R.string.connecting_spotify), "");
+        }
     }
     
     // Cleanup
