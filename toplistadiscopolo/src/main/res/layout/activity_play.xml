@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_theme_onPrimaryContainer"
-    android:textColor="@android:color/black"
+    android:background="@color/md_theme_primary"
+    android:textColor="@color/md_theme_onPrimary"
     android:orientation="vertical"
     tools:theme="@style/AppTheme"
     android:id="@+id/root">
@@ -16,6 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="?attr/colorSurface"
         ads:adSize="SMART_BANNER"
         ads:adUnitId="@string/banner_ad_unit_id">
     </com.google.android.gms.ads.AdView>
@@ -25,17 +26,17 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:minHeight="?attr/actionBarSize"
-        android:backgroundTint="@color/md_theme_primary"
-        android:background="#696969"
-        app:tabTextColor="@android:color/white"
+        android:backgroundTint="@color/md_theme_primaryContainer"
+        android:background="@color/md_theme_primaryContainer"
+        app:tabTextColor="@color/md_theme_onPrimary"
         app:layout_scrollFlags="scroll|enterAlways"
-        app:navigationIconTint="@android:color/white">
+        app:navigationIconTint="@color/md_theme_onSecondary">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/spotify"
-            android:textColor="@android:color/white"
+            android:textColor="@color/md_theme_onSecondary"
             android:textAppearance="?attr/textAppearanceHeadline6" />
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -44,7 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="@android:color/black"
+        android:textColor="@color/md_theme_onPrimary"
         android:textSize="18sp"
         android:paddingTop="12dp"
         android:paddingBottom="4dp"
@@ -55,7 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="@android:color/black"
+        android:textColor="@color/md_theme_onPrimary"
         android:textSize="16sp"
         android:paddingBottom="12dp" />
 

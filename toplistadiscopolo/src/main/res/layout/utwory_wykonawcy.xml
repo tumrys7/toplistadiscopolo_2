@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_theme_onPrimaryContainer"
+    android:background="@color/md_theme_primary"
     android:orientation="vertical"
-    android:textColor="@android:color/black"
+    android:textColor="@color/md_theme_onPrimary"
     tools:theme="@style/AppTheme"
     android:id="@+id/root">
 
@@ -15,17 +15,17 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:minHeight="?attr/actionBarSize"
-        android:backgroundTint="@color/md_theme_primary"
-        android:background="#696969"
-        app:tabTextColor="@android:color/white"
+        android:backgroundTint="@color/md_theme_primaryContainer"
+        android:background="@color/md_theme_primaryContainer"
+        app:tabTextColor="@color/md_theme_onPrimary"
         app:layout_scrollFlags="scroll|enterAlways"
-        app:navigationIconTint="@android:color/white">
+        app:navigationIconTint="@color/md_theme_onSecondary">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/title_activity_utwory_wykonawcy"
-            android:textColor="@android:color/white"
+            android:textColor="@color/md_theme_onSecondary"
             android:textAppearance="?attr/textAppearanceHeadline6" />
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -33,7 +33,7 @@
         android:id="@+id/wykUtwory"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:dividerHeight="1dp" />
+        android:divider="@null" />
 
 
 </LinearLayout>

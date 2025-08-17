@@ -47,8 +47,8 @@
     <string name="text_too_many_votes">You have recently voted on this song. You can vote once per VOTES_INTERVAL minutes.</string>
     <string name="text_zmiana_jezyka">Changes will be visible after application restart</string>
 
-    <string name="text_awans">Up</string>
-    <string name="text_spadek">Down</string>
+    <string name="text_awans">↑ Up</string>
+    <string name="text_spadek">↓ Down</string>
     <string name="text_glosow">Votes:</string>
     <string name="text_na_liscie_od">Added:</string>
     <string name="menu_settings">Settings</string>

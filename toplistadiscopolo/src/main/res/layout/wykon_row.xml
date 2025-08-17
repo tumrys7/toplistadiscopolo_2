@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
-    android:orientation="horizontal"
-    android:padding="5dip" >
+    android:orientation="horizontal" >
 
  
     <TextView
@@ -12,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="000000"
-        android:textColor="#343434"
+        android:textColor="@color/md_theme_onPrimary"
         android:textSize="10sp"
         android:visibility="invisible" />
 
@@ -22,10 +21,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-	android:layout_marginEnd="2dp"
-	android:padding="10dip"
+	    android:layout_marginEnd="2sp"
+	    android:padding="12sp"
         android:text="Just gona stand there and ..."
-        android:textColor="#040404"
+        android:textColor="@color/md_theme_onPrimary"
         android:textSize="20sp"
         android:fontFamily="@font/roboto_light"
         android:textStyle="bold" />

@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff"
+    android:background="@color/md_theme_primary"
+    android:textColor="@color/md_theme_onPrimary"
     android:id="@+id/root">
 
     <TextView
@@ -12,6 +13,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:text="@string/loading"
+        android:textColor="@color/md_theme_onPrimary"
         android:textSize="30sp"
         android:textStyle="bold"
         tools:context=".Loading" />

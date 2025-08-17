@@ -1,33 +1,32 @@
 package com.grandline.toplistadiscopolo.fragments;
 
+import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
-
-import java.util.HashMap;
 
 import com.grandline.toplistadiscopolo.Constants;
 import com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo;
 import com.grandline.toplistadiscopolo.R;
 import com.grandline.toplistadiscopolo.adapters.WykAdapter;
 
+import java.util.HashMap;
+
 public class WykonawcyFragment extends Fragment {
 
     private ListView listWykon;
     private WykAdapter adapterWyk;
-    private EditText inputSearch;
-    private ImageButton clearButton;
+ //   private EditText inputSearch;
+//    private ImageButton clearButton;
     private ListaPrzebojowDiscoPolo parentActivity;
 
     @Override
@@ -44,8 +43,6 @@ public class WykonawcyFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_wykonawcy, container, false);
 
         listWykon = view.findViewById(R.id.listWykon);
-        inputSearch = view.findViewById(R.id.inputSearch);
-        clearButton = view.findViewById(R.id.clearButton);
 
         return view;
     }
@@ -64,26 +61,30 @@ public class WykonawcyFragment extends Fragment {
                 final String id_wykonawcy = mapo.get(Constants.KEY_ID_WYKON);
                 parentActivity.showAuthSongs(id_wykonawcy);
             });
+            SearchView search_view = view.findViewById(R.id.search_view);
+            EditText searchEditText = search_view.findViewById(androidx.appcompat.R.id.search_src_text);
+            searchEditText.setHintTextColor(Color.parseColor("#546E7A"));
 
-            inputSearch.addTextChangedListener(new TextWatcher() {
-                public void onTextChanged(CharSequence cs, int arg1, int arg2, int arg3) {
-                    if (parentActivity != null) {
-                        parentActivity.filterWykonawcy(parentActivity.wykonList, cs);
-                    }
-                }
-
-                public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
-                    // TODO Auto-generated method stub
-                }
-
-                public void afterTextChanged(Editable arg0) {
+            // Listener na tekst:
+            search_view.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
                     if (adapterWyk != null) {
                         adapterWyk.safeNotifyDataSetChanged();
                     }
+                    return false;
+                }
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (parentActivity != null) {
+                        parentActivity.filterWykonawcy(parentActivity.wykonList, newText);
+                    }
+                    return false;
                 }
             });
 
-            clearButton.setOnClickListener(arg0 -> inputSearch.setText(""));
+
+ //           clearButton.setOnClickListener(arg0 -> inputSearch.setText(""));
             
             // Notify parent activity that this fragment is ready for updates
             Log.i("WykonawcyFragment", "Fragment is ready, notifying parent activity");
@@ -161,21 +162,14 @@ public class WykonawcyFragment extends Fragment {
             listWykon.setAdapter(null);
         }
 
-        if (inputSearch != null) {
-            inputSearch.addTextChangedListener(null);
-            inputSearch.setOnFocusChangeListener(null);
-        }
-
-        if (clearButton != null) {
-            clearButton.setOnClickListener(null);
-        }
+//        if (clearButton != null) {
+ //           clearButton.setOnClickListener(null);
+ //       }
     }
 
     private void cleanupReferences() {
         adapterWyk = null;
         listWykon = null;
-        inputSearch = null;
-        clearButton = null;
         parentActivity = null;
     }
 }

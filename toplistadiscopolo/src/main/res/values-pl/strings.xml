@@ -46,8 +46,8 @@
     <string name="text_too_many_votes">Niedawno głosowała(e)ś na ten utwór. Głosuj raz na VOTES_INTERVAL minut.</string>
     <string name="text_zmiana_jezyka">Zmiany będą widoczne po restarcie aplikacji</string>
         
-    <string name="text_awans">Awans</string>
-    <string name="text_spadek">Spadek</string>
+    <string name="text_awans">↑ Awans</string>
+    <string name="text_spadek">↓ Spadek</string>
     <string name="text_glosow">Głosów:</string>
     <string name="text_na_liscie_od">Na liście od:</string>
     <string name="menu_settings">Ustawienia</string>

@@ -1,0 +1,42 @@
+<resources>
+    <color name="md_theme_primary">#000000</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#004F59</color>
+    <color name="md_theme_onPrimaryContainer">#96FFF4</color>
+
+    <color name="md_theme_secondary">#7CD7EA</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#004F59</color>
+    <color name="md_theme_onSecondaryContainer">#A2DAEF</color>
+
+    <color name="md_theme_tertiary">#68DFBC</color>
+    <color name="md_theme_onTertiary">#003827</color>
+    <color name="md_theme_tertiaryContainer">#00513D</color>
+    <color name="md_theme_onTertiaryContainer">#92F7DC</color>
+
+    <color name="md_theme_error">#FFB4AB</color>
+    <color name="md_theme_errorContainer">#93000A</color>
+    <color name="md_theme_onError">#690005</color>
+    <color name="md_theme_onErrorContainer">#FFDAD6</color>
+
+    <color name="md_theme_background">#191C1D</color>
+    <color name="md_theme_onBackground">#E2E3E4</color>
+    <color name="md_theme_surface">#191C1D</color>
+    <color name="md_theme_onSurface">#E2E3E4</color>
+    <color name="md_theme_surfaceVariant">#000000</color>
+    <color name="md_theme_onSurfaceVariant">#BEC8CB</color>
+    <color name="md_theme_outline">#899294</color>
+    <color name="md_theme_inverseSurface">#E2E3E4</color>
+    <color name="md_theme_inverseOnSurface">#292C2D</color>
+    <color name="md_theme_inversePrimary">#00B8D4</color>
+    <color name="md_theme_surfaceContainer">#232728</color>
+
+    <color name="md_theme_progress_horizontal_start">#004F59</color>
+    <color name="md_theme_progress_horizontal">#004F59</color>
+    <color name="md_theme_progress_horizontal_end">#004F59</color>
+    <!-- OPTIONAL: DESATURATED/NEUTRAL COLORS (can be omitted if not needed) -->
+    <color name="md_theme_light_neutral">#E7F7F9</color>
+    <color name="md_theme_dark_neutral">#233032</color>
+    <color name="md_theme_light_surfaceTint">#00B8D4</color>
+    <color name="md_theme_dark_surfaceTint">#000000</color>
+</resources>

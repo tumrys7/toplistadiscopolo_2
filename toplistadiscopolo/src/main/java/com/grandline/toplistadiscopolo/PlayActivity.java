@@ -11,7 +11,6 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
@@ -20,12 +19,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.activity.EdgeToEdge;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.graphics.Insets;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -127,28 +126,7 @@ public class PlayActivity extends AppCompatActivity {
    }
 
     public void setLightSystemBars(Window window, boolean lightStatusBar, boolean lightNavigationBar) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // API 30+
-            WindowInsetsController insetsController = window.getInsetsController();
-            if (insetsController != null) {
-                int appearance = 0;
-                int mask = 0;
-
-                if (lightStatusBar) {
-                    appearance |= WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-                    mask |= WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-                }
-                if (lightNavigationBar) {
-                    appearance |= WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                    mask |= WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                }
-
-                insetsController.setSystemBarsAppearance(appearance, mask);
-
-                // Set transparent background for system bars if needed
-                window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-                window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Fallback to deprecated method for API 23-29
             int flags = window.getDecorView().getSystemUiVisibility();
             if (lightStatusBar) {
