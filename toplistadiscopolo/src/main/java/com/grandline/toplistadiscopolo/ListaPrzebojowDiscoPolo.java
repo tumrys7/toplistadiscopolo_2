@@ -2468,18 +2468,19 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			ViewGroup rootView = findViewById(R.id.root);
 			if (rootView != null) {
 				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+				Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 			} else {
-				Log.e("SpotifyDebug", "Root view is null, cannot initialize SpotifyBottomSheetController");
+				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");
 				return;
 			}
 		}
 		
-		if (spotifyBottomSheetController != null && spotifyTrackId != null && !spotifyTrackId.isEmpty()) {
-			Log.d("SpotifyDebug", "Calling spotifyBottomSheetController.playTrack()");
+		// Add a small delay to ensure the Alert Dialog is fully dismissed before showing the bottom sheet
+		// This prevents UI conflicts between dialog dismissal and bottom sheet display
+		new Handler(Looper.getMainLooper()).postDelayed(() -> {
+			Log.d("SpotifyDebug", "Calling spotifyBottomSheetController.playTrack() after delay");
 			spotifyBottomSheetController.playTrack(spotifyTrackId, title, artist);
-		} else {
-			Log.e("SpotifyDebug", "Cannot play track - controller: " + (spotifyBottomSheetController != null) + ", trackId valid: " + (spotifyTrackId != null && !spotifyTrackId.isEmpty()));
-		}
+		}, 100); // 100ms delay to allow dialog dismissal to complete
 	}
 	
 	// Get Spotify Bottom Sheet Controller
