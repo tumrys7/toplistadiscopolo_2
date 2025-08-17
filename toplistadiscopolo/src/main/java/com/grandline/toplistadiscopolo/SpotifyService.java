@@ -72,8 +72,19 @@ public class SpotifyService {
     
     // Connect to Spotify
     public void connect() {
-        if (isConnected() || isConnecting) {
-            Log.d(TAG, "Already connected or connecting to Spotify");
+        // If already connected, notify listener immediately
+        if (isConnected()) {
+            Log.d(TAG, "Already connected to Spotify");
+            if (connectionListener != null) {
+                connectionListener.onConnected();
+            }
+            return;
+        }
+        
+        // If already connecting, just log but don't return - allow setting new listener
+        if (isConnecting) {
+            Log.d(TAG, "Already connecting to Spotify");
+            // The connection listener will be called when connection completes
             return;
         }
         

@@ -2460,8 +2460,25 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	// Public method to play Spotify track from adapters
 	public void playSpotifyTrack(String spotifyTrackId, String title, String artist) {
+		Log.d("SpotifyDebug", "playSpotifyTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
+		
+		if (spotifyBottomSheetController == null) {
+			Log.e("SpotifyDebug", "SpotifyBottomSheetController is null! Attempting to reinitialize...");
+			// Try to reinitialize if null
+			ViewGroup rootView = findViewById(R.id.root);
+			if (rootView != null) {
+				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			} else {
+				Log.e("SpotifyDebug", "Root view is null, cannot initialize SpotifyBottomSheetController");
+				return;
+			}
+		}
+		
 		if (spotifyBottomSheetController != null && spotifyTrackId != null && !spotifyTrackId.isEmpty()) {
+			Log.d("SpotifyDebug", "Calling spotifyBottomSheetController.playTrack()");
 			spotifyBottomSheetController.playTrack(spotifyTrackId, title, artist);
+		} else {
+			Log.e("SpotifyDebug", "Cannot play track - controller: " + (spotifyBottomSheetController != null) + ", trackId valid: " + (spotifyTrackId != null && !spotifyTrackId.isEmpty()));
 		}
 	}
 	
