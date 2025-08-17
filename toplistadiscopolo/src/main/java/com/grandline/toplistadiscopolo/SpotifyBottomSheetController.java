@@ -195,38 +195,42 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Update UI immediately
         updateTrackInfo(title, artist);
         
-        // Connect to Spotify if needed
-        if (!spotifyService.isConnected()) {
-            spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
-                @Override
-                public void onConnected() {
-                    // Play track after connection
-                    spotifyService.playTrack(spotifyTrackId);
-                    showBottomSheet(true); // Show expanded
-                }
-                
-                @Override
-                public void onConnectionFailed(Throwable error) {
-                    Log.e(TAG, "Failed to connect to Spotify", error);
-                }
-                
-                @Override
-                public void onDisconnected() {
-                    // Handle disconnection
-                }
-            });
-            spotifyService.connect();
-        } else {
-            // Already connected, play track
-            spotifyService.playTrack(spotifyTrackId);
-            showBottomSheet(true); // Show expanded
-        }
+        // Set up connection listener before checking connection status
+        spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+            @Override
+            public void onConnected() {
+                // Play track after connection
+                spotifyService.playTrack(spotifyTrackId);
+                showBottomSheet(true); // Show expanded
+            }
+            
+            @Override
+            public void onConnectionFailed(Throwable error) {
+                Log.e(TAG, "Failed to connect to Spotify", error);
+            }
+            
+            @Override
+            public void onDisconnected() {
+                // Handle disconnection
+            }
+        });
+        
+        // Connect to Spotify (will notify listener immediately if already connected)
+        spotifyService.connect();
     }
     
     public void showBottomSheet(boolean expanded) {
+        Log.d(TAG, "showBottomSheet called - expanded: " + expanded);
+        
+        if (bottomSheetBehavior == null) {
+            Log.e(TAG, "BottomSheetBehavior is null!");
+            return;
+        }
+        
         if (expanded) {
             bottomSheetBehavior.setPeekHeight(dpToPx(72));
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            Log.d(TAG, "Bottom sheet set to EXPANDED state");
         } else {
             bottomSheetBehavior.setPeekHeight(dpToPx(72));
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
