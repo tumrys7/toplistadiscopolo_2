@@ -224,46 +224,42 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     
     // Public methods
     
-    public void playTrack(String spotifyTrackId, String title, String artist) {
-        Log.d(TAG, "playTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
+    public void playTrack(String trackId, String title, String artist) {
+        Log.d(TAG, "playTrack called - trackId: " + trackId + ", title: " + title + ", artist: " + artist);
         
-        // Extract track ID from various Spotify URL formats
-        String extractedTrackId = extractSpotifyTrackId(spotifyTrackId);
-        Log.d(TAG, "Extracted track ID: " + extractedTrackId);
+        // Extract track ID from Spotify URL if needed
+        String actualTrackId = extractSpotifyTrackId(trackId);
+        Log.d(TAG, "Extracted track ID: " + actualTrackId);
         
-        // Store track info
-        this.currentTrackId = extractedTrackId;
-        this.currentTrackTitle = title;
-        this.currentTrackArtist = artist;
+        // Store current track info
+        currentTrackId = actualTrackId;
+        currentTrackTitle = title;
+        currentTrackArtist = artist;
         
-        // Update UI immediately
+        // Update UI with track info immediately
         updateTrackInfo(title, artist);
         
-        // Show bottom sheet immediately for user feedback
+        // Show the bottom sheet
         showBottomSheet(true);
         
         // Check if already connected
         if (spotifyService.isConnected()) {
-            Log.d(TAG, "Spotify already connected, playing track immediately");
-            // Already connected, play immediately
-            spotifyService.playTrack(extractedTrackId);
+            Log.d(TAG, "Already connected to Spotify, playing track immediately");
+            spotifyService.playTrack(actualTrackId);
         } else {
             Log.d(TAG, "Spotify not connected, setting up connection");
             
-            // Store the pending track info
-            this.pendingTrackId = extractedTrackId;
-            this.pendingTrackTitle = title;
-            this.pendingTrackArtist = artist;
-            this.hasPendingTrack = true;
+            // Store pending track info
+            pendingTrackId = actualTrackId;
+            pendingTrackTitle = title;
+            pendingTrackArtist = artist;
+            hasPendingTrack = true;
             
-            // Show loading state while connecting
+            // Show loading state
             showLoadingState(true);
             
-            // Always set up the connection listener to ensure we handle the pending track
-            Log.d(TAG, "Setting up connection listener for pending track");
-            
-            // Set up connection listener for when connection completes
-            spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+            // Create a connection listener specifically for this playback request
+            SpotifyService.SpotifyConnectionListener playbackConnectionListener = new SpotifyService.SpotifyConnectionListener() {
                 @Override
                 public void onConnected() {
                     Log.d(TAG, "Spotify connected callback - checking for pending track");
@@ -279,6 +275,9 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         pendingTrackTitle = null;
                         pendingTrackArtist = null;
                     }
+                    
+                    // Remove this listener after use
+                    spotifyService.removeConnectionListener(this);
                 }
                 
                 @Override
@@ -307,6 +306,9 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     pendingTrackId = null;
                     pendingTrackTitle = null;
                     pendingTrackArtist = null;
+                    
+                    // Remove this listener after use
+                    spotifyService.removeConnectionListener(this);
                 }
                 
                 @Override
@@ -318,8 +320,15 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     pendingTrackId = null;
                     pendingTrackTitle = null;
                     pendingTrackArtist = null;
+                    
+                    // Remove this listener after use
+                    spotifyService.removeConnectionListener(this);
                 }
-            });
+            };
+            
+            // Add the connection listener
+            Log.d(TAG, "Setting up connection listener for pending track");
+            spotifyService.addConnectionListener(playbackConnectionListener);
             
             // Check if we need to start a new connection
             if (!spotifyService.isConnecting()) {
