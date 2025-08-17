@@ -45,6 +45,13 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.activity:activity:1.10.1'
     implementation 'androidx.multidex:multidex:2.0.1'
+    
+    // Spotify App Remote SDK
+    implementation 'com.spotify.android:spotify-app-remote:0.8.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Glide for image loading (for Spotify album art)
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

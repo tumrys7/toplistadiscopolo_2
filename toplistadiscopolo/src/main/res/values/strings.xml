@@ -70,5 +70,10 @@
     <string name="title_activity_ad_fullscreen">AdFullscreenActivity</string>
     <string name="loading">Please wait&#8230;</string>
     <string name="ad_cta">Button</string>
+    
+    <!-- Spotify Player -->
+    <string name="album_art">Album Art</string>
+    <string name="no_track_playing">No track playing</string>
+    <string name="powered_by_spotify">Powered by Spotify</string>
 
 </resources>

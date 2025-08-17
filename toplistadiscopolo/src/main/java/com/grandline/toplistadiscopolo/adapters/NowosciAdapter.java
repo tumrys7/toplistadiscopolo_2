@@ -112,6 +112,7 @@ public class NowosciAdapter extends BaseAdapter {
         TextView duration = vi.findViewById(R.id.ile_glosow); // duration
         ImageView thumb_image= vi.findViewById(R.id.list_image); // thumb image
         TextView createDate = vi.findViewById(R.id.data_dodania); // listPosition
+        TextView spotify = vi.findViewById(R.id.spotify); // spotify track id
         
         HashMap<String, String> song;
         synchronized(dataLock) {
@@ -134,6 +135,7 @@ public class NowosciAdapter extends BaseAdapter {
         duration.setText(song.get(Constants.KEY_VOTES));
 //        listPosition.setText(song.get(Constants.KEY_POSITION));
         createDate.setText(song.get(Constants.KEY_CREATE_DATE));
+        spotify.setText(song.get(Constants.KEY_SPOTIFY));
         
         // Load image asynchronously to prevent main thread blocking
         String thumbUrl = song.get(Constants.KEY_THUMB_URL);

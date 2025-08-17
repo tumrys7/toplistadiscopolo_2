@@ -81,6 +81,7 @@ public class LazyAdapter extends BaseAdapter {
         TextView createDate = vi.findViewById(R.id.data_dodania); // listPosition
         TextView placeChange = vi.findViewById(R.id.zmiana); // zmiana
         ProgressBar votesProgress = vi.findViewById(R.id.votesProgress); // progress
+        TextView spotify = vi.findViewById(R.id.spotify); // spotify track id
         
         HashMap<String, String> song;
         synchronized(dataLock) {
@@ -103,6 +104,7 @@ public class LazyAdapter extends BaseAdapter {
         duration.setText(song.get(Constants.KEY_VOTES));
         listPosition.setText(song.get(Constants.KEY_POSITION));
         createDate.setText(song.get(Constants.KEY_CREATE_DATE));
+        spotify.setText(song.get(Constants.KEY_SPOTIFY));
         
         // Load image asynchronously to prevent main thread blocking
         String thumbUrl = song.get(Constants.KEY_THUMB_URL);

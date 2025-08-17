@@ -45,4 +45,7 @@
     <color name="text_awans_color">#4CAF50</color> <!-- Green for upward movement -->
     <color name="text_spadek_color">#F44336</color> <!-- Red for downward movement -->
     <color name="text_nowosc_color">#2196F3</color> <!-- Blue for new items -->
+    
+    <!-- Spotify Brand Color -->
+    <color name="spotify_green">#1DB954</color>
 </resources>
