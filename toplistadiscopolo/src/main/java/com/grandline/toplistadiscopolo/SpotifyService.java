@@ -10,6 +10,7 @@ import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.Image;
+import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
@@ -234,7 +235,7 @@ public class SpotifyService {
     }
     
     // Get album art for current track
-    public void getAlbumArt(String imageUri, Image.Dimension dimension) {
+    public void getAlbumArt(ImageUri imageUri, Image.Dimension dimension) {
         if (!isConnected() || imageUri == null) return;
         
         mSpotifyAppRemote.getImagesApi()

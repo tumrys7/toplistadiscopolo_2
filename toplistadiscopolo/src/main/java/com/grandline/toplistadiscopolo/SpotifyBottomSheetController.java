@@ -285,7 +285,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         
         // Load album art
         if (track.imageUri != null) {
-            spotifyService.getAlbumArt(track.imageUri.raw, Image.Dimension.THUMBNAIL);
+            spotifyService.getAlbumArt(track.imageUri, Image.Dimension.THUMBNAIL);
         }
     }
     
@@ -361,7 +361,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         spotifyService.getPlayerState(playerState -> {
             if (playerState != null && playerState.track != null && playerState.track.imageUri != null) {
                 Image.Dimension dimension = large ? Image.Dimension.LARGE : Image.Dimension.THUMBNAIL;
-                spotifyService.getAlbumArt(playerState.track.imageUri.raw, dimension);
+                spotifyService.getAlbumArt(playerState.track.imageUri, dimension);
             }
         });
     }
