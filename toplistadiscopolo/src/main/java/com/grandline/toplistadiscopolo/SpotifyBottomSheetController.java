@@ -74,52 +74,61 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     }
     
     private void initializeBottomSheet() {
-        // Inflate bottom sheet layout
-        LayoutInflater inflater = LayoutInflater.from(context);
-        bottomSheetContainer = (CoordinatorLayout) inflater.inflate(
-            R.layout.bottom_sheet_spotify_player, rootView, false);
+        Log.d(TAG, "Initializing bottom sheet");
         
-        // Add to root view
-        rootView.addView(bottomSheetContainer);
-        
-        // Get bottom sheet and behavior
-        bottomSheet = bottomSheetContainer.findViewById(R.id.spotify_bottom_sheet);
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        
-        // Configure bottom sheet behavior
-        bottomSheetBehavior.setPeekHeight(0); // Initially hidden
-        bottomSheetBehavior.setHideable(true);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        bottomSheetBehavior.setSkipCollapsed(false);
-        
-        // Initialize UI elements
-        initializeMiniPlayer();
-        initializeExpandedPlayer();
-        
-        // Set Spotify listener
-        spotifyService.setPlayerListener(this);
+        try {
+            // Inflate the bottom sheet layout directly (without CoordinatorLayout wrapper)
+            LayoutInflater inflater = LayoutInflater.from(context);
+            bottomSheet = (LinearLayout) inflater.inflate(R.layout.spotify_bottom_sheet_content, rootView, false);
+            
+            // Add the bottom sheet to the root CoordinatorLayout
+            rootView.addView(bottomSheet);
+            
+            // For compatibility, set bottomSheetContainer to rootView since we're not using a separate container
+            bottomSheetContainer = (CoordinatorLayout) rootView;
+            
+            // Get the BottomSheetBehavior from the bottom sheet
+            bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+            
+            // Configure bottom sheet behavior
+            bottomSheetBehavior.setPeekHeight(0); // Initially hidden
+            bottomSheetBehavior.setHideable(true);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            bottomSheetBehavior.setSkipCollapsed(false);
+            
+            // Initialize UI elements
+            initializeMiniPlayer();
+            initializeExpandedPlayer();
+            
+            // Set Spotify listener
+            spotifyService.setPlayerListener(this);
+            
+            Log.d(TAG, "Bottom sheet initialized successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing bottom sheet", e);
+        }
     }
     
     private void initializeMiniPlayer() {
-        miniPlayer = bottomSheetContainer.findViewById(R.id.mini_player);
-        miniAlbumArt = bottomSheetContainer.findViewById(R.id.mini_album_art);
-        miniTrackTitle = bottomSheetContainer.findViewById(R.id.mini_track_title);
-        miniTrackArtist = bottomSheetContainer.findViewById(R.id.mini_track_artist);
-        miniPlayPauseButton = bottomSheetContainer.findViewById(R.id.mini_play_pause_button);
-        miniCloseButton = bottomSheetContainer.findViewById(R.id.mini_close_button);
+        miniPlayer = bottomSheet.findViewById(R.id.mini_player);
+        miniAlbumArt = bottomSheet.findViewById(R.id.mini_album_art);
+        miniTrackTitle = bottomSheet.findViewById(R.id.mini_track_title);
+        miniTrackArtist = bottomSheet.findViewById(R.id.mini_track_artist);
+        miniPlayPauseButton = bottomSheet.findViewById(R.id.mini_play_pause_button);
+        miniCloseButton = bottomSheet.findViewById(R.id.mini_close_button);
     }
     
     private void initializeExpandedPlayer() {
-        expandedPlayer = bottomSheetContainer.findViewById(R.id.expanded_player);
-        expandedAlbumArt = bottomSheetContainer.findViewById(R.id.expanded_album_art);
-        expandedTrackTitle = bottomSheetContainer.findViewById(R.id.expanded_track_title);
-        expandedTrackArtist = bottomSheetContainer.findViewById(R.id.expanded_track_artist);
-        seekBar = bottomSheetContainer.findViewById(R.id.seek_bar);
-        currentTime = bottomSheetContainer.findViewById(R.id.current_time);
-        totalTime = bottomSheetContainer.findViewById(R.id.total_time);
-        previousButton = bottomSheetContainer.findViewById(R.id.previous_button);
-        playPauseButton = bottomSheetContainer.findViewById(R.id.play_pause_button);
-        nextButton = bottomSheetContainer.findViewById(R.id.next_button);
+        expandedPlayer = bottomSheet.findViewById(R.id.expanded_player);
+        expandedAlbumArt = bottomSheet.findViewById(R.id.expanded_album_art);
+        expandedTrackTitle = bottomSheet.findViewById(R.id.expanded_track_title);
+        expandedTrackArtist = bottomSheet.findViewById(R.id.expanded_track_artist);
+        seekBar = bottomSheet.findViewById(R.id.seek_bar);
+        currentTime = bottomSheet.findViewById(R.id.current_time);
+        totalTime = bottomSheet.findViewById(R.id.total_time);
+        previousButton = bottomSheet.findViewById(R.id.previous_button);
+        playPauseButton = bottomSheet.findViewById(R.id.play_pause_button);
+        nextButton = bottomSheet.findViewById(R.id.next_button);
     }
     
     private void setupListeners() {
@@ -187,6 +196,8 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     // Public methods
     
     public void playTrack(String spotifyTrackId, String title, String artist) {
+        Log.d(TAG, "playTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
+        
         // Store track info
         this.currentTrackId = spotifyTrackId;
         this.currentTrackTitle = title;
@@ -195,28 +206,49 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Update UI immediately
         updateTrackInfo(title, artist);
         
-        // Set up connection listener before checking connection status
-        spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
-            @Override
-            public void onConnected() {
-                // Play track after connection
-                spotifyService.playTrack(spotifyTrackId);
-                showBottomSheet(true); // Show expanded
-            }
+        // Check if already connected
+        if (spotifyService.isConnected()) {
+            Log.d(TAG, "Spotify already connected, playing track immediately");
+            // Already connected, play immediately
+            spotifyService.playTrack(spotifyTrackId);
+            showBottomSheet(true); // Show expanded
+        } else {
+            Log.d(TAG, "Spotify not connected, setting up connection listener");
             
-            @Override
-            public void onConnectionFailed(Throwable error) {
-                Log.e(TAG, "Failed to connect to Spotify", error);
-            }
+            // Set up connection listener for when connection completes
+            // This will be called even if connection is already in progress
+            spotifyService.setConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+                @Override
+                public void onConnected() {
+                    Log.d(TAG, "Spotify connected callback - playing track: " + spotifyTrackId);
+                    // Play track after connection
+                    spotifyService.playTrack(spotifyTrackId);
+                    showBottomSheet(true); // Show expanded
+                }
+                
+                @Override
+                public void onConnectionFailed(Throwable error) {
+                    Log.e(TAG, "Failed to connect to Spotify", error);
+                    // Optionally show an error message to the user
+                }
+                
+                @Override
+                public void onDisconnected() {
+                    Log.d(TAG, "Spotify disconnected");
+                    // Handle disconnection
+                }
+            });
             
-            @Override
-            public void onDisconnected() {
-                // Handle disconnection
+            // If already connecting, the listener above will be called when connection completes
+            // If not connecting, this will start a new connection
+            if (spotifyService.isConnecting()) {
+                Log.d(TAG, "Spotify is already connecting, waiting for connection to complete");
+                // The listener we just set will be called when the ongoing connection completes
+            } else {
+                Log.d(TAG, "Starting new Spotify connection");
+                spotifyService.connect();
             }
-        });
-        
-        // Connect to Spotify (will notify listener immediately if already connected)
-        spotifyService.connect();
+        }
     }
     
     public void showBottomSheet(boolean expanded) {
@@ -227,6 +259,14 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             return;
         }
         
+        if (bottomSheet == null) {
+            Log.e(TAG, "BottomSheet is null!");
+            return;
+        }
+        
+        // Ensure the bottom sheet is visible
+        bottomSheet.setVisibility(View.VISIBLE);
+        
         if (expanded) {
             bottomSheetBehavior.setPeekHeight(dpToPx(72));
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -234,6 +274,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         } else {
             bottomSheetBehavior.setPeekHeight(dpToPx(72));
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            Log.d(TAG, "Bottom sheet set to COLLAPSED state");
         }
     }
     
