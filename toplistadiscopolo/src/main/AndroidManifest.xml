@@ -72,11 +72,6 @@
             android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
         <activity
-            android:name="com.grandline.toplistadiscopolo.PlayActivity"
-            android:theme="@style/AppTheme"
-            android:parentActivityName="com.grandline.toplistadiscopolo.ListaPrzebojowDiscoPolo">
-        </activity>
-        <activity
             android:name="com.grandline.toplistadiscopolo.OProgramie"
             android:label="@string/title_activity_oprogramie"
             android:theme="@style/AppTheme">

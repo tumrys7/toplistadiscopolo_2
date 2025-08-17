@@ -30,6 +30,7 @@
     <string name="teledysk">Teledysk</string>
     <string name="spotify">Posłuchaj</string>
     <string name="utwory_wykonawcy">Utwory wykonawcy</string>
+    <string name="no_song_on_spotify">Brak utworu w Spotify</string>
     <string name="spotify_go_to_app">Przejdź do Spotify:</string>
     <string name="connecting_spotify">Łączenie ze Spotify...</string>
     <string name="connection_failed">Połączenie nieudane</string>
