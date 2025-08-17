@@ -128,7 +128,10 @@ public class LazyAdapter extends BaseAdapter {
         
         // Set color based on text content
         if (placeChangeText != null) {
-            if (placeChangeText.startsWith("↑")) {
+            if (placeChangeText.equals("Nowość") || placeChangeText.contains("Nowość")) {
+                // Text is "Nowość" - set blue color
+                placeChange.setTextColor(ContextCompat.getColor(context, R.color.text_nowosc_color));
+            } else if (placeChangeText.startsWith("↑")) {
                 // Text starts with ↑ (text_awans) - set green color
                 placeChange.setTextColor(ContextCompat.getColor(context, R.color.text_awans_color));
             } else if (placeChangeText.startsWith("↓")) {
