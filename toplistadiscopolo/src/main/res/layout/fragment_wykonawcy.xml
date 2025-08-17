@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -8,11 +9,15 @@
     android:id="@+id/search_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:hint="@string/tab_wykonawcy_filtruj"
     android:background="@drawable/list_selector"
-    android:inputType="textVisiblePassword"
-    android:textColorHint="#546E7A"
-    android:textColor="@color/md_theme_onPrimary"/>
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:clickable="true"
+    app:queryHint="@string/tab_wykonawcy_filtruj"
+    app:iconifiedByDefault="false"
+    app:searchIcon="@android:drawable/ic_menu_search"
+    app:closeIcon="@android:drawable/ic_menu_close_clear_cancel"
+    app:queryBackground="@android:color/transparent"/>
 
     <ListView
     android:id="@+id/listWykon"
