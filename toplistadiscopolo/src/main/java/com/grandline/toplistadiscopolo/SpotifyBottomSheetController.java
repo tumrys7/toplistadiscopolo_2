@@ -207,8 +207,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     public void playTrack(String spotifyTrackId, String title, String artist) {
         Log.d(TAG, "playTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
         
+        // Extract track ID from various Spotify URL formats
+        String extractedTrackId = extractSpotifyTrackId(spotifyTrackId);
+        Log.d(TAG, "Extracted track ID: " + extractedTrackId);
+        
         // Store track info
-        this.currentTrackId = spotifyTrackId;
+        this.currentTrackId = extractedTrackId;
         this.currentTrackTitle = title;
         this.currentTrackArtist = artist;
         
@@ -222,12 +226,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         if (spotifyService.isConnected()) {
             Log.d(TAG, "Spotify already connected, playing track immediately");
             // Already connected, play immediately
-            spotifyService.playTrack(spotifyTrackId);
+            spotifyService.playTrack(extractedTrackId);
         } else {
             Log.d(TAG, "Spotify not connected, setting up connection");
             
             // Store the pending track info
-            this.pendingTrackId = spotifyTrackId;
+            this.pendingTrackId = extractedTrackId;
             this.pendingTrackTitle = title;
             this.pendingTrackArtist = artist;
             this.hasPendingTrack = true;
@@ -261,8 +265,14 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         // Hide loading state and show error
                         showLoadingState(false);
                         hasPendingTrack = false;
-                        // Show error message to the user
-                        updateTrackInfo(context.getString(R.string.connection_failed), error.getMessage());
+                        
+                        // Show appropriate error message to the user
+                        String errorMessage = error.getMessage();
+                        if (errorMessage != null && errorMessage.contains("not installed")) {
+                            updateTrackInfo("Spotify Not Installed", "Please install Spotify app to play music");
+                        } else {
+                            updateTrackInfo("Connection Failed", "Unable to connect to Spotify. Please try again.");
+                        }
                     }
                     
                     @Override
@@ -309,18 +319,36 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Set peek height before changing state
         bottomSheetBehavior.setPeekHeight(dpToPx(72));
         
-        if (expanded) {
-            // Use post to ensure the state change happens after any pending UI operations
-            bottomSheet.post(() -> {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                Log.d(TAG, "Bottom sheet set to EXPANDED state");
-            });
-        } else {
-            bottomSheet.post(() -> {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                Log.d(TAG, "Bottom sheet set to COLLAPSED state");
-            });
-        }
+        // Force layout update to ensure the bottom sheet is properly measured
+        bottomSheet.requestLayout();
+        
+        // Use post to ensure the state change happens after any pending UI operations
+        bottomSheet.post(() -> {
+            try {
+                if (expanded) {
+                    // First make sure it's not hidden
+                    if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        // Then expand after a short delay
+                        bottomSheet.postDelayed(() -> {
+                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            Log.d(TAG, "Bottom sheet set to EXPANDED state");
+                        }, 100);
+                    } else {
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        Log.d(TAG, "Bottom sheet set to EXPANDED state");
+                    }
+                } else {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    Log.d(TAG, "Bottom sheet set to COLLAPSED state");
+                }
+                
+                // Log the current state for debugging
+                Log.d(TAG, "Bottom sheet current state: " + getStateString(bottomSheetBehavior.getState()));
+            } catch (Exception e) {
+                Log.e(TAG, "Error setting bottom sheet state", e);
+            }
+        });
     }
     
     public void hideBottomSheet() {
@@ -493,6 +521,72 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         // Update text to show loading state
         if (show && currentTrackTitle == null) {
             updateTrackInfo(context.getString(R.string.connecting_spotify), "");
+        }
+    }
+    
+    /**
+     * Extracts the Spotify track ID from various URL formats
+     * Supports:
+     * - Plain track ID: "2LxgXxai3bBNcIeiQxb9PL"
+     * - Spotify URI: "spotify:track:2LxgXxai3bBNcIeiQxb9PL"
+     * - Open URL: "https://open.spotify.com/track/2LxgXxai3bBNcIeiQxb9PL"
+     * - Embed URL: "https://open.spotify.com/embed/track/2LxgXxai3bBNcIeiQxb9PL?theme=0"
+     */
+    private String extractSpotifyTrackId(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        // Remove any query parameters first
+        String cleanInput = input.split("\\?")[0];
+        
+        // Check if it's already a plain track ID (22 characters)
+        if (cleanInput.matches("[a-zA-Z0-9]{22}")) {
+            return cleanInput;
+        }
+        
+        // Check for Spotify URI format
+        if (cleanInput.startsWith("spotify:track:")) {
+            return cleanInput.substring("spotify:track:".length());
+        }
+        
+        // Check for Open Spotify URL format
+        if (cleanInput.contains("open.spotify.com/track/")) {
+            String[] parts = cleanInput.split("/track/");
+            if (parts.length > 1) {
+                return parts[1];
+            }
+        }
+        
+        // Check for Embed Spotify URL format
+        if (cleanInput.contains("open.spotify.com/embed/track/")) {
+            String[] parts = cleanInput.split("/embed/track/");
+            if (parts.length > 1) {
+                return parts[1];
+            }
+        }
+        
+        // If no pattern matches, return the original input
+        Log.w(TAG, "Could not extract track ID from: " + input);
+        return cleanInput;
+    }
+    
+    private String getStateString(int state) {
+        switch (state) {
+            case BottomSheetBehavior.STATE_EXPANDED:
+                return "EXPANDED";
+            case BottomSheetBehavior.STATE_COLLAPSED:
+                return "COLLAPSED";
+            case BottomSheetBehavior.STATE_HIDDEN:
+                return "HIDDEN";
+            case BottomSheetBehavior.STATE_DRAGGING:
+                return "DRAGGING";
+            case BottomSheetBehavior.STATE_SETTLING:
+                return "SETTLING";
+            case BottomSheetBehavior.STATE_HALF_EXPANDED:
+                return "HALF_EXPANDED";
+            default:
+                return "UNKNOWN";
         }
     }
     
