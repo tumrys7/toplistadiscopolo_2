@@ -117,9 +117,10 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             
             // Configure bottom sheet behavior
             bottomSheetBehavior.setPeekHeight(dpToPx(72)); // Peek height for mini player
-            bottomSheetBehavior.setHideable(true);
+            bottomSheetBehavior.setHideable(true); // Still allow hiding via close button or programmatically
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // Initially hidden until track is played
-            bottomSheetBehavior.setSkipCollapsed(false);
+            bottomSheetBehavior.setSkipCollapsed(false); // Don't skip collapsed state when transitioning
+            bottomSheetBehavior.setHalfExpandedRatio(0.5f); // Set half-expanded ratio for smoother transitions
             
             // Make bottom sheet draggable
             bottomSheetBehavior.setDraggable(true);
@@ -262,8 +263,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         
         // Bottom sheet state callback
         bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            private int previousState = BottomSheetBehavior.STATE_HIDDEN;
+            
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                Log.d(TAG, "Bottom sheet state changed from " + getStateString(previousState) + " to " + getStateString(newState));
+                
                 switch (newState) {
                     case BottomSheetBehavior.STATE_EXPANDED:
                         // Load large album art when expanded
@@ -272,10 +277,34 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         }
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
-                        // Stop progress updates when hidden
-                        stopProgressUpdate();
+                        // If we're trying to hide from expanded state (user swiped down), 
+                        // keep it in collapsed state instead to maintain the input channel
+                        if (previousState == BottomSheetBehavior.STATE_EXPANDED || 
+                            previousState == BottomSheetBehavior.STATE_DRAGGING ||
+                            previousState == BottomSheetBehavior.STATE_SETTLING) {
+                            // Check if we have an active track - if yes, stay collapsed
+                            if (currentTrackId != null || spotifyService.isConnected()) {
+                                Log.d(TAG, "Preventing hide from expanded state - staying collapsed");
+                                bottomSheet.post(() -> {
+                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                                });
+                            } else {
+                                // No active track, allow hiding
+                                stopProgressUpdate();
+                            }
+                        } else {
+                            // Stop progress updates when hidden from other states
+                            stopProgressUpdate();
+                        }
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        // Bottom sheet is collapsed - mini player visible
+                        Log.d(TAG, "Bottom sheet collapsed - mini player visible");
                         break;
                 }
+                
+                // Update previous state for next callback
+                previousState = newState;
             }
             
             @Override
@@ -488,8 +517,14 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     }
     
     public void hideBottomSheet() {
+        // Only hide if explicitly requested (e.g., via close button)
+        // This ensures the bottom sheet can be properly hidden when needed
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         stopProgressUpdate();
+        // Clear current track info when explicitly hiding
+        currentTrackId = null;
+        currentTrackTitle = null;
+        currentTrackArtist = null;
         // Optionally pause playback
         if (isPlaying) {
             spotifyService.pause();
