@@ -239,7 +239,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		ViewGroup rootView = findViewById(R.id.root);
 		if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
-			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this, rootView);
 		}
 
 		//only for Free Version
@@ -379,6 +379,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		///rewardedAd.getAdMetadata();
 		super.onResume();
 		
+		// Resume YouTube bottom sheet WebView timers safely
+		if (youTubeBottomSheetController != null) {
+			youTubeBottomSheetController.onResume();
+		}
 		// Resume ads safely
 		try {
 			if (mAdView != null) {
@@ -392,6 +396,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	@Override
 	public void onPause() {
 		//rewardedAd.pause(this);
+		// Pause YouTube bottom sheet WebView timers safely
+		if (youTubeBottomSheetController != null) {
+			youTubeBottomSheetController.onPause();
+		}
 		super.onPause();
 	}
 
@@ -2478,7 +2486,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			ViewGroup rootView = findViewById(R.id.root);
 					if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
-			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this, rootView);
 			Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 		} else {
 				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");
