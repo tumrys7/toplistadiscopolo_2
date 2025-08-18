@@ -301,9 +301,10 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         String actualTrackId = extractSpotifyTrackId(trackId);
         Log.d(TAG, "Extracted track ID: " + actualTrackId);
         
-        // Check if trackId is null, empty, or invalid
-        if (actualTrackId == null || actualTrackId.isEmpty() || actualTrackId.equals("null")) {
-            Log.w(TAG, "No valid Spotify track ID available");
+        // Check if trackId is null, empty, invalid, or still contains URL format (extraction failed)
+        if (actualTrackId == null || actualTrackId.isEmpty() || actualTrackId.equals("null") 
+                || actualTrackId.contains("spotify.com") || actualTrackId.contains(":")) {
+            Log.w(TAG, "No valid Spotify track ID available - trackId: " + actualTrackId);
             
             // Show bottom sheet with "No Song on Spotify" message
             showNoTrackAvailable(title, artist);
@@ -626,6 +627,8 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private void updateProgress(long position, long duration) {
         if (duration > 0) {
             float progress = (float) position / duration * 100;
+            // Clamp progress between 0 and 100 to prevent IllegalStateException
+            progress = Math.max(0f, Math.min(100f, progress));
             seekBar.setValue(progress);
             currentTime.setText(formatTime(position));
             totalTime.setText(formatTime(duration));
