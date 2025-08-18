@@ -47,7 +47,7 @@
         <style name="YouTubeBottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
             <item name="shapeAppearanceOverlay">@style/YouTubeBottomSheetShapeAppearance</item>
             <item name="behavior_peekHeight">200dp</item>
-            <item name="behavior_hideable">true</item>
+            <item name="behavior_hideable">false</item>
             <item name="behavior_skipCollapsed">false</item>
             <item name="behavior_draggable">true</item>
         </style>

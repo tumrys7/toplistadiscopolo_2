@@ -117,8 +117,9 @@ public class YouTubeBottomSheetController {
         }
         
         bottomSheetDialog = new BottomSheetDialog(context, R.style.YouTubeBottomSheetDialog);
-        bottomSheetDialog.setCancelable(true);
-        bottomSheetDialog.setCanceledOnTouchOutside(true);
+        // Make dialog non-dismissable on outside touch
+        bottomSheetDialog.setCancelable(false);
+        bottomSheetDialog.setCanceledOnTouchOutside(false);
         
         // Inflate layout
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -156,7 +157,8 @@ public class YouTubeBottomSheetController {
         
         bottomSheetBehavior.setPeekHeight(collapsedHeight);
         bottomSheetBehavior.setMaxHeight(expandedHeight);
-        bottomSheetBehavior.setHideable(true);
+        // Prevent hiding by dragging down
+        bottomSheetBehavior.setHideable(false);
         bottomSheetBehavior.setSkipCollapsed(false);
         bottomSheetBehavior.setDraggable(true);
         
@@ -176,7 +178,8 @@ public class YouTubeBottomSheetController {
                         headerLayout.setVisibility(View.GONE);
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
-                        dismiss();
+                        // Prevent hiding, expand back to collapsed state
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                         break;
                 }
             }
@@ -205,7 +208,8 @@ public class YouTubeBottomSheetController {
             webSettings.setMediaPlaybackRequiresUserGesture(false);
             webSettings.setAllowFileAccess(false);
             webSettings.setAllowContentAccess(false);
-            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+            // Allow mixed content for YouTube compatibility
+            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
             webSettings.setLoadWithOverviewMode(true);
             webSettings.setUseWideViewPort(true);
             webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
@@ -213,6 +217,9 @@ public class YouTubeBottomSheetController {
             webSettings.setBuiltInZoomControls(false);
             webSettings.setSupportZoom(false);
             webSettings.setDisplayZoomControls(false);
+            // Additional settings for better video playback
+            webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
+            webSettings.setPluginState(WebSettings.PluginState.ON);
             
             // Hardware acceleration
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -303,9 +310,8 @@ public class YouTubeBottomSheetController {
                         // Swipe down
                         if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        } else if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                         }
+                        // Don't allow hiding when swiping down from collapsed state
                         return true;
                     } else if (deltaY < -100 && Math.abs(velocityY) > 100) {
                         // Swipe up
@@ -330,7 +336,7 @@ public class YouTubeBottomSheetController {
         // Ensure WebView is ready
         mainHandler.post(() -> {
             try {
-                // Method 1: Try loading with embedded iframe (preferred)
+                // Use YouTube IFrame API for better compatibility and compliance
                 String html = "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
@@ -338,45 +344,82 @@ public class YouTubeBottomSheetController {
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
                 "<style>" +
                 "* { margin: 0; padding: 0; box-sizing: border-box; }" +
-                "body { background: #000; overflow: hidden; }" +
-                ".video-container { position: relative; width: 100%; height: 100vh; }" +
-                "iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }" +
+                "html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }" +
+                ".video-container { position: relative; width: 100%; height: 0; padding-bottom: 56.25%; }" +
+                "#player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }" +
                 "</style>" +
                 "</head>" +
                 "<body>" +
                 "<div class='video-container'>" +
-                "<iframe id='ytplayer' type='text/html' " +
-                "src='https://www.youtube.com/embed/" + videoId + "?autoplay=0&origin=http://localhost&rel=0&modestbranding=1&playsinline=1' " +
-                "frameborder='0' " +
-                "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' " +
-                "allowfullscreen>" +
-                "</iframe>" +
+                "<div id='player'></div>" +
                 "</div>" +
+                "<script>" +
+                "var tag = document.createElement('script');" +
+                "tag.src = 'https://www.youtube.com/iframe_api';" +
+                "var firstScriptTag = document.getElementsByTagName('script')[0];" +
+                "firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);" +
+                "var player;" +
+                "function onYouTubeIframeAPIReady() {" +
+                "  player = new YT.Player('player', {" +
+                "    videoId: '" + videoId + "'," +
+                "    width: '100%'," +
+                "    height: '100%'," +
+                "    playerVars: {" +
+                "      'playsinline': 1," +
+                "      'rel': 0," +
+                "      'modestbranding': 1," +
+                "      'autoplay': 0," +
+                "      'controls': 1," +
+                "      'showinfo': 0," +
+                "      'fs': 1," +
+                "      'origin': 'http://localhost'" +
+                "    }," +
+                "    events: {" +
+                "      'onReady': onPlayerReady," +
+                "      'onStateChange': onPlayerStateChange," +
+                "      'onError': onPlayerError" +
+                "    }" +
+                "  });" +
+                "}" +
+                "function onPlayerReady(event) {" +
+                "  console.log('Player is ready');" +
+                "  Android.onPlayerReady();" +
+                "}" +
+                "function onPlayerStateChange(event) {" +
+                "  console.log('Player state changed: ' + event.data);" +
+                "}" +
+                "function onPlayerError(event) {" +
+                "  console.log('Player error: ' + event.data);" +
+                "  Android.onPlayerError(event.data);" +
+                "}" +
+                "</script>" +
                 "</body>" +
                 "</html>";
                 
                 Log.d(TAG, "Loading YouTube video with ID: " + videoId);
                 
-                // Load the HTML content
-                webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
+                // Add JavaScript interface for communication
+                webView.addJavascriptInterface(new YouTubeJSInterface(), "Android");
                 
-                // Alternative: If iframe doesn't work, try direct URL loading after a delay
-                mainHandler.postDelayed(() -> {
-                    if (!isWebViewReady) {
-                        Log.d(TAG, "Fallback: Loading YouTube mobile URL directly");
-                        String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
-                        webView.loadUrl(mobileUrl);
-                    }
-                }, 3000);
+                // Load the HTML content with YouTube IFrame API
+                webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error loading YouTube video", e);
-                // Fallback to mobile YouTube URL
+                // Fallback to embedded iframe without API
                 try {
-                    String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
-                    webView.loadUrl(mobileUrl);
+                    String fallbackHtml = "<!DOCTYPE html>" +
+                    "<html><head>" +
+                    "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
+                    "<style>body{margin:0;padding:0;background:#000;}iframe{width:100%;height:100vh;border:none;}</style>" +
+                    "</head><body>" +
+                    "<iframe src='https://www.youtube.com/embed/" + videoId + "?rel=0&modestbranding=1&playsinline=1' " +
+                    "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' " +
+                    "allowfullscreen></iframe>" +
+                    "</body></html>";
+                    webView.loadDataWithBaseURL("http://localhost", fallbackHtml, "text/html", "UTF-8", null);
                 } catch (Exception ex) {
-                    Log.e(TAG, "Error loading fallback URL", ex);
+                    Log.e(TAG, "Error loading fallback embed", ex);
                 }
             }
         });
@@ -418,6 +461,31 @@ public class YouTubeBottomSheetController {
         }
         
         return null;
+    }
+    
+    /**
+     * JavaScript interface for YouTube player communication
+     */
+    private class YouTubeJSInterface {
+        @JavascriptInterface
+        public void onPlayerReady() {
+            mainHandler.post(() -> {
+                isWebViewReady = true;
+                Log.d(TAG, "YouTube player is ready");
+            });
+        }
+        
+        @JavascriptInterface
+        public void onPlayerError(int errorCode) {
+            mainHandler.post(() -> {
+                Log.e(TAG, "YouTube player error: " + errorCode);
+                // Handle different error codes
+                // 2 - Invalid parameter
+                // 5 - HTML5 player error
+                // 100 - Video not found
+                // 101, 150 - Video not playable
+            });
+        }
     }
     
     /**
