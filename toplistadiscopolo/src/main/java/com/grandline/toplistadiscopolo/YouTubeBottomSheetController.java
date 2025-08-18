@@ -49,6 +49,7 @@ public class YouTubeBottomSheetController {
     private ImageButton expandCollapseButton;
     private LinearLayout headerLayout;
     private FrameLayout contentContainer;
+    private Handler mainHandler;
     
     private String currentVideoId;
     private String currentTitle;
@@ -61,6 +62,7 @@ public class YouTubeBottomSheetController {
     
     public YouTubeBottomSheetController(Activity activity) {
         this.activityRef = new WeakReference<>(activity);
+        this.mainHandler = new Handler(Looper.getMainLooper());
     }
     
     /**
@@ -104,6 +106,16 @@ public class YouTubeBottomSheetController {
     
     @SuppressLint("ClickableViewAccessibility")
     private void setupBottomSheet(Context context) {
+        // Clean up any existing dialog first
+        if (bottomSheetDialog != null) {
+            try {
+                bottomSheetDialog.dismiss();
+            } catch (Exception e) {
+                Log.e(TAG, "Error dismissing existing dialog", e);
+            }
+            bottomSheetDialog = null;
+        }
+        
         bottomSheetDialog = new BottomSheetDialog(context, R.style.YouTubeBottomSheetDialog);
         bottomSheetDialog.setCancelable(true);
         bottomSheetDialog.setCanceledOnTouchOutside(true);
@@ -181,49 +193,79 @@ public class YouTubeBottomSheetController {
     
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
-        webSettings.setAllowFileAccess(false);
-        webSettings.setAllowContentAccess(false);
-        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        if (webView == null) {
+            Log.e(TAG, "WebView is null in setupWebView");
+            return;
+        }
         
-        // Ustaw WebViewClient aby zapobiec otwieraniu linków w przeglądarce
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                // Blokuj nawigację poza YouTube
-                if (!url.contains("youtube.com") && !url.contains("youtu.be")) {
-                    return true;
+        try {
+            WebSettings webSettings = webView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            webSettings.setDomStorageEnabled(true);
+            webSettings.setMediaPlaybackRequiresUserGesture(false);
+            webSettings.setAllowFileAccess(false);
+            webSettings.setAllowContentAccess(false);
+            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+            webSettings.setLoadWithOverviewMode(true);
+            webSettings.setUseWideViewPort(true);
+            webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webSettings.setDatabaseEnabled(true);
+            
+            // Hardware acceleration
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            
+            // Ustaw WebViewClient aby zapobiec otwieraniu linków w przeglądarce
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    String url = request.getUrl().toString();
+                    // Blokuj nawigację poza YouTube
+                    if (!url.contains("youtube.com") && !url.contains("youtu.be") && !url.contains("googlevideo.com")) {
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
+                
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    isWebViewReady = true;
+                    Log.d(TAG, "Page finished loading: " + url);
+                }
+                
+                @Override
+                public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                    super.onReceivedError(view, errorCode, description, failingUrl);
+                    Log.e(TAG, "WebView error: " + errorCode + " - " + description + " at " + failingUrl);
+                }
+            });
             
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                isWebViewReady = true;
-            }
-        });
-        
-        // WebChromeClient dla pełnoekranowego video
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onShowCustomView(View view, CustomViewCallback callback) {
-                super.onShowCustomView(view, callback);
-                // Obsługa trybu pełnoekranowego
-            }
+            // WebChromeClient dla pełnoekranowego video
+            webView.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public void onShowCustomView(View view, CustomViewCallback callback) {
+                    super.onShowCustomView(view, callback);
+                    // Obsługa trybu pełnoekranowego
+                }
+                
+                @Override
+                public void onHideCustomView() {
+                    super.onHideCustomView();
+                }
+                
+                @Override
+                public void onProgressChanged(WebView view, int newProgress) {
+                    super.onProgressChanged(view, newProgress);
+                    Log.d(TAG, "Loading progress: " + newProgress + "%");
+                }
+            });
             
-            @Override
-            public void onHideCustomView() {
-                super.onHideCustomView();
-            }
-        });
-        
-        // Ustaw kolor tła
-        webView.setBackgroundColor(Color.BLACK);
+            // Ustaw kolor tła
+            webView.setBackgroundColor(Color.BLACK);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up WebView", e);
+        }
     }
     
     private void setupButtons() {
@@ -278,11 +320,15 @@ public class YouTubeBottomSheetController {
     
     private void loadYouTubeVideo(String videoId) {
         if (webView == null || videoId == null) {
+            Log.e(TAG, "Cannot load video: webView=" + (webView != null) + ", videoId=" + videoId);
             return;
         }
         
-        // HTML z iframe YouTube - zgodny z polityką YouTube
-        String html = "<!DOCTYPE html>" +
+        // Ensure WebView is ready
+        mainHandler.post(() -> {
+            try {
+                // HTML z iframe YouTube - zgodny z polityką YouTube
+                String html = "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
@@ -303,8 +349,13 @@ public class YouTubeBottomSheetController {
                 "</div>" +
                 "</body>" +
                 "</html>";
-        
-        webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
+                
+                Log.d(TAG, "Loading YouTube video with ID: " + videoId);
+                webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading YouTube video", e);
+            }
+        });
     }
     
     private void updateVideoInfo() {
@@ -367,18 +418,28 @@ public class YouTubeBottomSheetController {
      * Zamyka Bottom Sheet i czyści zasoby
      */
     public void dismiss() {
-        if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
-            bottomSheetDialog.dismiss();
+        try {
+            if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
+                bottomSheetDialog.dismiss();
+            }
+            cleanupWebView();
+        } catch (Exception e) {
+            Log.e(TAG, "Error dismissing bottom sheet", e);
         }
-        cleanupWebView();
     }
     
     private void cleanupWebView() {
         if (webView != null) {
-            webView.loadUrl("about:blank");
-            webView.clearHistory();
-            webView.clearCache(true);
-            isWebViewReady = false;
+            try {
+                webView.stopLoading();
+                webView.loadUrl("about:blank");
+                webView.clearHistory();
+                webView.clearCache(true);
+                webView.clearFormData();
+                isWebViewReady = false;
+            } catch (Exception e) {
+                Log.e(TAG, "Error cleaning up WebView", e);
+            }
         }
     }
     
@@ -427,11 +488,23 @@ public class YouTubeBottomSheetController {
      * Obsługa cyklu życia - wywołać w onDestroy() Activity
      */
     public void onDestroy() {
-        dismiss();
-        if (webView != null) {
-            webView.destroy();
-            webView = null;
+        try {
+            dismiss();
+            if (webView != null) {
+                ViewGroup parent = (ViewGroup) webView.getParent();
+                if (parent != null) {
+                    parent.removeView(webView);
+                }
+                webView.destroy();
+                webView = null;
+            }
+            bottomSheetDialog = null;
+            bottomSheetBehavior = null;
+            bottomSheetView = null;
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onDestroy", e);
+        } finally {
+            activityRef.clear();
         }
-        activityRef.clear();
     }
 }
