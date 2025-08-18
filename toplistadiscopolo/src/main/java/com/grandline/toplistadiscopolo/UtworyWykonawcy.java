@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.grandline.toplistadiscopolo.YouTubeBottomSheetController;
 
 public class UtworyWykonawcy extends AppCompatActivity {
 
@@ -110,6 +111,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		CoordinatorLayout rootView = findViewById(R.id.root);
 		if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 		}
 
@@ -297,16 +299,11 @@ public class UtworyWykonawcy extends AppCompatActivity {
 						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 					} else if (wykItems[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "1";
+						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
-						try {
-							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-							//	browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-							//	if (browserIntent.resolveActivity(getPackageManager()) != null) {
-							startActivity(browserIntent);
-							//	}
-						} catch (Exception e) {
-							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
+						// Use YouTube Bottom Sheet instead of browser
+						if (youTubeBottomSheetController != null) {
+							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
 						}
 					} else if(wykItems[item]==getString(R.string.spotify)){
 						// Use Spotify Bottom Sheet instead of PlayActivity
@@ -581,6 +578,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			ViewGroup rootView = findViewById(R.id.root);
 			if (rootView != null) {
 				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 				Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 			} else {
