@@ -72,6 +72,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.grandline.toplistadiscopolo.YouTubeBottomSheetController;
 
 
 public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
@@ -95,6 +96,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	// Spotify Bottom Sheet Controller
 	private SpotifyBottomSheetController spotifyBottomSheetController;
+	// YouTube Bottom Sheet Controller
+	private YouTubeBottomSheetController youTubeBottomSheetController;
 
 	// Activity result launcher
 	private ActivityResultLauncher<Intent> activityResultLauncher;
@@ -236,6 +239,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		ViewGroup rootView = findViewById(R.id.root);
 		if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 		}
 
 		//only for Free Version
@@ -358,6 +363,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 				if (spotifyBottomSheetController != null) {
 					spotifyBottomSheetController.onDestroy();
+		if (youTubeBottomSheetController != null) {
+			youTubeBottomSheetController.onDestroy();
+		}
 				}
 
 		} catch (Exception e) {
@@ -1264,13 +1272,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						finish();
 						showAuthSongs(idWykonawcy);
 					} else if (RewardItems[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "1";
+						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-						try {
-							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-							startActivity(browserIntent);
-						} catch (Exception e) {
-							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
+						// Use YouTube Bottom Sheet instead of browser
+						if (youTubeBottomSheetController != null) {
+							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+						} else {
+							Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 						}
 											}else if (RewardItems[item] == getString(R.string.spotify)) {
                         // Use Spotify Bottom Sheet instead of PlayActivity
@@ -1287,12 +1295,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						finish();
 						showAuthSongs(idWykonawcy);
 					} else if (items[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "1";
+						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
-						try {
-							Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-							startActivity(browserIntent);
-						} catch (Exception e) {
+						// Use YouTube Bottom Sheet instead of browser
+					if (youTubeBottomSheetController != null) {
+						youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+					} else {
+						Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
 						}
 					                    }else if (items[item] == getString(R.string.spotify)) {
@@ -1315,9 +1324,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
 				}
 				else if(wykItems[item]==getString(R.string.teledysk)){
-					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"1");
-					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(teledysk));
-					startActivity(browserIntent);
+					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
+				// Use YouTube Bottom Sheet instead of browser
+				if (youTubeBottomSheetController != null) {
+					youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+				} else {
+					Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
+				}
 				}
 				                else if(wykItems[item]==getString(R.string.spotify)){
                     // Use Spotify Bottom Sheet instead of PlayActivity
@@ -2467,6 +2480,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			ViewGroup rootView = findViewById(R.id.root);
 			if (rootView != null) {
 				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 				Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 			} else {
 				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");
