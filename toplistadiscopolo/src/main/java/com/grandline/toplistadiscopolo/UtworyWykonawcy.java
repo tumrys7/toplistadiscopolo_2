@@ -73,6 +73,8 @@ public class UtworyWykonawcy extends AppCompatActivity {
 	
 	// Spotify Bottom Sheet Controller
 	private SpotifyBottomSheetController spotifyBottomSheetController;
+	// YouTube Bottom Sheet Controller
+	private YouTubeBottomSheetController youTubeBottomSheetController;
 
 	// ExecutorService and Handler for background tasks
 	private ExecutorService executorService;
@@ -108,6 +110,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		CoordinatorLayout rootView = findViewById(R.id.root);
 		if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 		}
 
 		language = getLocaleSettings();
@@ -578,6 +581,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			ViewGroup rootView = findViewById(R.id.root);
 			if (rootView != null) {
 				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
+			youTubeBottomSheetController = new YouTubeBottomSheetController(this);
 				Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 			} else {
 				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");
