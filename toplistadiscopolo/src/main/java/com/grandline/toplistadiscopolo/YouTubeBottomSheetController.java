@@ -228,7 +228,11 @@ public class YouTubeBottomSheetController {
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 					String url = request.getUrl().toString();
-					if (url.contains("youtube.com") || url.contains("youtu.be")) {
+					if (url.contains("youtube.com") ||
+						url.contains("youtu.be") ||
+						url.contains("youtube-nocookie.com") ||
+						url.contains("googlevideo.com") ||
+						url.contains("ytimg.com")) {
 						return false;
 					}
 					return true;
@@ -370,6 +374,7 @@ public class YouTubeBottomSheetController {
 					"frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe>" +
 					"</div>" +
 					"</body></html>";
+				// Use a neutral base URL so WebView renders our HTML instead of navigating to the YouTube homepage
 				webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
 			} catch (Exception e) {
 				Log.e(TAG, "Error loading iframe, falling back to mobile URL", e);
