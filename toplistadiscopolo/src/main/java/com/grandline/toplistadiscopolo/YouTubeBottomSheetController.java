@@ -25,9 +25,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.lang.ref.WeakReference;
 import java.util.regex.Matcher;
@@ -37,10 +37,10 @@ public class YouTubeBottomSheetController {
 	private static final String TAG = "YouTubeBottomSheet";
 
 	private final WeakReference<Activity> activityRef;
-	private BottomSheetDialog bottomSheetDialog;
+	private final WeakReference<ViewGroup> rootViewRef;
 	private BottomSheetBehavior<View> bottomSheetBehavior;
 	private WebView webView;
-	private View bottomSheetView;
+	private LinearLayout bottomSheetView;
 	private TextView titleTextView;
 	private TextView artistTextView;
 	private ImageButton closeButton;
@@ -63,7 +63,12 @@ public class YouTubeBottomSheetController {
 	private static final int EXPANDED_HEIGHT_PERCENT = 85;
 
 	public YouTubeBottomSheetController(Activity activity) {
+		this(activity, activity != null ? (ViewGroup) activity.findViewById(R.id.root) : null);
+	}
+
+	public YouTubeBottomSheetController(Activity activity, ViewGroup rootView) {
 		this.activityRef = new WeakReference<>(activity);
+		this.rootViewRef = new WeakReference<>(rootView);
 		this.mainHandler = new Handler(Looper.getMainLooper());
 	}
 
@@ -83,35 +88,54 @@ public class YouTubeBottomSheetController {
 		this.currentTitle = title != null ? title : "";
 		this.currentArtist = artist != null ? artist : "";
 
-		if (bottomSheetDialog == null) {
-			setupBottomSheet(activity);
-		}
+		setupBottomSheet(activity);
 
 		updateVideoInfo();
 		loadYouTubeVideo(videoId);
 
-		if (!bottomSheetDialog.isShowing()) {
-			bottomSheetDialog.show();
-			if (bottomSheetBehavior != null) {
-				bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-			}
+		if (bottomSheetBehavior != null && bottomSheetView != null) {
+			bottomSheetView.setVisibility(View.VISIBLE);
+			bottomSheetView.bringToFront();
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 		}
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
 	private void setupBottomSheet(Context context) {
-		if (bottomSheetDialog != null) {
-			try { bottomSheetDialog.dismiss(); } catch (Exception ignored) {}
-			bottomSheetDialog = null;
+		if (bottomSheetView != null && bottomSheetBehavior != null) {
+			return;
 		}
 
-		bottomSheetDialog = new BottomSheetDialog(context, R.style.YouTubeBottomSheetDialog);
-		bottomSheetDialog.setCancelable(true);
-		bottomSheetDialog.setCanceledOnTouchOutside(false);
+		Activity activity = activityRef.get();
+		ViewGroup root = rootViewRef != null ? rootViewRef.get() : null;
+		if (root == null && activity != null) {
+			root = activity.findViewById(R.id.root);
+		}
+		if (root == null) {
+			Log.e(TAG, "Root view is null; cannot setup YouTube bottom sheet");
+			return;
+		}
 
 		LayoutInflater inflater = LayoutInflater.from(context);
-		bottomSheetView = inflater.inflate(R.layout.youtube_bottom_sheet_layout, null);
+		View inflated = inflater.inflate(R.layout.youtube_bottom_sheet_layout, root, false);
+		LinearLayout container = inflated.findViewById(R.id.youtube_bottom_sheet_container);
+		if (container == null) {
+			Log.e(TAG, "youtube_bottom_sheet_container not found in layout");
+			return;
+		}
+		ViewGroup tempParent = (ViewGroup) container.getParent();
+		if (tempParent != null) {
+			tempParent.removeView(container);
+		}
+		ViewGroup.LayoutParams lp = container.getLayoutParams();
+		if (lp instanceof CoordinatorLayout.LayoutParams) {
+			CoordinatorLayout.LayoutParams clp = (CoordinatorLayout.LayoutParams) lp;
+			clp.setMargins(0, 0, 0, getNavigationBarHeight(context));
+			container.setLayoutParams(clp);
+		}
+		root.addView(container);
 
+		bottomSheetView = container;
 		headerLayout = bottomSheetView.findViewById(R.id.youtube_header_layout);
 		titleTextView = bottomSheetView.findViewById(R.id.youtube_title);
 		artistTextView = bottomSheetView.findViewById(R.id.youtube_artist);
@@ -123,11 +147,7 @@ public class YouTubeBottomSheetController {
 		setupWebView();
 		setupButtons();
 
-		bottomSheetDialog.setContentView(bottomSheetView);
-
-		View parent = (View) bottomSheetView.getParent();
-		bottomSheetBehavior = BottomSheetBehavior.from(parent);
-
+		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetView);
 		setupBottomSheetBehavior(context);
 		setupSwipeGestures();
 	}
@@ -139,7 +159,11 @@ public class YouTubeBottomSheetController {
 		int expandedHeight = (screenHeight * EXPANDED_HEIGHT_PERCENT) / 100;
 
 		bottomSheetBehavior.setPeekHeight(collapsedHeight);
-		bottomSheetBehavior.setMaxHeight(expandedHeight);
+		try {
+			bottomSheetBehavior.setMaxHeight(expandedHeight);
+		} catch (Throwable ignored) {
+			// setMaxHeight may not exist on older versions; ignore
+		}
 		bottomSheetBehavior.setHideable(true);
 		bottomSheetBehavior.setSkipCollapsed(false);
 		bottomSheetBehavior.setDraggable(true);
@@ -161,7 +185,7 @@ public class YouTubeBottomSheetController {
 						headerLayout.setVisibility(View.GONE);
 						break;
 					case BottomSheetBehavior.STATE_HIDDEN:
-						dismiss();
+						// Keep hidden; cleanup happens via dismiss()
 						break;
 				}
 			}
@@ -397,8 +421,11 @@ public class YouTubeBottomSheetController {
 
 	public void dismiss() {
 		try {
-			if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
-				bottomSheetDialog.dismiss();
+			if (bottomSheetBehavior != null) {
+				bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+			}
+			if (bottomSheetView != null) {
+				bottomSheetView.setVisibility(View.GONE);
 			}
 			cleanupWebView();
 		} catch (Exception e) {
@@ -422,7 +449,7 @@ public class YouTubeBottomSheetController {
 	}
 
 	public boolean isShowing() {
-		return bottomSheetDialog != null && bottomSheetDialog.isShowing();
+		return bottomSheetView != null && bottomSheetView.getVisibility() == View.VISIBLE && bottomSheetBehavior != null && bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN;
 	}
 
 	public boolean isMinimized() {
@@ -456,9 +483,12 @@ public class YouTubeBottomSheetController {
 				webView.destroy();
 				webView = null;
 			}
-			bottomSheetDialog = null;
+			if (bottomSheetView != null) {
+				ViewGroup parent = (ViewGroup) bottomSheetView.getParent();
+				if (parent != null) parent.removeView(bottomSheetView);
+				bottomSheetView = null;
+			}
 			bottomSheetBehavior = null;
-			bottomSheetView = null;
 		} catch (Exception e) {
 			Log.e(TAG, "Error in onDestroy", e);
 		} finally {
@@ -467,5 +497,13 @@ public class YouTubeBottomSheetController {
 				activityRef.clear();
 			}
 		}
+	}
+
+	private int getNavigationBarHeight(Context context) {
+		int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+		if (resourceId > 0) {
+			return context.getResources().getDimensionPixelSize(resourceId);
+		}
+		return 0;
 	}
 }
