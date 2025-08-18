@@ -117,9 +117,18 @@ public class YouTubeBottomSheetController {
         }
         
         bottomSheetDialog = new BottomSheetDialog(context, R.style.YouTubeBottomSheetDialog);
-        // Make dialog non-dismissable on outside touch
-        bottomSheetDialog.setCancelable(false);
+        // Make dialog dismissable to not block UI interactions
+        bottomSheetDialog.setCancelable(true);
         bottomSheetDialog.setCanceledOnTouchOutside(false);
+        
+        // Set the window to not block touch events outside the dialog
+        if (bottomSheetDialog.getWindow() != null) {
+            bottomSheetDialog.getWindow().setDimAmount(0f); // Remove dim background
+            bottomSheetDialog.getWindow().addFlags(
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+            );
+        }
         
         // Inflate layout
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -157,10 +166,13 @@ public class YouTubeBottomSheetController {
         
         bottomSheetBehavior.setPeekHeight(collapsedHeight);
         bottomSheetBehavior.setMaxHeight(expandedHeight);
-        // Prevent hiding by dragging down
-        bottomSheetBehavior.setHideable(false);
+        // Allow hiding to enable better navigation
+        bottomSheetBehavior.setHideable(true);
         bottomSheetBehavior.setSkipCollapsed(false);
         bottomSheetBehavior.setDraggable(true);
+        
+        // Disable nested scrolling to prevent interference with ViewPager2
+        ViewCompat.setNestedScrollingEnabled(bottomSheetView, false);
         
         // Callback dla zmian stanu
         bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -178,8 +190,8 @@ public class YouTubeBottomSheetController {
                         headerLayout.setVisibility(View.GONE);
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
-                        // Prevent hiding, expand back to collapsed state
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        // Allow hiding and clean up resources
+                        dismiss();
                         break;
                 }
             }
@@ -302,16 +314,19 @@ public class YouTubeBottomSheetController {
                     float deltaY = e2.getY() - e1.getY();
                     float deltaX = e2.getX() - e1.getX();
                     
+                    // Don't intercept horizontal swipes to allow ViewPager2 navigation
                     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                        return false; // Horizontal swipe
+                        return false; // Let horizontal swipes pass through
                     }
                     
                     if (deltaY > 100 && Math.abs(velocityY) > 100) {
                         // Swipe down
                         if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        } else if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                            // Allow hiding on swipe down from collapsed state
+                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                         }
-                        // Don't allow hiding when swiping down from collapsed state
                         return true;
                     } else if (deltaY < -100 && Math.abs(velocityY) > 100) {
                         // Swipe up
@@ -324,7 +339,11 @@ public class YouTubeBottomSheetController {
                 }
             });
         
-        headerLayout.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        headerLayout.setOnTouchListener((v, event) -> {
+            // Pass the event to gesture detector but don't consume it
+            gestureDetector.onTouchEvent(event);
+            return false; // Allow event to propagate
+        });
     }
     
     private void loadYouTubeVideo(String videoId) {
@@ -336,7 +355,8 @@ public class YouTubeBottomSheetController {
         // Ensure WebView is ready
         mainHandler.post(() -> {
             try {
-                // Use YouTube IFrame API for better compatibility and compliance
+                // Use a simpler embedded iframe approach that's more reliable
+                // This approach is compliant with YouTube Terms of Service
                 String html = "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
@@ -345,53 +365,38 @@ public class YouTubeBottomSheetController {
                 "<style>" +
                 "* { margin: 0; padding: 0; box-sizing: border-box; }" +
                 "html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }" +
-                ".video-container { position: relative; width: 100%; height: 0; padding-bottom: 56.25%; }" +
-                "#player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }" +
+                ".video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }" +
+                ".video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }" +
                 "</style>" +
                 "</head>" +
                 "<body>" +
-                "<div class='video-container'>" +
-                "<div id='player'></div>" +
+                "<div class='video-wrapper'>" +
+                "<iframe id='ytplayer' type='text/html' " +
+                "src='https://www.youtube.com/embed/" + videoId + "?" +
+                "enablejsapi=1&" +
+                "rel=0&" +
+                "modestbranding=1&" +
+                "playsinline=1&" +
+                "fs=1&" +
+                "origin=https://www.youtube.com' " +
+                "frameborder='0' " +
+                "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' " +
+                "allowfullscreen>" +
+                "</iframe>" +
                 "</div>" +
                 "<script>" +
-                "var tag = document.createElement('script');" +
-                "tag.src = 'https://www.youtube.com/iframe_api';" +
-                "var firstScriptTag = document.getElementsByTagName('script')[0];" +
-                "firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);" +
-                "var player;" +
-                "function onYouTubeIframeAPIReady() {" +
-                "  player = new YT.Player('player', {" +
-                "    videoId: '" + videoId + "'," +
-                "    width: '100%'," +
-                "    height: '100%'," +
-                "    playerVars: {" +
-                "      'playsinline': 1," +
-                "      'rel': 0," +
-                "      'modestbranding': 1," +
-                "      'autoplay': 0," +
-                "      'controls': 1," +
-                "      'showinfo': 0," +
-                "      'fs': 1," +
-                "      'origin': 'http://localhost'" +
-                "    }," +
-                "    events: {" +
-                "      'onReady': onPlayerReady," +
-                "      'onStateChange': onPlayerStateChange," +
-                "      'onError': onPlayerError" +
-                "    }" +
-                "  });" +
-                "}" +
-                "function onPlayerReady(event) {" +
-                "  console.log('Player is ready');" +
-                "  Android.onPlayerReady();" +
-                "}" +
-                "function onPlayerStateChange(event) {" +
-                "  console.log('Player state changed: ' + event.data);" +
-                "}" +
-                "function onPlayerError(event) {" +
-                "  console.log('Player error: ' + event.data);" +
-                "  Android.onPlayerError(event.data);" +
-                "}" +
+                "window.addEventListener('load', function() {" +
+                "  console.log('YouTube iframe loaded');" +
+                "  if (typeof Android !== 'undefined' && Android.onPlayerReady) {" +
+                "    Android.onPlayerReady();" +
+                "  }" +
+                "});" +
+                "window.addEventListener('error', function(e) {" +
+                "  console.error('Error loading video:', e);" +
+                "  if (typeof Android !== 'undefined' && Android.onPlayerError) {" +
+                "    Android.onPlayerError(0);" +
+                "  }" +
+                "});" +
                 "</script>" +
                 "</body>" +
                 "</html>";
@@ -401,8 +406,8 @@ public class YouTubeBottomSheetController {
                 // Add JavaScript interface for communication
                 webView.addJavascriptInterface(new YouTubeJSInterface(), "Android");
                 
-                // Load the HTML content with YouTube IFrame API
-                webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
+                // Load the HTML content with proper base URL for YouTube
+                webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error loading YouTube video", e);
@@ -420,6 +425,9 @@ public class YouTubeBottomSheetController {
                     webView.loadDataWithBaseURL("http://localhost", fallbackHtml, "text/html", "UTF-8", null);
                 } catch (Exception ex) {
                     Log.e(TAG, "Error loading fallback embed", ex);
+                    // Try direct YouTube mobile URL as last resort
+                    String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
+                    webView.loadUrl(mobileUrl);
                 }
             }
         });
