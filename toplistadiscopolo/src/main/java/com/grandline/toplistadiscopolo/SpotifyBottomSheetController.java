@@ -78,11 +78,14 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         this.rootView = rootView;
         this.spotifyService = SpotifyService.getInstance(context);
         
-        initializeBottomSheet();
-        setupListeners();
+        if (initializeBottomSheet()) {
+            setupListeners();
+        } else {
+            Log.e(TAG, "Failed to initialize bottom sheet - listeners not set up");
+        }
     }
     
-    private void initializeBottomSheet() {
+    private boolean initializeBottomSheet() {
         Log.d(TAG, "Initializing bottom sheet");
         
         try {
@@ -101,8 +104,13 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                 Log.d(TAG, "Bottom sheet inflated and added to view hierarchy");
             }
             
-            // For compatibility, set bottomSheetContainer to rootView since we're not using a separate container
-            bottomSheetContainer = (CoordinatorLayout) rootView;
+            // Check if rootView is a CoordinatorLayout
+            if (rootView instanceof CoordinatorLayout) {
+                bottomSheetContainer = (CoordinatorLayout) rootView;
+            } else {
+                Log.e(TAG, "Root view is not a CoordinatorLayout: " + rootView.getClass().getName());
+                throw new IllegalStateException("Root view must be a CoordinatorLayout for BottomSheet to work properly");
+            }
             
             // Get the BottomSheetBehavior from the bottom sheet
             bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
@@ -131,8 +139,10 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             spotifyService.setPlayerListener(this);
             
             Log.d(TAG, "Bottom sheet initialized successfully");
+            return true;
         } catch (Exception e) {
             Log.e(TAG, "Error initializing bottom sheet", e);
+            return false;
         }
     }
     
@@ -191,6 +201,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     }
     
     private void setupListeners() {
+        // Check if views are initialized before setting listeners
+        if (miniPlayer == null || bottomSheetBehavior == null) {
+            Log.e(TAG, "Cannot setup listeners - views not initialized");
+            return;
+        }
+        
         // Mini player click to expand
         miniPlayer.setOnClickListener(v -> {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -199,11 +215,17 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
         });
         
         // Play/Pause buttons
-        miniPlayPauseButton.setOnClickListener(v -> togglePlayPause());
-        playPauseButton.setOnClickListener(v -> togglePlayPause());
+        if (miniPlayPauseButton != null) {
+            miniPlayPauseButton.setOnClickListener(v -> togglePlayPause());
+        }
+        if (playPauseButton != null) {
+            playPauseButton.setOnClickListener(v -> togglePlayPause());
+        }
         
         // Close button
-        miniCloseButton.setOnClickListener(v -> hideBottomSheet());
+        if (miniCloseButton != null) {
+            miniCloseButton.setOnClickListener(v -> hideBottomSheet());
+        }
         
         // Retry button
         if (retryButton != null) {
