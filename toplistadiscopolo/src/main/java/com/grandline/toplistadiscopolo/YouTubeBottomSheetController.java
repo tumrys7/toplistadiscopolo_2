@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
@@ -14,6 +15,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.ConsoleMessage;
+import android.webkit.CookieManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -210,7 +213,7 @@ public class YouTubeBottomSheetController {
 			WebSettings webSettings = webView.getSettings();
 			webSettings.setJavaScriptEnabled(true);
 			webSettings.setDomStorageEnabled(true);
-			webSettings.setMediaPlaybackRequiresUserGesture(true);
+			webSettings.setMediaPlaybackRequiresUserGesture(false);
 			webSettings.setAllowFileAccess(false);
 			webSettings.setAllowContentAccess(false);
 			webSettings.setLoadWithOverviewMode(true);
@@ -222,17 +225,26 @@ public class YouTubeBottomSheetController {
 			webSettings.setDisplayZoomControls(false);
 			webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
 
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+				CookieManager cookieManager = CookieManager.getInstance();
+				cookieManager.setAcceptCookie(true);
+				cookieManager.setAcceptThirdPartyCookies(webView, true);
+			}
+
 			webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
 			webView.setWebViewClient(new WebViewClient() {
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 					String url = request.getUrl().toString();
-					if (url.contains("youtube.com") ||
+					if (url.startsWith("about:blank") ||
+						url.contains("youtube.com") ||
 						url.contains("youtu.be") ||
 						url.contains("youtube-nocookie.com") ||
 						url.contains("googlevideo.com") ||
-						url.contains("ytimg.com")) {
+						url.contains("ytimg.com") ||
+						url.contains("localhost")) {
 						return false;
 					}
 					return true;
@@ -303,6 +315,17 @@ public class YouTubeBottomSheetController {
 						bottomSheetView.setVisibility(View.VISIBLE);
 					}
 				}
+
+				@Override
+				public void onProgressChanged(WebView view, int newProgress) {
+					Log.d(TAG, "Loading progress: " + newProgress + "%");
+				}
+
+				@Override
+				public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+					Log.d(TAG, "Console: " + consoleMessage.messageLevel() + ": " + consoleMessage.message());
+					return super.onConsoleMessage(consoleMessage);
+				}
 			});
 
 			webView.setBackgroundColor(Color.BLACK);
@@ -370,12 +393,12 @@ public class YouTubeBottomSheetController {
 					"<style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#000;overflow:hidden}.video-wrapper{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}.video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}</style>" +
 					"</head><body>" +
 					"<div class='video-wrapper'>" +
-					"<iframe id='ytplayer' type='text/html' src='https://www.youtube.com/embed/" + videoId + "?rel=0&modestbranding=1&playsinline=1&fs=1' " +
+					"<iframe id='ytplayer' type='text/html' src='https://www.youtube.com/embed/" + videoId + "?enablejsapi=1&rel=0&modestbranding=1&playsinline=1&fs=1&autoplay=1&origin=https://www.youtube.com' " +
 					"frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe>" +
 					"</div>" +
 					"</body></html>";
-				// Use a neutral base URL so WebView renders our HTML instead of navigating to the YouTube homepage
-				webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
+				// Load HTML with YouTube as base URL for better iframe compatibility
+				webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
 			} catch (Exception e) {
 				Log.e(TAG, "Error loading iframe, falling back to mobile URL", e);
 				String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
