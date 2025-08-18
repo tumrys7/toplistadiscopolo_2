@@ -80,4 +80,10 @@
     <string name="artist_name">Nazwa wykonawcy</string>
     <string name="no_track_playing">Brak odtwarzanego utworu</string>
     <string name="powered_by_spotify">Obsługiwane przez Spotify</string>
+
+    <!-- YouTube Bottom Sheet -->
+    <string name="expand_collapse">Rozwiń/Zwiń</string>
+    <string name="close">Zamknij</string>
+    <string name="youtube_player_title">YouTube Player</string>
+    <string name="loading_video">Ładowanie video...</string>
 </resources>

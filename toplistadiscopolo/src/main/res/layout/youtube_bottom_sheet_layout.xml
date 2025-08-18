@@ -63,8 +63,8 @@
                 android:src="@android:drawable/arrow_down_float"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/expand_collapse"
-                android:tint="?attr/colorOnSurface"
-                android:padding="12dp" />
+                android:padding="12dp"
+                app:tint="?attr/colorOnSurface" />
 
             <ImageButton
                 android:id="@+id/youtube_close_button"
@@ -73,8 +73,8 @@
                 android:src="@drawable/ic_close"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/close"
-                android:tint="?attr/colorOnSurface"
-                android:padding="12dp" />
+                android:padding="12dp"
+                app:tint="?attr/colorOnSurface" />
 
         </LinearLayout>
 
@@ -88,7 +88,7 @@
         <FrameLayout
             android:id="@+id/youtube_content_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:minHeight="200dp"
             android:background="@android:color/black">
 
