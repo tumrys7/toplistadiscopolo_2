@@ -379,6 +379,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		///rewardedAd.getAdMetadata();
 		super.onResume();
 		
+		// Resume YouTube bottom sheet WebView timers safely
+		if (youTubeBottomSheetController != null) {
+			youTubeBottomSheetController.onResume();
+		}
 		// Resume ads safely
 		try {
 			if (mAdView != null) {
@@ -392,6 +396,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	@Override
 	public void onPause() {
 		//rewardedAd.pause(this);
+		// Pause YouTube bottom sheet WebView timers safely
+		if (youTubeBottomSheetController != null) {
+			youTubeBottomSheetController.onPause();
+		}
 		super.onPause();
 	}
 
