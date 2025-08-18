@@ -1,39 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_theme_primary"
-    android:orientation="vertical"
-    android:textColor="@color/md_theme_onPrimary"
     tools:theme="@style/AppTheme"
     android:id="@+id/root">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/utwory_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:minHeight="?attr/actionBarSize"
-        android:backgroundTint="@color/md_theme_primaryContainer"
-        android:background="@color/md_theme_primaryContainer"
-        app:tabTextColor="@color/md_theme_onPrimary"
-        app:layout_scrollFlags="scroll|enterAlways"
-        app:navigationIconTint="@color/md_theme_onSecondary">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/title_activity_utwory_wykonawcy"
-            android:textColor="@color/md_theme_onSecondary"
-            android:textAppearance="?attr/textAppearanceHeadline6" />
-    </com.google.android.material.appbar.MaterialToolbar>
-
-    <ListView
-        android:id="@+id/wykUtwory"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@null" />
+        android:orientation="vertical">
 
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/utwory_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:minHeight="?attr/actionBarSize"
+            android:backgroundTint="@color/md_theme_primaryContainer"
+            android:background="@color/md_theme_primaryContainer"
+            app:tabTextColor="@color/md_theme_onPrimary"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:navigationIconTint="@color/md_theme_onSecondary">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/title_activity_utwory_wykonawcy"
+                android:textColor="@color/md_theme_onSecondary"
+                android:textAppearance="?attr/textAppearanceHeadline6" />
+        </com.google.android.material.appbar.MaterialToolbar>
 
-</LinearLayout>
+        <ListView
+            android:id="@+id/wykUtwory"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
