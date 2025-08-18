@@ -81,4 +81,23 @@
     <string name="no_track_playing">No track playing</string>
     <string name="powered_by_spotify">Powered by Spotify</string>
 
+    <!-- YouTube Bottom Sheet -->
+    <string name="expand_collapse">Expand/Collapse</string>
+    <string name="close">Close</string>
+    <string name="youtube_player_title">YouTube Player</string>
+    <string name="loading_video">Loading video...</string>
+
+</resources>
+    <!-- YouTube Bottom Sheet -->
+    <string name="expand_collapse">Expand/Collapse</string>
+    <string name="close">Close</string>
+    <string name="youtube_player_title">YouTube Player</string>
+    <string name="loading_video">Loading video...</string>
+
+    <!-- YouTube Bottom Sheet -->
+    <string name="expand_collapse">Expand/Collapse</string>
+    <string name="close">Close</string>
+    <string name="youtube_player_title">YouTube Player</string>
+    <string name="loading_video">Loading video...</string>
+
 </resources>
