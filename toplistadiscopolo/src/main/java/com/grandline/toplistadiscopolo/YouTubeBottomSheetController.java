@@ -208,8 +208,11 @@ public class YouTubeBottomSheetController {
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
             webSettings.setLoadWithOverviewMode(true);
             webSettings.setUseWideViewPort(true);
-            webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
             webSettings.setDatabaseEnabled(true);
+            webSettings.setBuiltInZoomControls(false);
+            webSettings.setSupportZoom(false);
+            webSettings.setDisplayZoomControls(false);
             
             // Hardware acceleration
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -327,23 +330,25 @@ public class YouTubeBottomSheetController {
         // Ensure WebView is ready
         mainHandler.post(() -> {
             try {
-                // HTML z iframe YouTube - zgodny z polityką YouTube
+                // Method 1: Try loading with embedded iframe (preferred)
                 String html = "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +
+                "<meta charset='utf-8'>" +
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
                 "<style>" +
-                "body { margin: 0; padding: 0; background: #000; }" +
-                ".video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }" +
-                ".video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }" +
+                "* { margin: 0; padding: 0; box-sizing: border-box; }" +
+                "body { background: #000; overflow: hidden; }" +
+                ".video-container { position: relative; width: 100%; height: 100vh; }" +
+                "iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }" +
                 "</style>" +
                 "</head>" +
                 "<body>" +
                 "<div class='video-container'>" +
-                "<iframe " +
-                "src='https://www.youtube.com/embed/" + videoId + "?autoplay=0&rel=0&showinfo=1&modestbranding=1' " +
+                "<iframe id='ytplayer' type='text/html' " +
+                "src='https://www.youtube.com/embed/" + videoId + "?autoplay=0&origin=http://localhost&rel=0&modestbranding=1&playsinline=1' " +
                 "frameborder='0' " +
-                "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' " +
+                "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' " +
                 "allowfullscreen>" +
                 "</iframe>" +
                 "</div>" +
@@ -351,9 +356,28 @@ public class YouTubeBottomSheetController {
                 "</html>";
                 
                 Log.d(TAG, "Loading YouTube video with ID: " + videoId);
-                webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
+                
+                // Load the HTML content
+                webView.loadDataWithBaseURL("http://localhost", html, "text/html", "UTF-8", null);
+                
+                // Alternative: If iframe doesn't work, try direct URL loading after a delay
+                mainHandler.postDelayed(() -> {
+                    if (!isWebViewReady) {
+                        Log.d(TAG, "Fallback: Loading YouTube mobile URL directly");
+                        String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
+                        webView.loadUrl(mobileUrl);
+                    }
+                }, 3000);
+                
             } catch (Exception e) {
                 Log.e(TAG, "Error loading YouTube video", e);
+                // Fallback to mobile YouTube URL
+                try {
+                    String mobileUrl = "https://m.youtube.com/watch?v=" + videoId;
+                    webView.loadUrl(mobileUrl);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error loading fallback URL", ex);
+                }
             }
         });
     }
