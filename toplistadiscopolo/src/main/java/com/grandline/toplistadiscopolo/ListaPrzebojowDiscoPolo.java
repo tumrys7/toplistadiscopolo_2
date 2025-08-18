@@ -1302,7 +1302,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
 					} else {
 						Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
-							Log.e("VideoPlayback", "Error launching video: " + e.getMessage());
 						}
 					                    }else if (items[item] == getString(R.string.spotify)) {
                         // Use Spotify Bottom Sheet instead of PlayActivity
