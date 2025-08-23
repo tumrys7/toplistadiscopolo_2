@@ -106,6 +106,8 @@ public class UtworyWykonawcy extends AppCompatActivity {
 
 		EdgeToEdge.enable(this);
 
+		setContentView(R.layout.utwory_wykonawcy);
+
 		CoordinatorLayout rootView = findViewById(R.id.root);
 		if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
@@ -113,7 +115,6 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		}
 
 		language = getLocaleSettings();
-		setContentView(R.layout.utwory_wykonawcy);
 
 		// Wywołanie metody, ustawiającej czarne ikony i przezroczyste paski systemowe
 		getWindow().getDecorView().post(new Runnable() {
@@ -307,10 +308,20 @@ public class UtworyWykonawcy extends AppCompatActivity {
 					} else if (wykItems[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
-						// Use YouTube Bottom Sheet instead of browser
-						if (youTubeBottomSheetController != null) {
-							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+						// Ensure controller is initialized
+						if (youTubeBottomSheetController == null) {
+							ViewGroup rootView = findViewById(R.id.root);
+							if (rootView != null) {
+								youTubeBottomSheetController = new YouTubeBottomSheetController(this, rootView);
+							} else {
+								Log.e("YouTubeDebug", "Root view is null; cannot initialize YouTubeBottomSheetController");
+								return;
+							}
 						}
+						// Delay to allow dialog to dismiss cleanly before showing bottom sheet
+						new Handler(Looper.getMainLooper()).postDelayed(() -> {
+							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+						}, 100);
 					} else if(wykItems[item]==getString(R.string.spotify)){
 						// Use Spotify Bottom Sheet instead of PlayActivity
 						playSpotifyTrack(spotify, title, artist);
