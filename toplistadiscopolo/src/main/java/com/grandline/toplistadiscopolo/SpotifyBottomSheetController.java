@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -28,12 +27,12 @@ import com.spotify.protocol.types.Track;
 public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlayerListener {
     private static final String TAG = "SpotifyBottomSheet";
     
-    private Context context;
-    private ViewGroup rootView;
+    private final Context context;
+    private final ViewGroup rootView;
     private CoordinatorLayout bottomSheetContainer;
     private LinearLayout bottomSheet;
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
-    private SpotifyService spotifyService;
+    private final SpotifyService spotifyService;
     
     // UI Elements - Mini Player
     private LinearLayout miniPlayer;
@@ -44,7 +43,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private MaterialButton miniCloseButton;
     private ProgressBar loadingIndicator;
     private MaterialButton retryButton;
-    
+
     // UI Elements - Expanded Player
     private LinearLayout expandedPlayer;
     private ImageView expandedAlbumArt;
@@ -61,7 +60,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     private boolean isPlaying = false;
     private long trackDuration = 0;
     private long currentPosition = 0;
-    private Handler progressHandler = new Handler(Looper.getMainLooper());
+    private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private Runnable progressRunnable;
     private String currentTrackId;
     private String currentTrackTitle;
@@ -171,8 +170,8 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             retryButton.setLayoutParams(params);
             
             // Add retry button to the mini player layout
-            if (miniPlayer instanceof LinearLayout) {
-                ((LinearLayout) miniPlayer).addView(retryButton);
+            if (miniPlayer != null) {
+                miniPlayer.addView(retryButton);
             }
         }
         
@@ -892,4 +891,5 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             totalTime.setVisibility(View.VISIBLE);
         }
     }
+
 }

@@ -72,7 +72,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.grandline.toplistadiscopolo.YouTubeBottomSheetController;
 
 
 public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
@@ -201,11 +200,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 		final View root = findViewById(R.id.root);
 		if (root != null) {
-			ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-				Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-				v.setPadding(v.getPaddingLeft(), sysBars.top, v.getPaddingRight(), sysBars.bottom);
-				return WindowInsetsCompat.CONSUMED;
-			});
+		ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+			Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+			v.setPadding(
+					v.getPaddingLeft(),    // zostawia istniejący padding po lewej
+					sysBars.top,           // ustawia padding na górze wg paska statusu
+					v.getPaddingRight(),   // zostawia istniejący padding po prawej
+					v.getPaddingBottom()   // pozostawia istniejący padding na dole bez zmian
+			);
+			Insets navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+			ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+			lp.bottomMargin = navBarInsets.bottom; // dynamicznie wg systemowego navigation bar
+			v.setLayoutParams(lp);
+			return insets;
+		});
 		}
 
 		// Włączenie na android >=7 Dangerous permission: zapis okładek w pamięci urządzenia
@@ -254,28 +262,26 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 
 	public void setLightSystemBars(Window window, boolean lightStatusBar, boolean lightNavigationBar) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			// Fallback to deprecated method for API 23-29
-			int flags = window.getDecorView().getSystemUiVisibility();
-			if (lightStatusBar) {
-				flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-			} else {
-				flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-			}
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				if (lightNavigationBar) {
-					flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-				} else {
-					flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-				}
-			}
-			window.getDecorView().setSystemUiVisibility(flags);
-			window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-			}
-		}
-	}
+        // Fallback to deprecated method for API 23-29
+        int flags = window.getDecorView().getSystemUiVisibility();
+        if (lightStatusBar) {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        } else {
+            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (lightNavigationBar) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            } else {
+                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+        }
+        window.getDecorView().setSystemUiVisibility(flags);
+        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        }
+    }
 
 	public void onStart () {
 		super.onStart();
@@ -362,9 +368,9 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 				if (spotifyBottomSheetController != null) {
 					spotifyBottomSheetController.onDestroy();
-		if (youTubeBottomSheetController != null) {
-			youTubeBottomSheetController.onDestroy();
-		}
+				}
+				if (youTubeBottomSheetController != null) {
+					youTubeBottomSheetController.onDestroy();
 				}
 
 		} catch (Exception e) {
@@ -383,6 +389,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (youTubeBottomSheetController != null) {
 			youTubeBottomSheetController.onResume();
 		}
+
 		// Resume ads safely
 		try {
 			if (mAdView != null) {
@@ -400,6 +407,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (youTubeBottomSheetController != null) {
 			youTubeBottomSheetController.onPause();
 		}
+
+
 		super.onPause();
 	}
 
@@ -1279,7 +1288,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						finish();
 						showAuthSongs(idWykonawcy);
 					} else if (RewardItems[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "0";
+						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 						// Use YouTube Bottom Sheet instead of browser
 						if (youTubeBottomSheetController != null) {
@@ -1302,7 +1311,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						finish();
 						showAuthSongs(idWykonawcy);
 					} else if (items[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "0";
+						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 						// Use YouTube Bottom Sheet instead of browser
 					if (youTubeBottomSheetController != null) {
@@ -1327,9 +1336,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			builder.setItems(wykItems, (dialog, item) -> {
 				//Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
 				if(wykItems[item]==getString(R.string.zaglosuj)){
+					glosTeledysk = "0";
 					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
 				}
 				else if(wykItems[item]==getString(R.string.teledysk)){
+					glosTeledysk = "1";
 					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
 				// Use YouTube Bottom Sheet instead of browser
 				if (youTubeBottomSheetController != null) {
@@ -1907,7 +1918,10 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 							Log.d(TAG, loadAdError.getMessage());
 							rewardedAd = null;
 							ListaPrzebojowDiscoPolo.this.isLoading = false;
-							Toast.makeText(ListaPrzebojowDiscoPolo.this, "onAdFailedToLoad", Toast.LENGTH_SHORT).show();
+						//	Toast.makeText(ListaPrzebojowDiscoPolo.this, "onAdFailedToLoad", Toast.LENGTH_SHORT).show();
+							Log.d(TAG, "onAdFailedToLoad");
+							Log.w("ListaprzebojowDiscoPolo", "Ad failed to load: " + loadAdError);
+
 						}
 
 						@Override

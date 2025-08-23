@@ -3,7 +3,6 @@ package com.grandline.toplistadiscopolo;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -51,7 +50,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.grandline.toplistadiscopolo.YouTubeBottomSheetController;
 
 public class UtworyWykonawcy extends AppCompatActivity {
 
@@ -129,8 +127,17 @@ public class UtworyWykonawcy extends AppCompatActivity {
 		if (root != null) {
 			ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
 				Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-				v.setPadding(v.getPaddingLeft(), sysBars.top, v.getPaddingRight(), sysBars.bottom);
-				return WindowInsetsCompat.CONSUMED;
+				v.setPadding(
+						v.getPaddingLeft(),    // zostawia istniejący padding po lewej
+						sysBars.top,           // ustawia padding na górze wg paska statusu
+						v.getPaddingRight(),   // zostawia istniejący padding po prawej
+						v.getPaddingBottom()   // pozostawia istniejący padding na dole bez zmian
+				);
+				Insets navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+				ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+				lp.bottomMargin = navBarInsets.bottom; // dynamicznie wg systemowego navigation bar
+				v.setLayoutParams(lp);
+				return insets;
 			});
 		}
 
@@ -298,7 +305,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 						glosTeledysk = "0";
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 					} else if (wykItems[item] == getString(R.string.teledysk)) {
-						glosTeledysk = "0";
+						glosTeledysk = "1";
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 						// Use YouTube Bottom Sheet instead of browser
 						if (youTubeBottomSheetController != null) {

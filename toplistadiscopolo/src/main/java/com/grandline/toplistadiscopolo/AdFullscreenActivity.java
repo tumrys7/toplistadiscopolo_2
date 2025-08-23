@@ -100,6 +100,8 @@ public class AdFullscreenActivity extends AppCompatActivity {
                         // Handle the error
                     //    Log.i(TAG, loadAdError.getMessage());
                         mInterstitialAd = null;
+                        Log.w("AdFullscreenactivity", "mInterstitialAd failed to load: " + loadAdError);
+
                     }
                 });
     }

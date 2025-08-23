@@ -89,9 +89,10 @@
         <!-- Kontener na WebView z filmem YouTube -->
         <FrameLayout
             android:id="@+id/youtube_content_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:minHeight="200dp"
+            android:hardwareAccelerated="true"
+            android:layout_gravity="center"
+            android:layout_width="320dp"
+            android:layout_height="180dp"
             android:background="@android:color/black">
 
             <WebView
