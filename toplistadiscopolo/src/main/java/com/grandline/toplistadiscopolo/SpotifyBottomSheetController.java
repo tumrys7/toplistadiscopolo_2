@@ -116,10 +116,12 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             
             // Configure bottom sheet behavior
             bottomSheetBehavior.setPeekHeight(dpToPx(72)); // Peek height for mini player
-            bottomSheetBehavior.setHideable(false); // Prevent hiding on swipe - will only hide programmatically
+            bottomSheetBehavior.setHideable(true); // Allow hidden state at startup; we control visibility programmatically
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // Initially hidden until track is played
             bottomSheetBehavior.setSkipCollapsed(false); // Don't skip collapsed state when transitioning
             bottomSheetBehavior.setHalfExpandedRatio(0.5f); // Set half-expanded ratio for smoother transitions
+            // Ensure view is not visible until explicitly shown
+            bottomSheet.setVisibility(View.GONE);
             
             // Make bottom sheet draggable
             bottomSheetBehavior.setDraggable(true);
