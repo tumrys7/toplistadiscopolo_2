@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -307,7 +308,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 					} else if (wykItems[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
-						zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
+	//					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, glosTeledysk);
 						// Ensure controller is initialized
 						if (youTubeBottomSheetController == null) {
 							ViewGroup rootView = findViewById(R.id.root);
@@ -318,12 +319,19 @@ public class UtworyWykonawcy extends AppCompatActivity {
 								return;
 							}
 						}
-						// Delay to allow dialog to dismiss cleanly before showing bottom sheet
-						new Handler(Looper.getMainLooper()).postDelayed(() -> {
+						// Use YouTube Bottom Sheet instead of browser
+						if (youTubeBottomSheetController != null) {
 							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
-						}, 100);
+						} else {
+							Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
+						}
+
+//						// Delay to allow dialog to dismiss cleanly before showing bottom sheet
+//						new Handler(Looper.getMainLooper()).postDelayed(() -> {
+//							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+//						}, 100);
 					} else if(wykItems[item]==getString(R.string.spotify)){
-						// Use Spotify Bottom Sheet instead of PlayActivity
+						// Use Spotify Bottom Sheet instead of Activity
 						playSpotifyTrack(spotify, title, artist);
 					}
 				});
@@ -340,7 +348,7 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
 			String androidId = prefs.getString("user_id", null);
 			if (androidId == null) {
-				androidId = java.util.UUID.randomUUID().toString();
+				androidId = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
 				prefs.edit().putString("user_id", androidId).apply();
 			}
 			String url;
@@ -357,8 +365,10 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			voteInBackground(url, listType);
 			// [START glos_utw_wykon_event]
 			Bundle bundle = new Bundle();
-			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, myIdWykonawcy);
-			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, votingListId);
+			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, votingListId);
+			bundle.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
+			bundle.putString(FirebaseAnalytics.Param.LEVEL, teledysk);
+			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, myIdWykonawcy);
 			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_utw_wykonawcy");
 			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 			// [END glos_utw_wykon_event]
@@ -587,6 +597,17 @@ public class UtworyWykonawcy extends AppCompatActivity {
 
 	// Public method to play Spotify track from adapters
 	public void playSpotifyTrack(String spotifyTrackId, String title, String artist) {
+			// [START image_view_event]
+			Bundle bundle = new Bundle();
+			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, title);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "tytul");
+			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, spotifyTrackId);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "spotifyTrackId");
+			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, artist);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "wykonawca");
+			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_spotify_track");
+			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+			// [END image_view_event]
 		Log.d("SpotifyDebug", "playSpotifyTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
 
 		if (spotifyBottomSheetController == null) {
@@ -595,7 +616,6 @@ public class UtworyWykonawcy extends AppCompatActivity {
 			ViewGroup rootView = findViewById(R.id.root);
 			if (rootView != null) {
 				spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
-			youTubeBottomSheetController = new YouTubeBottomSheetController(this, rootView);
 				Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 			} else {
 				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");

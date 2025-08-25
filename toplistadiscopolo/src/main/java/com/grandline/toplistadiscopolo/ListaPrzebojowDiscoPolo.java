@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -228,7 +229,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
 		androidId = prefs.getString("user_id", null);
 		if (androidId == null) {
-			androidId = java.util.UUID.randomUUID().toString();
+			String androidId = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
 			prefs.edit().putString("user_id", androidId).apply();
 		}
 		// [START shared_app_measurement]
@@ -534,7 +535,8 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			// [START image_view_event]
 			Bundle bundle = new Bundle();
 			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, idUtworu);
-			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "id_utworu");
+			bundle.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
+			bundle.putString(FirebaseAnalytics.Param.LEVEL, teledysk);
 			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_lista");
 			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 			// [END image_view_event]
@@ -1289,15 +1291,15 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						showAuthSongs(idWykonawcy);
 					} else if (RewardItems[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
-						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
+//						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 						// Use YouTube Bottom Sheet instead of browser
 						if (youTubeBottomSheetController != null) {
 							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
 						} else {
 							Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 						}
-											}else if (RewardItems[item] == getString(R.string.spotify)) {
-                        // Use Spotify Bottom Sheet instead of PlayActivity
+					} else if (RewardItems[item] == getString(R.string.spotify)) {
+                        // Use Spotify Bottom Sheet instead of Activity
                         playSpotifyTrack(spotify, title, artist);
                     }
 				});
@@ -1312,15 +1314,15 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						showAuthSongs(idWykonawcy);
 					} else if (items[item] == getString(R.string.teledysk)) {
 						glosTeledysk = "1";
-						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
+//						zaglosuj(idListy, Constants.KEY_LISTA, null, idGrupy, glosTeledysk);
 						// Use YouTube Bottom Sheet instead of browser
 					if (youTubeBottomSheetController != null) {
 						youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
 					} else {
 						Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 						}
-					                    }else if (items[item] == getString(R.string.spotify)) {
-                        // Use Spotify Bottom Sheet instead of PlayActivity
+					}else if (items[item] == getString(R.string.spotify)) {
+                        // Use Spotify Bottom Sheet instead of Activity
                         playSpotifyTrack(spotify, title, artist);
                     }
 				});
@@ -1337,11 +1339,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				//Toast.makeText(getApplicationContext(), wykItems[item], Toast.LENGTH_SHORT).show();
 				if(wykItems[item]==getString(R.string.zaglosuj)){
 					glosTeledysk = "0";
-					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
+					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,glosTeledysk);
 				}
 				else if(wykItems[item]==getString(R.string.teledysk)){
 					glosTeledysk = "1";
-					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,"0");
+//					zaglosuj(idListy, Constants.KEY_UTW_WYKONAWCY, idWykonawcy, idGrupy,glosTeledysk);
 				// Use YouTube Bottom Sheet instead of browser
 				if (youTubeBottomSheetController != null) {
 					youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
@@ -1350,7 +1352,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				}
 				}
 				                else if(wykItems[item]==getString(R.string.spotify)){
-                    // Use Spotify Bottom Sheet instead of PlayActivity
+                    // Use Spotify Bottom Sheet instead of Activity
                     playSpotifyTrack(spotify, title, artist);
                 }
 			});
@@ -1995,7 +1997,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 					// [START image_view_event]
 					Bundle bundlereward = new Bundle();
-					bundlereward.putString(FirebaseAnalytics.Param.ITEM_ID, androidId);
+					bundlereward.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
 					bundlereward.putString(FirebaseAnalytics.Param.ITEM_NAME, "rewardvideo");
 					bundlereward.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "on_rewarded_video");
 					mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundlereward);
@@ -2492,6 +2494,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	
 	// Public method to play Spotify track from adapters
 	public void playSpotifyTrack(String spotifyTrackId, String title, String artist) {
+		// [START image_view_event]
+		Bundle bundle = new Bundle();
+		bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, title);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "tytul");
+		bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, spotifyTrackId);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "spotifyTrackId");
+		bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, artist);
+//			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "wykonawca");
+		bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_spotify_track");
+		mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+		// [END image_view_event]
 		Log.d("SpotifyDebug", "playSpotifyTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
 		
 		if (spotifyBottomSheetController == null) {
@@ -2500,7 +2513,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			ViewGroup rootView = findViewById(R.id.root);
 					if (rootView != null) {
 			spotifyBottomSheetController = new SpotifyBottomSheetController(this, rootView);
-			youTubeBottomSheetController = new YouTubeBottomSheetController(this, rootView);
 			Log.d("SpotifyDebug", "SpotifyBottomSheetController reinitialized");
 		} else {
 				Log.e("SpotifyDebug", "Could not reinitialize - root view is null");

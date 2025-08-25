@@ -759,7 +759,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             miniAlbumArt.setImageResource(R.drawable.ic_launcher);
         }
         if (expandedAlbumArt != null) {
-            expandedAlbumArt.setImageResource(R.drawable.ic_launcher);
+            expandedAlbumArt.setImageResource(R.drawable.ic_launcher_300);
         }
         
         // Hide playback controls

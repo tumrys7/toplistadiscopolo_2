@@ -30,7 +30,9 @@ compileOptions {
 
 dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-analytics:23.0.0'
+    implementation platform('com.google.firebase:firebase-bom:34.1.0')
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-inappmessaging-display")
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.appcompat:appcompat-resources:1.7.1'
     implementation 'com.google.android.ads:mediation-test-suite:3.0.0'

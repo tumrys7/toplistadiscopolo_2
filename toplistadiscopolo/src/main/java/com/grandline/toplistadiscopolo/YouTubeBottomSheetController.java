@@ -50,7 +50,7 @@ public class YouTubeBottomSheetController {
 	private ImageButton expandCollapseButton;
 	private LinearLayout headerLayout;
 	private FrameLayout contentContainer;
-	private Handler mainHandler;
+	private final Handler mainHandler;
 	private View customFullScreenView;
 	private WebChromeClient.CustomViewCallback customViewCallback;
 	private FrameLayout fullScreenContainer;
@@ -65,9 +65,9 @@ public class YouTubeBottomSheetController {
 	private static final int COLLAPSED_HEIGHT_DP = 200;
 	private static final int EXPANDED_HEIGHT_PERCENT = 85;
 
-	public YouTubeBottomSheetController(Activity activity) {
-		this(activity, activity != null ? (ViewGroup) activity.findViewById(R.id.root) : null);
-	}
+//	public YouTubeBottomSheetController(Activity activity) {
+//		this(activity, activity != null ? (ViewGroup) activity.findViewById(R.id.root) : null);
+//	}
 
 	public YouTubeBottomSheetController(Activity activity, ViewGroup rootView) {
 		this.activityRef = new WeakReference<>(activity);
@@ -167,7 +167,7 @@ public class YouTubeBottomSheetController {
 		} catch (Throwable ignored) {
 			// setMaxHeight may not exist on older versions; ignore
 		}
-		bottomSheetBehavior.setHideable(true);
+		bottomSheetBehavior.setHideable(false); //ukrywa calkowicie
 		bottomSheetBehavior.setSkipCollapsed(false);
 		bottomSheetBehavior.setDraggable(true);
 
@@ -181,11 +181,13 @@ public class YouTubeBottomSheetController {
 						isMinimized = false;
 						expandCollapseButton.setImageResource(android.R.drawable.arrow_down_float);
 						headerLayout.setVisibility(View.VISIBLE);
+						updateVideoInfo();
 						break;
 					case BottomSheetBehavior.STATE_COLLAPSED:
 						isMinimized = true;
 						expandCollapseButton.setImageResource(android.R.drawable.arrow_up_float);
 						headerLayout.setVisibility(View.GONE);
+						updateVideoInfo();
 						break;
 					case BottomSheetBehavior.STATE_HIDDEN:
 						// Keep hidden; cleanup happens via dismiss()
@@ -197,6 +199,7 @@ public class YouTubeBottomSheetController {
 			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 				if (slideOffset >= 0) {
 					headerLayout.setAlpha(slideOffset);
+					updateVideoInfo();
 				}
 			}
 		});
@@ -238,17 +241,14 @@ public class YouTubeBottomSheetController {
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 					String url = request.getUrl().toString();
-					if (url.startsWith("about:blank") ||
-						url.contains("youtube.com") ||
-						url.contains("youtu.be") ||
-						url.contains("youtube-nocookie.com") ||
-						url.contains("googlevideo.com") ||
-						url.contains("ytimg.com") ||
-						url.contains("localhost")) {
-						return false;
-					}
-					return true;
-				}
+                    return !url.startsWith("about:blank") &&
+                            !url.contains("youtube.com") &&
+                            !url.contains("youtu.be") &&
+                            !url.contains("youtube-nocookie.com") &&
+                            !url.contains("googlevideo.com") &&
+                            !url.contains("ytimg.com") &&
+                            !url.contains("localhost");
+                }
 
 				@Override
 				public void onPageFinished(WebView view, String url) {
@@ -342,6 +342,7 @@ public class YouTubeBottomSheetController {
 					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 				} else {
 					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+					updateVideoInfo();
 				}
 			}
 		});
@@ -360,9 +361,10 @@ public class YouTubeBottomSheetController {
 				if (deltaY > 100 && Math.abs(velocityY) > 100) {
 					if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
 						bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-					} else if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-						bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 					}
+//					else if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+//						bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+//					}
 					return true;
 				} else if (deltaY < -100 && Math.abs(velocityY) > 100) {
 					if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -375,6 +377,7 @@ public class YouTubeBottomSheetController {
 		});
 		headerLayout.setOnTouchListener((v, event) -> {
 			detector.onTouchEvent(event);
+			updateVideoInfo();
 			return false;
 		});
 	}
