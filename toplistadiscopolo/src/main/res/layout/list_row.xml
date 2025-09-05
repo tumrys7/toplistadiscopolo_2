@@ -64,6 +64,7 @@
         android:paddingEnd="10dp"
         android:layout_alignEnd="@+id/votesProgress"
         android:layout_centerVertical="true"
+        android:visibility="invisible"
         android:src="@drawable/arrow"
         app:navigationIconTint="@color/md_theme_onPrimary"/>
 
