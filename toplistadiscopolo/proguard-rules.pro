@@ -8,6 +8,18 @@
 -keep class com.google.android.gms.ads.** { *; }
 -keep class com.google.ads.** { *; }
 
+# Keep Google Play Services classes
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**
+
+# Keep Firebase classes
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Keep Google API classes
+-keep class com.google.api.** { *; }
+-dontwarn com.google.api.**
+
 # Keep codec2 client classes
 -keep class android.hardware.media.c2.** { *; }
 -keep class com.android.media.** { *; }
