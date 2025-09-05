@@ -376,14 +376,23 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     
                     // Show appropriate error message to the user
                     String errorMessage = error != null ? error.getMessage() : "Unknown error";
-                    if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
+                    if (errorMessage.contains("SPOTIFY_NOT_INSTALLED")) {
+                        updateTrackInfo(context.getString(R.string.spotify_install_required), context.getString(R.string.spotify_install_instructions));
+                        showRetryButton(true);
+                    } else if (errorMessage.contains("AUTHORIZATION_REQUIRED")) {
+                        updateTrackInfo(context.getString(R.string.spotify_login_required), context.getString(R.string.spotify_login_instructions));
+                        showRetryButton(true);
+                    } else if (errorMessage.contains("AUTHORIZATION_ERROR")) {
+                        updateTrackInfo(context.getString(R.string.spotify_setup_needed), context.getString(R.string.spotify_setup_instructions));
+                        showRetryButton(true);
+                    } else if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
                         updateTrackInfo("Spotify Not Installed", "Install Spotify app to play: " + (pendingTrackTitle != null ? pendingTrackTitle : "this track"));
+                        showRetryButton(true);
                     } else if (errorMessage.contains("Please login to Spotify")) {
                         updateTrackInfo("Login Required", "Please login to Spotify and try again");
-                        // Add a retry button or action
                         showRetryButton(true);
-                    } else if (errorMessage.contains("Please authorize")) {
-                        updateTrackInfo("Authorization Required", "Please authorize the app and try again");
+                    } else if (errorMessage.contains("Please authorize") || errorMessage.contains("UserNotAuthorizedException") || errorMessage.contains("Explicit user authorization")) {
+                        updateTrackInfo(context.getString(R.string.spotify_authorization_needed), context.getString(R.string.spotify_authorization_instructions));
                         showRetryButton(true);
                     } else if (errorMessage.contains("Connection timeout")) {
                         updateTrackInfo("Connection Timeout", "Please open Spotify app and try again");
