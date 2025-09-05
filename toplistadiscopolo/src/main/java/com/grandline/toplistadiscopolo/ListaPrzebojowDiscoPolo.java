@@ -229,8 +229,14 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
 		androidId = prefs.getString("user_id", null);
 		if (androidId == null) {
-			String androidId = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
-			prefs.edit().putString("user_id", androidId).apply();
+			androidId = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
+			if (androidId != null) {
+				prefs.edit().putString("user_id", androidId).apply();
+			} else {
+				// Fallback to a default value if ANDROID_ID is also null
+				androidId = "unknown_device";
+				prefs.edit().putString("user_id", androidId).apply();
+			}
 		}
 		// [START shared_app_measurement]
 		// Obtain the FirebaseAnalytics instance.
@@ -1523,7 +1529,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 
 				//	Log.i(TAG, "Root androidid element: " + androidId );
 				//mojalista
-				String xml_mojalista = parser.getXmlFromUrlMoja(Constants.URL_MOJALISTA.replace("LANG", language).replace("ANDROIDID", androidId)); // getting XML from URL
+				String xml_mojalista = parser.getXmlFromUrlMoja(buildSafeUrl(Constants.URL_MOJALISTA)); // getting XML from URL
 
 				Document docmoja = parser.getDomElementMoja(xml_mojalista); // getting DOM element
 				//	Log.i(TAG, "Root moja element: " + xml_mojalista );
@@ -1873,9 +1879,45 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	public String getLocaleSettings() {
 		//SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
 		Locale lc = Locale.getDefault();
-		String localeDefault = lc.getLanguage();
+		String localeDefault = lc != null ? lc.getLanguage() : "en";
 		//String localeString = settings.getString("locale",localeDefault);
-		return localeDefault;
+		return localeDefault != null ? localeDefault : "en";
+	}
+
+	/**
+	 * Helper method to safely build URLs with null checks
+	 * @param baseUrl The base URL template
+	 * @return URL with safe replacements for LANG and ANDROIDID placeholders
+	 */
+	private String buildSafeUrl(String baseUrl) {
+		if (baseUrl == null) {
+			Log.w(TAG, "buildSafeUrl called with null baseUrl");
+			return "";
+		}
+		String safeLanguage = (language != null) ? language : "en";
+		String safeAndroidId = (androidId != null) ? androidId : "unknown_device";
+		
+		if (language == null) {
+			Log.w(TAG, "Language is null, using fallback: en");
+		}
+		if (androidId == null) {
+			Log.w(TAG, "AndroidId is null, using fallback: unknown_device");
+		}
+		
+		return baseUrl.replace("LANG", safeLanguage).replace("ANDROIDID", safeAndroidId);
+	}
+
+	/**
+	 * Helper method to safely build URLs with language replacement only
+	 * @param baseUrl The base URL template
+	 * @return URL with safe replacement for LANG placeholder
+	 */
+	private String buildSafeUrlWithLanguage(String baseUrl) {
+		if (baseUrl == null) {
+			return "";
+		}
+		String safeLanguage = (language != null) ? language : "en";
+		return baseUrl.replace("LANG", safeLanguage);
 	}
 	public void setLocaleSettings(String localeString){
 
@@ -2075,7 +2117,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				// Build a new list first; only swap on success to avoid clearing UI on failure
 				ArrayList<HashMap<String, String>> newSongsListMojalista = new ArrayList<>();
 
-				String xml_mojalista = parser.getXmlFromUrlMoja(Constants.URL_MOJALISTA.replace("LANG", language).replace("ANDROIDID", androidId));
+				String xml_mojalista = parser.getXmlFromUrlMoja(buildSafeUrl(Constants.URL_MOJALISTA));
 				Document docmoja = parser.getDomElementMoja(xml_mojalista);
 				NodeList nl = docmoja.getElementsByTagName(Constants.KEY_SONG_MOJA);
 
