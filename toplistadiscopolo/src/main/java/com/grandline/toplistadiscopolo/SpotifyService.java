@@ -281,9 +281,10 @@ public class SpotifyService {
                         Log.e(TAG, "Spotify app not found - not retrying");
                         shouldRetry = false;
                     } else if (errorMessage.contains("UserNotAuthorizedException") ||
-                               errorMessage.contains("not authorized")) {
-                        Log.e(TAG, "User not authorized - trying browser authorization");
-                        tryBrowserAuthorization();
+                               errorMessage.contains("not authorized") ||
+                               errorMessage.contains("Explicit user authorization is required")) {
+                        Log.e(TAG, "User not authorized - guiding user through authorization");
+                        handleAuthorizationRequired();
                         return;
                     } else if (errorMessage.contains("OfflineException") ||
                                errorMessage.contains("offline")) {
@@ -481,48 +482,41 @@ public class SpotifyService {
         });
     }
 
-    private void tryBrowserAuthorization() {
-        Log.d(TAG, "Attempting to open Spotify for authorization...");
+    private void handleAuthorizationRequired() {
+        Log.d(TAG, "Handling Spotify authorization requirement...");
         isConnecting = false;
         connectionRetryCount = 0;
         
         try {
-            // First try to open the Spotify app directly
+            // First try to open the Spotify app directly for user to login
             Intent spotifyIntent = context.getPackageManager().getLaunchIntentForPackage("com.spotify.music");
             if (spotifyIntent != null) {
                 spotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(spotifyIntent);
-                Log.d(TAG, "Opened Spotify app for user to login");
+                Log.d(TAG, "Opened Spotify app - user needs to login and authorize");
                 
-                // Notify listeners with helpful message
-                Exception authException = new Exception("Please login to Spotify and try again");
+                // Provide clear instructions to user
+                Exception authException = new Exception("AUTHORIZATION_REQUIRED: Please login to Spotify, then return to this app and try again. The app will automatically request permission to control Spotify.");
                 if (connectionListeners.size() > 0) {
                     connectionListeners.forEach(listener -> listener.onConnectionFailed(authException));
                 }
             } else {
-                // If Spotify app is not available, try browser
-                String authUrl = "https://accounts.spotify.com/authorize" +
-                    "?client_id=" + CLIENT_ID +
-                    "&response_type=code" +
-                    "&redirect_uri=" + Uri.encode(REDIRECT_URI) +
-                    "&scope=app-remote-control streaming user-read-playback-state user-modify-playback-state";
-                
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
-                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(browserIntent);
-                Log.d(TAG, "Launched browser for Spotify authorization");
-                
-                // Notify listeners
-                Exception authException = new Exception("Please authorize the app in your browser and try again");
+                // Spotify app not installed - direct user to install it
+                Exception installException = new Exception("SPOTIFY_NOT_INSTALLED: Please install Spotify from Google Play Store, login to your account, then try again.");
                 if (connectionListeners.size() > 0) {
-                    connectionListeners.forEach(listener -> listener.onConnectionFailed(authException));
+                    connectionListeners.forEach(listener -> listener.onConnectionFailed(installException));
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to launch authorization: " + e.getMessage(), e);
+            Log.e(TAG, "Failed to handle authorization: " + e.getMessage(), e);
             if (connectionListeners.size() > 0) {
-                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("Failed to open Spotify for authorization: " + e.getMessage())));
+                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("AUTHORIZATION_ERROR: Unable to open Spotify. Please install Spotify app, login, and try again.")));
             }
         }
+    }
+    
+    private void tryBrowserAuthorization() {
+        // This method is kept for backward compatibility but now calls the new handler
+        handleAuthorizationRequired();
     }
 }

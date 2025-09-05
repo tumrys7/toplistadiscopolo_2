@@ -35,6 +35,14 @@
     <string name="spotify_go_to_app">Go to Spotify:</string>
     <string name="connecting_spotify">Connecting to Spotify...</string>
     <string name="connection_failed">Connection failed</string>
+    <string name="spotify_login_required">Login to Spotify</string>
+    <string name="spotify_login_instructions">Open Spotify app → Login → Return here → Tap retry</string>
+    <string name="spotify_authorization_needed">Authorization Needed</string>
+    <string name="spotify_authorization_instructions">Spotify will ask for permission when you retry</string>
+    <string name="spotify_install_required">Install Spotify</string>
+    <string name="spotify_install_instructions">Please install Spotify from Play Store, login, then try again</string>
+    <string name="spotify_setup_needed">Spotify Setup Needed</string>
+    <string name="spotify_setup_instructions">Install Spotify → Login → Try again</string>
     
     <!-- komunikaty -->
     <string name="text_cookie_title">Consent to Use of cookies</string>
