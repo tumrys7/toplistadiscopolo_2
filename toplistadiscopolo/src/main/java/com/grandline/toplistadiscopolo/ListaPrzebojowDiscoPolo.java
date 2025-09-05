@@ -47,6 +47,8 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -69,6 +71,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -239,13 +242,30 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
 		}
 		// [START shared_app_measurement]
-		// Obtain the FirebaseAnalytics instance.
-		mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+		// Log package information for debugging
+		logPackageInfo();
+		
+		// Check Google Play Services availability before initializing Firebase
+		if (isGooglePlayServicesAvailable()) {
+			try {
+				// Obtain the FirebaseAnalytics instance.
+				mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+				Log.i(TAG, "Firebase Analytics initialized successfully");
+				
+				// [START user_property]
+				if (androidId != null) {
+					mFirebaseAnalytics.setUserProperty("android_id", androidId);
+				}
+				// [END user_property]
+			} catch (Exception e) {
+				Log.e(TAG, "Failed to initialize Firebase Analytics: " + e.getMessage(), e);
+				mFirebaseAnalytics = null;
+			}
+		} else {
+			Log.w(TAG, "Google Play Services not available, skipping Firebase Analytics initialization");
+			mFirebaseAnalytics = null;
+		}
 		// [END shared_app_measurement]
-
-		// [START user_property]
-		mFirebaseAnalytics.setUserProperty("android_id", androidId);
-		// [END user_property]
 
 
 		setupTabLayoutWithViewPager();
@@ -539,12 +559,14 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			votingListId = idUtworu;
 			voteInBackground(url, listType);
 			// [START image_view_event]
-			Bundle bundle = new Bundle();
-			bundle.putString(FirebaseAnalytics.Param.ITEM_ID, idUtworu);
-			bundle.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
-			bundle.putString(FirebaseAnalytics.Param.LEVEL, teledysk);
-			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_lista");
-			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+			if (mFirebaseAnalytics != null) {
+				Bundle bundle = new Bundle();
+				bundle.putString(FirebaseAnalytics.Param.ITEM_ID, idUtworu);
+				bundle.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
+				bundle.putString(FirebaseAnalytics.Param.LEVEL, teledysk);
+				bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "glos_lista");
+				mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+			}
 			// [END image_view_event]
 
 		} else {
@@ -571,8 +593,26 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		
 		isDataLoading = true;
 		
-		MobileAds.initialize(this, initializationStatus -> {
-		});
+		// Initialize MobileAds with proper error handling
+		if (isGooglePlayServicesAvailable()) {
+			try {
+				MobileAds.initialize(this, initializationStatus -> {
+					Log.i(TAG, "MobileAds initialized successfully");
+					// You can check initialization status here if needed
+					Map<String, com.google.android.gms.ads.initialization.AdapterStatus> statusMap = 
+						initializationStatus.getAdapterStatusMap();
+					for (String adapterClass : statusMap.keySet()) {
+						com.google.android.gms.ads.initialization.AdapterStatus status = statusMap.get(adapterClass);
+						Log.d(TAG, String.format("Adapter name: %s, Description: %s, Latency: %d",
+							adapterClass, status.getDescription(), status.getLatency()));
+					}
+				});
+			} catch (Exception e) {
+				Log.e(TAG, "Failed to initialize MobileAds: " + e.getMessage(), e);
+			}
+		} else {
+			Log.w(TAG, "Google Play Services not available, skipping MobileAds initialization");
+		}
 
 		loadRewardedAd();
 
@@ -1919,6 +1959,80 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		String safeLanguage = (language != null) ? language : "en";
 		return baseUrl.replace("LANG", safeLanguage);
 	}
+
+	/**
+	 * Check if Google Play Services is available and up to date
+	 * @return true if Google Play Services is available, false otherwise
+	 */
+	private boolean isGooglePlayServicesAvailable() {
+		GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+		int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			Log.e(TAG, "Google Play Services not available. Result code: " + resultCode);
+			String errorMessage = getGooglePlayServicesErrorMessage(resultCode);
+			Log.e(TAG, "Error details: " + errorMessage);
+			if (apiAvailability.isUserResolvableError(resultCode)) {
+				Log.i(TAG, "Google Play Services error is user resolvable");
+				// You could show a dialog to the user here if needed
+			}
+			return false;
+		}
+		Log.i(TAG, "Google Play Services is available");
+		return true;
+	}
+
+	/**
+	 * Get human-readable error message for Google Play Services error codes
+	 */
+	private String getGooglePlayServicesErrorMessage(int errorCode) {
+		switch (errorCode) {
+			case ConnectionResult.SERVICE_MISSING:
+				return "Google Play Services is missing";
+			case ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED:
+				return "Google Play Services needs to be updated";
+			case ConnectionResult.SERVICE_DISABLED:
+				return "Google Play Services is disabled";
+			case ConnectionResult.SERVICE_INVALID:
+				return "Google Play Services version is invalid";
+			case ConnectionResult.SIGN_IN_REQUIRED:
+				return "Sign in to Google Play Services is required";
+			case ConnectionResult.NETWORK_ERROR:
+				return "Network error connecting to Google Play Services";
+			case ConnectionResult.INTERNAL_ERROR:
+				return "Internal error in Google Play Services";
+			case ConnectionResult.API_UNAVAILABLE:
+				return "API is not available on this device";
+			default:
+				return "Unknown error code: " + errorCode;
+		}
+	}
+
+	/**
+	 * Log package information for debugging Google Play Services issues
+	 */
+	private void logPackageInfo() {
+		try {
+			String packageName = getPackageName();
+			Log.i(TAG, "App package name: " + packageName);
+			
+			// Log package manager information
+			PackageManager pm = getPackageManager();
+			android.content.pm.PackageInfo packageInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
+			Log.i(TAG, "App version code: " + packageInfo.versionCode);
+			Log.i(TAG, "App version name: " + packageInfo.versionName);
+			
+			// Log signing information (for debugging certificate issues)
+			if (packageInfo.signatures != null && packageInfo.signatures.length > 0) {
+				Log.i(TAG, "App has " + packageInfo.signatures.length + " signature(s)");
+				// Don't log the actual signature for security reasons, just confirm it exists
+			} else {
+				Log.w(TAG, "App has no signatures - this may cause Google Play Services issues");
+			}
+			
+		} catch (Exception e) {
+			Log.e(TAG, "Error logging package info: " + e.getMessage());
+		}
+	}
 	public void setLocaleSettings(String localeString){
 
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, 0);
@@ -2038,15 +2152,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 					refreshNowosciWithAdReward();
 
 					// [START image_view_event]
-					Bundle bundlereward = new Bundle();
-					bundlereward.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
-					bundlereward.putString(FirebaseAnalytics.Param.ITEM_NAME, "rewardvideo");
-					bundlereward.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "on_rewarded_video");
-					mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundlereward);
+					if (mFirebaseAnalytics != null) {
+						Bundle bundlereward = new Bundle();
+						bundlereward.putString(FirebaseAnalytics.Param.GROUP_ID, androidId);
+						bundlereward.putString(FirebaseAnalytics.Param.ITEM_NAME, "rewardvideo");
+						bundlereward.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "on_rewarded_video");
+						mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundlereward);
 
-					Bundle bundleparams = new Bundle();
-					bundleparams.putString(FirebaseAnalytics.Param.ACHIEVEMENT_ID, "rewarded_video");
-					mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundleparams);
+						Bundle bundleparams = new Bundle();
+						bundleparams.putString(FirebaseAnalytics.Param.ACHIEVEMENT_ID, "rewarded_video");
+						mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundleparams);
+					}
 					// [END image_view_event]
 
 
@@ -2537,15 +2653,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	// Public method to play Spotify track from adapters
 	public void playSpotifyTrack(String spotifyTrackId, String title, String artist) {
 		// [START image_view_event]
-		Bundle bundle = new Bundle();
-		bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, title);
+		if (mFirebaseAnalytics != null) {
+			Bundle bundle = new Bundle();
+			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, title);
 //			bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "tytul");
-		bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, spotifyTrackId);
+			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, spotifyTrackId);
 //			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "spotifyTrackId");
-		bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, artist);
+			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, artist);
 //			bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, "wykonawca");
-		bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_spotify_track");
-		mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+			bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_spotify_track");
+			mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+		}
 		// [END image_view_event]
 		Log.d("SpotifyDebug", "playSpotifyTrack called - trackId: " + spotifyTrackId + ", title: " + title + ", artist: " + artist);
 		
