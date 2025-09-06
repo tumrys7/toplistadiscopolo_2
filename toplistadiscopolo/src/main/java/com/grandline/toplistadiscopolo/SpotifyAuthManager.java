@@ -5,8 +5,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Base64;
 import android.util.Log;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -29,6 +33,8 @@ public class SpotifyAuthManager {
     private static final String PREFS_NAME = "spotify_auth_prefs";
     private static final String KEY_ACCESS_TOKEN = "access_token";
     private static final String KEY_TOKEN_EXPIRY = "token_expiry";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
+    private static final String KEY_CODE_VERIFIER = "code_verifier";
     
     public static final int REQUEST_CODE = 1337;
     
@@ -71,7 +77,7 @@ public class SpotifyAuthManager {
     }
     
     /**
-     * Start the authorization process
+     * Start the authorization process with PKCE
      */
     public void startAuthorization(Activity activity, AuthorizationListener listener) {
         this.authorizationListener = listener;
@@ -86,6 +92,14 @@ public class SpotifyAuthManager {
             return;
         }
         
+        // Try to refresh token if we have a refresh token
+        String refreshToken = getStoredRefreshToken();
+        if (refreshToken != null) {
+            Log.d(TAG, "Attempting to refresh access token");
+            refreshAccessToken(refreshToken, listener);
+            return;
+        }
+        
         // Check internet connectivity before starting authorization
         if (!hasInternetConnection()) {
             Log.e(TAG, "No internet connection available for authorization");
@@ -95,26 +109,39 @@ public class SpotifyAuthManager {
             return;
         }
         
-        Log.d(TAG, "Starting Spotify authorization flow");
-        
-        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
-            Constants.SPOTIFY_CLIENT_ID,
-            AuthorizationResponse.Type.CODE,
-            Constants.SPOTIFY_REDIRECT_URI
-        );
-        
-        // Request the app-remote-control scope which is required for App Remote SDK
-        builder.setScopes(new String[]{"app-remote-control", "streaming"});
-        
-        // Enable PKCE for Authorization Code Flow
-        builder.setShowDialog(false);
-        
-        AuthorizationRequest request = builder.build();
+        Log.d(TAG, "Starting Spotify PKCE authorization flow");
         
         try {
+            // Generate PKCE parameters
+            String codeVerifier = generateCodeVerifier();
+            String codeChallenge = generateCodeChallenge(codeVerifier);
+            
+            // Store code verifier for later use
+            storeCodeVerifier(codeVerifier);
+            
+            AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
+                Constants.SPOTIFY_CLIENT_ID,
+                AuthorizationResponse.Type.CODE,
+                Constants.SPOTIFY_REDIRECT_URI
+            );
+            
+            // Request the app-remote-control scope which is required for App Remote SDK
+            builder.setScopes(new String[]{"app-remote-control", "streaming"});
+            
+            // Add PKCE parameters
+            builder.setCustomParam("code_challenge_method", "S256");
+            builder.setCustomParam("code_challenge", codeChallenge);
+            
+            // Enable PKCE for Authorization Code Flow
+            builder.setShowDialog(false);
+            
+            AuthorizationRequest request = builder.build();
+            
             AuthorizationClient.openLoginActivity(activity, REQUEST_CODE, request);
+            Log.d(TAG, "PKCE authorization request sent");
+            
         } catch (Exception e) {
-            Log.e(TAG, "Failed to start authorization", e);
+            Log.e(TAG, "Failed to start PKCE authorization", e);
             if (listener != null) {
                 listener.onAuthorizationFailed("Failed to start authorization: " + e.getMessage());
             }
@@ -193,10 +220,20 @@ public class SpotifyAuthManager {
     }
     
     /**
-     * Exchange authorization code for access token using Spotify's token endpoint
+     * Exchange authorization code for access token using PKCE
      */
     private void exchangeCodeForToken(String authorizationCode) {
-        Log.d(TAG, "Exchanging authorization code for access token");
+        Log.d(TAG, "Exchanging authorization code for access token using PKCE");
+        
+        String codeVerifier = getStoredCodeVerifier();
+        if (codeVerifier == null) {
+            Log.e(TAG, "No code verifier found for PKCE");
+            if (authorizationListener != null) {
+                authorizationListener.onAuthorizationFailed("PKCE code verifier not found");
+                authorizationListener = null;
+            }
+            return;
+        }
         
         OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -209,6 +246,7 @@ public class SpotifyAuthManager {
             .add("code", authorizationCode)
             .add("redirect_uri", Constants.SPOTIFY_REDIRECT_URI)
             .add("client_id", Constants.SPOTIFY_CLIENT_ID)
+            .add("code_verifier", codeVerifier)  // PKCE parameter
             .build();
         
         Request request = new Request.Builder()
@@ -225,6 +263,8 @@ public class SpotifyAuthManager {
                     authorizationListener.onAuthorizationFailed("Token exchange failed: " + e.getMessage());
                     authorizationListener = null;
                 }
+                // Clear stored code verifier
+                clearCodeVerifier();
             }
             
             @Override
@@ -239,10 +279,22 @@ public class SpotifyAuthManager {
                             String accessToken = jsonResponse.getString("access_token");
                             int expiresIn = jsonResponse.getInt("expires_in");
                             
-                            Log.d(TAG, "Access token received successfully, expires in: " + expiresIn + " seconds");
+                            // Get refresh token if available
+                            String refreshToken = null;
+                            if (jsonResponse.has("refresh_token")) {
+                                refreshToken = jsonResponse.getString("refresh_token");
+                            }
                             
-                            // Store the token
-                            storeAccessToken(accessToken, expiresIn);
+                            Log.d(TAG, "Access token received successfully, expires in: " + expiresIn + " seconds");
+                            if (refreshToken != null) {
+                                Log.d(TAG, "Refresh token also received");
+                            }
+                            
+                            // Store the tokens
+                            storeTokens(accessToken, refreshToken, expiresIn);
+                            
+                            // Clear the code verifier as it's no longer needed
+                            clearCodeVerifier();
                             
                             if (authorizationListener != null) {
                                 authorizationListener.onAuthorizationComplete(accessToken);
@@ -255,6 +307,7 @@ public class SpotifyAuthManager {
                                 authorizationListener.onAuthorizationFailed("Failed to parse token response: " + e.getMessage());
                                 authorizationListener = null;
                             }
+                            clearCodeVerifier();
                         }
                     } else {
                         Log.e(TAG, "Token exchange failed with response: " + responseBody);
@@ -275,6 +328,7 @@ public class SpotifyAuthManager {
                             authorizationListener.onAuthorizationFailed(errorMessage);
                             authorizationListener = null;
                         }
+                        clearCodeVerifier();
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Unexpected error during token exchange", e);
@@ -282,6 +336,7 @@ public class SpotifyAuthManager {
                         authorizationListener.onAuthorizationFailed("Unexpected error: " + e.getMessage());
                         authorizationListener = null;
                     }
+                    clearCodeVerifier();
                 }
             }
         });
@@ -327,21 +382,38 @@ public class SpotifyAuthManager {
         Log.d(TAG, "Authorization cleared");
     }
     
-    private void storeAccessToken(String token, int expiresInSeconds) {
+    private void storeTokens(String accessToken, String refreshToken, int expiresInSeconds) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         long expiryTime = System.currentTimeMillis() + (expiresInSeconds * 1000L);
         
-        prefs.edit()
-            .putString(KEY_ACCESS_TOKEN, token)
-            .putLong(KEY_TOKEN_EXPIRY, expiryTime)
-            .apply();
+        SharedPreferences.Editor editor = prefs.edit()
+            .putString(KEY_ACCESS_TOKEN, accessToken)
+            .putLong(KEY_TOKEN_EXPIRY, expiryTime);
+        
+        if (refreshToken != null) {
+            editor.putString(KEY_REFRESH_TOKEN, refreshToken);
+        }
+        
+        editor.apply();
         
         Log.d(TAG, "Access token stored, expires at: " + new java.util.Date(expiryTime));
+        if (refreshToken != null) {
+            Log.d(TAG, "Refresh token also stored");
+        }
+    }
+    
+    private void storeAccessToken(String token, int expiresInSeconds) {
+        storeTokens(token, null, expiresInSeconds);
     }
     
     private String getStoredAccessToken() {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         return prefs.getString(KEY_ACCESS_TOKEN, null);
+    }
+    
+    private String getStoredRefreshToken() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
     }
     
     private boolean isTokenExpired() {
@@ -357,5 +429,155 @@ public class SpotifyAuthManager {
         }
         
         return expired;
+    }
+    
+    // PKCE helper methods
+    
+    /**
+     * Generate a cryptographically secure random string for PKCE code verifier
+     */
+    private String generateCodeVerifier() {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] codeVerifier = new byte[32];
+        secureRandom.nextBytes(codeVerifier);
+        return Base64.encodeToString(codeVerifier, Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+    }
+    
+    /**
+     * Generate code challenge from code verifier using SHA256
+     */
+    private String generateCodeChallenge(String codeVerifier) throws NoSuchAlgorithmException {
+        byte[] bytes = codeVerifier.getBytes();
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(bytes, 0, bytes.length);
+        byte[] digest = messageDigest.digest();
+        return Base64.encodeToString(digest, Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+    }
+    
+    /**
+     * Store the code verifier for later use in token exchange
+     */
+    private void storeCodeVerifier(String codeVerifier) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_CODE_VERIFIER, codeVerifier).apply();
+        Log.d(TAG, "Code verifier stored for PKCE");
+    }
+    
+    /**
+     * Get the stored code verifier
+     */
+    private String getStoredCodeVerifier() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_CODE_VERIFIER, null);
+    }
+    
+    /**
+     * Clear the stored code verifier
+     */
+    private void clearCodeVerifier() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().remove(KEY_CODE_VERIFIER).apply();
+        Log.d(TAG, "Code verifier cleared");
+    }
+    
+    /**
+     * Refresh the access token using the refresh token
+     */
+    private void refreshAccessToken(String refreshToken, AuthorizationListener listener) {
+        Log.d(TAG, "Refreshing access token");
+        
+        OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
+        
+        FormBody formBody = new FormBody.Builder()
+            .add("grant_type", "refresh_token")
+            .add("refresh_token", refreshToken)
+            .add("client_id", Constants.SPOTIFY_CLIENT_ID)
+            .build();
+        
+        Request request = new Request.Builder()
+            .url("https://accounts.spotify.com/api/token")
+            .post(formBody)
+            .addHeader("Content-Type", "application/x-www-form-urlencoded")
+            .build();
+        
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Failed to refresh token", e);
+                // If refresh fails, clear tokens and start fresh authorization
+                clearAuthorization();
+                if (listener != null) {
+                    listener.onAuthorizationFailed("Token refresh failed: " + e.getMessage());
+                }
+            }
+            
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    String responseBody = response.body().string();
+                    Log.d(TAG, "Token refresh response code: " + response.code());
+                    
+                    if (response.isSuccessful()) {
+                        try {
+                            JSONObject jsonResponse = new JSONObject(responseBody);
+                            String accessToken = jsonResponse.getString("access_token");
+                            int expiresIn = jsonResponse.getInt("expires_in");
+                            
+                            // Some refresh responses might include a new refresh token
+                            String newRefreshToken = refreshToken; // Keep the old one by default
+                            if (jsonResponse.has("refresh_token")) {
+                                newRefreshToken = jsonResponse.getString("refresh_token");
+                            }
+                            
+                            Log.d(TAG, "Access token refreshed successfully, expires in: " + expiresIn + " seconds");
+                            
+                            // Store the new tokens
+                            storeTokens(accessToken, newRefreshToken, expiresIn);
+                            
+                            if (listener != null) {
+                                listener.onAuthorizationComplete(accessToken);
+                            }
+                            
+                        } catch (JSONException e) {
+                            Log.e(TAG, "Failed to parse refresh token response", e);
+                            clearAuthorization();
+                            if (listener != null) {
+                                listener.onAuthorizationFailed("Failed to parse refresh response: " + e.getMessage());
+                            }
+                        }
+                    } else {
+                        Log.e(TAG, "Token refresh failed with response: " + responseBody);
+                        // If refresh fails, clear tokens and start fresh authorization
+                        clearAuthorization();
+                        
+                        String errorMessage = "Token refresh failed";
+                        try {
+                            JSONObject errorJson = new JSONObject(responseBody);
+                            if (errorJson.has("error_description")) {
+                                errorMessage = errorJson.getString("error_description");
+                            } else if (errorJson.has("error")) {
+                                errorMessage = errorJson.getString("error");
+                            }
+                        } catch (JSONException e) {
+                            Log.w(TAG, "Could not parse refresh error response", e);
+                        }
+                        
+                        if (listener != null) {
+                            listener.onAuthorizationFailed(errorMessage);
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Unexpected error during token refresh", e);
+                    clearAuthorization();
+                    if (listener != null) {
+                        listener.onAuthorizationFailed("Unexpected refresh error: " + e.getMessage());
+                    }
+                }
+            }
+        });
     }
 }
