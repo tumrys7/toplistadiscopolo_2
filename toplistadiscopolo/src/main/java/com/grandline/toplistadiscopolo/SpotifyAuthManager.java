@@ -77,10 +77,41 @@ public class SpotifyAuthManager {
     }
     
     /**
+     * Validate Spotify app configuration
+     */
+    private boolean validateSpotifyConfiguration() {
+        if (Constants.SPOTIFY_CLIENT_ID == null || Constants.SPOTIFY_CLIENT_ID.isEmpty() || Constants.SPOTIFY_CLIENT_ID.equals("YOUR_CLIENT_ID_HERE")) {
+            Log.e(TAG, "Spotify Client ID is not configured properly");
+            return false;
+        }
+        
+        if (Constants.SPOTIFY_REDIRECT_URI == null || Constants.SPOTIFY_REDIRECT_URI.isEmpty() || Constants.SPOTIFY_REDIRECT_URI.equals("YOUR_REDIRECT_URI_HERE")) {
+            Log.e(TAG, "Spotify Redirect URI is not configured properly");
+            return false;
+        }
+        
+        if (!Constants.SPOTIFY_REDIRECT_URI.startsWith(context.getPackageName() + "://")) {
+            Log.w(TAG, "Redirect URI should typically start with package name for deep linking");
+        }
+        
+        Log.d(TAG, "Spotify configuration validated successfully");
+        return true;
+    }
+    
+    /**
      * Start the authorization process with PKCE
      */
     public void startAuthorization(Activity activity, AuthorizationListener listener) {
         this.authorizationListener = listener;
+        
+        // Validate Spotify configuration first
+        if (!validateSpotifyConfiguration()) {
+            Log.e(TAG, "Invalid Spotify configuration");
+            if (listener != null) {
+                listener.onAuthorizationFailed("Invalid Spotify app configuration. Please check client ID and redirect URI.");
+            }
+            return;
+        }
         
         // Check if we have a valid token first
         String existingToken = getStoredAccessToken();
@@ -167,10 +198,18 @@ public class SpotifyAuthManager {
                 Log.d(TAG, "Authorization code received");
                 String authorizationCode = response.getCode();
                 
-                Log.d(TAG, "Authorization code received, exchanging for access token");
-                
-                // Exchange authorization code for access token
-                exchangeCodeForToken(authorizationCode);
+                if (authorizationCode != null && !authorizationCode.isEmpty()) {
+                    Log.d(TAG, "Authorization code received, exchanging for access token");
+                    
+                    // Exchange authorization code for access token
+                    exchangeCodeForToken(authorizationCode);
+                } else {
+                    Log.e(TAG, "Authorization code is null or empty");
+                    if (authorizationListener != null) {
+                        authorizationListener.onAuthorizationFailed("Invalid authorization code received");
+                        authorizationListener = null;
+                    }
+                }
                 break;
                 
             case ERROR:
@@ -184,7 +223,7 @@ public class SpotifyAuthManager {
                         if (authorizationListener != null) {
                             authorizationListener.onAuthorizationFailed("NETWORK_ERROR: Please check your internet connection and try again.");
                         }
-                    } else if (errorMsg.equals("USER_CANCELLED")) {
+                    } else if (errorMsg.equals("USER_CANCELLED") || errorMsg.equals("access_denied")) {
                         Log.w(TAG, "User cancelled authorization");
                         if (authorizationListener != null) {
                             authorizationListener.onAuthorizationFailed("Authorization cancelled by user");
@@ -290,8 +329,22 @@ public class SpotifyAuthManager {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e(TAG, "Failed to exchange code for token", e);
+                
+                String errorMessage = "Token exchange failed";
+                if (e != null) {
+                    if (e.getMessage() != null) {
+                        if (e.getMessage().contains("timeout")) {
+                            errorMessage = "Network timeout during token exchange. Please check your internet connection and try again.";
+                        } else if (e.getMessage().contains("network") || e.getMessage().contains("connection")) {
+                            errorMessage = "Network error during token exchange. Please check your internet connection and try again.";
+                        } else {
+                            errorMessage = "Token exchange failed: " + e.getMessage();
+                        }
+                    }
+                }
+                
                 if (authorizationListener != null) {
-                    authorizationListener.onAuthorizationFailed("Token exchange failed: " + e.getMessage());
+                    authorizationListener.onAuthorizationFailed(errorMessage);
                     authorizationListener = null;
                 }
                 // Clear stored code verifier
@@ -347,18 +400,41 @@ public class SpotifyAuthManager {
                             clearCodeVerifier();
                         }
                     } else {
-                        Log.e(TAG, "Token exchange failed with response: " + responseBody);
+                        Log.e(TAG, "Token exchange failed with HTTP " + response.code() + ": " + responseBody);
                         
-                        String errorMessage = "Token exchange failed";
+                        String errorMessage = "Token exchange failed (HTTP " + response.code() + ")";
                         try {
                             JSONObject errorJson = new JSONObject(responseBody);
                             if (errorJson.has("error_description")) {
-                                errorMessage = errorJson.getString("error_description");
+                                String errorDesc = errorJson.getString("error_description");
+                                Log.e(TAG, "Spotify error description: " + errorDesc);
+                                errorMessage = errorDesc;
+                                
+                                // Handle specific Spotify errors
+                                if (errorDesc.contains("invalid_client")) {
+                                    errorMessage = "Invalid Spotify client configuration. Please check app settings.";
+                                } else if (errorDesc.contains("invalid_grant")) {
+                                    errorMessage = "Authorization code expired or invalid. Please try again.";
+                                } else if (errorDesc.contains("invalid_request")) {
+                                    errorMessage = "Invalid authorization request. Please try again.";
+                                }
                             } else if (errorJson.has("error")) {
-                                errorMessage = errorJson.getString("error");
+                                String error = errorJson.getString("error");
+                                Log.e(TAG, "Spotify error: " + error);
+                                errorMessage = "Authorization failed: " + error;
                             }
                         } catch (JSONException e) {
                             Log.w(TAG, "Could not parse error response", e);
+                            // Use HTTP status code to provide better error messages
+                            if (response.code() == 400) {
+                                errorMessage = "Bad request - Invalid authorization parameters";
+                            } else if (response.code() == 401) {
+                                errorMessage = "Unauthorized - Invalid client credentials";
+                            } else if (response.code() == 403) {
+                                errorMessage = "Forbidden - Access denied";
+                            } else if (response.code() >= 500) {
+                                errorMessage = "Spotify server error. Please try again later.";
+                            }
                         }
                         
                         if (authorizationListener != null) {
@@ -403,11 +479,89 @@ public class SpotifyAuthManager {
             String storedToken = getStoredAccessToken();
             if (storedToken != null) {
                 Log.d(TAG, "Token exists but expired");
+                // Log when the token expired for debugging
+                SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                long expiryTime = prefs.getLong(KEY_TOKEN_EXPIRY, 0);
+                if (expiryTime > 0) {
+                    Log.d(TAG, "Token expired at: " + new java.util.Date(expiryTime));
+                    Log.d(TAG, "Current time: " + new java.util.Date());
+                }
             } else {
                 Log.d(TAG, "No token stored");
             }
         }
         return authorized;
+    }
+    
+    /**
+     * Get authorization status details for debugging
+     */
+    public String getAuthorizationStatusDebug() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        StringBuilder debug = new StringBuilder();
+        
+        String accessToken = prefs.getString(KEY_ACCESS_TOKEN, null);
+        String refreshToken = prefs.getString(KEY_REFRESH_TOKEN, null);
+        long expiryTime = prefs.getLong(KEY_TOKEN_EXPIRY, 0);
+        String codeVerifier = prefs.getString(KEY_CODE_VERIFIER, null);
+        
+        debug.append("Authorization Status Debug:\n");
+        debug.append("- Access Token: ").append(accessToken != null ? "Present" : "Missing").append("\n");
+        debug.append("- Refresh Token: ").append(refreshToken != null ? "Present" : "Missing").append("\n");
+        debug.append("- Code Verifier: ").append(codeVerifier != null ? "Present" : "Missing").append("\n");
+        
+        if (expiryTime > 0) {
+            debug.append("- Token Expiry: ").append(new java.util.Date(expiryTime)).append("\n");
+            debug.append("- Current Time: ").append(new java.util.Date()).append("\n");
+            debug.append("- Token Expired: ").append(isTokenExpired()).append("\n");
+        } else {
+            debug.append("- Token Expiry: Not set\n");
+        }
+        
+        debug.append("- Is Authorized: ").append(isAuthorized());
+        
+        return debug.toString();
+    }
+    
+    /**
+     * Check if authorization process is in progress (has code verifier but no token)
+     */
+    public boolean isAuthorizationInProgress() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String codeVerifier = prefs.getString(KEY_CODE_VERIFIER, null);
+        String accessToken = prefs.getString(KEY_ACCESS_TOKEN, null);
+        
+        return codeVerifier != null && accessToken == null;
+    }
+    
+    /**
+     * Force check if authorization completed without callback
+     * This can be used when the authorization callback might have been missed
+     */
+    public void checkAuthorizationCompletion(AuthorizationListener listener) {
+        if (isAuthorized()) {
+            Log.d(TAG, "Authorization already completed");
+            if (listener != null) {
+                listener.onAuthorizationComplete(getValidAccessToken());
+            }
+            return;
+        }
+        
+        if (isAuthorizationInProgress()) {
+            Log.w(TAG, "Authorization appears to be in progress but no token found");
+            Log.d(TAG, getAuthorizationStatusDebug());
+            
+            // Clear the stale code verifier and restart authorization
+            clearCodeVerifier();
+            if (listener != null) {
+                listener.onAuthorizationFailed("Authorization process incomplete. Please try again.");
+            }
+        } else {
+            Log.d(TAG, "No authorization in progress");
+            if (listener != null) {
+                listener.onAuthorizationFailed("No authorization process found. Please start authorization.");
+            }
+        }
     }
     
     /**

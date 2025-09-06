@@ -204,6 +204,7 @@ public class SpotifyService {
         SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
         if (!authManager.isAuthorized()) {
             Log.w(TAG, "User not authorized, need to complete OAuth flow first");
+            Log.d(TAG, authManager.getAuthorizationStatusDebug());
             handleAuthorizationRequired();
             return;
         }
@@ -603,6 +604,7 @@ public class SpotifyService {
         SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
         if (!authManager.isAuthorized()) {
             Log.w(TAG, "User still not authorized after return from authorization flow");
+            Log.d(TAG, authManager.getAuthorizationStatusDebug());
             handleAuthorizationRequired();
             return;
         }
