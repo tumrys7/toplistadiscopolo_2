@@ -522,6 +522,12 @@ public class SpotifyService {
         isConnecting = false;
         connectionRetryCount = 0;
         
+        // Cancel any pending timeout callbacks
+        if (connectionTimeoutRunnable != null) {
+            retryHandler.removeCallbacks(connectionTimeoutRunnable);
+            connectionTimeoutRunnable = null;
+        }
+        
         // Clear any existing connection
         if (mSpotifyAppRemote != null) {
             try {
@@ -532,7 +538,10 @@ public class SpotifyService {
             mSpotifyAppRemote = null;
         }
         
-        // Attempt new connection
-        connect();
+        // Small delay to ensure cleanup is complete before reconnecting
+        retryHandler.postDelayed(() -> {
+            Log.d(TAG, "Starting fresh connection attempt after cleanup");
+            connect();
+        }, 500);
     }
 }

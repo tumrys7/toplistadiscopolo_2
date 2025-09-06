@@ -422,13 +422,41 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			SpotifyService spotifyService = SpotifyService.getInstance(this);
 			// If user was trying to play something and Spotify is not connected, try to reconnect
 			if (!spotifyService.isConnected() && !spotifyService.isConnecting()) {
-				// Small delay to ensure app is fully resumed
+				// Small delay to ensure app is fully resumed and any authorization callback is processed
 				new Handler(Looper.getMainLooper()).postDelayed(() -> {
 					if (spotifyBottomSheetController.isBottomSheetVisible()) {
 						Log.d(TAG, "User returned from Spotify, attempting to force reconnect...");
+						
+						// Add a connection listener to retry the track after successful connection
+						spotifyService.addConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+							@Override
+							public void onConnected() {
+								Log.d(TAG, "Connected after user return, retrying track");
+								// Retry the current track
+								if (spotifyBottomSheetController != null) {
+									spotifyBottomSheetController.retryCurrentTrack();
+								}
+								// Remove this listener
+								spotifyService.removeConnectionListener(this);
+							}
+							
+							@Override
+							public void onConnectionFailed(Throwable error) {
+								Log.e(TAG, "Connection failed after user return", error);
+								// Remove this listener
+								spotifyService.removeConnectionListener(this);
+							}
+							
+							@Override
+							public void onDisconnected() {
+								// Remove this listener
+								spotifyService.removeConnectionListener(this);
+							}
+						});
+						
 						spotifyService.forceReconnect();
 					}
-				}, 1000);
+				}, 2000); // Increased delay to 2 seconds to allow for authorization processing
 			}
 		}
 
@@ -507,6 +535,64 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
 		} catch (Exception e) {
 			Log.e("InputCleanup", "Error in configuration change: " + e.getMessage());
+		}
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+		
+		// Handle Spotify authorization callback
+		if (intent != null && intent.getData() != null) {
+			String scheme = intent.getData().getScheme();
+			String host = intent.getData().getHost();
+			
+			// Check if this is a Spotify callback
+			if ("com.grandline.toplistadiscopolo".equals(scheme) && "callback".equals(host)) {
+				Log.d(TAG, "Received Spotify authorization callback");
+				
+				// The Spotify SDK will handle the callback automatically, 
+				// but we can add a small delay before attempting reconnection
+				// to ensure the authorization is fully processed
+				new Handler(Looper.getMainLooper()).postDelayed(() -> {
+					if (spotifyBottomSheetController != null && spotifyBottomSheetController.isBottomSheetVisible()) {
+						SpotifyService spotifyService = SpotifyService.getInstance(this);
+						if (!spotifyService.isConnected() && !spotifyService.isConnecting()) {
+							Log.d(TAG, "Authorization callback received, attempting reconnect...");
+							
+							// Add a connection listener to retry the track after successful connection
+							spotifyService.addConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+								@Override
+								public void onConnected() {
+									Log.d(TAG, "Connected after authorization callback, retrying track");
+									// Retry the current track
+									if (spotifyBottomSheetController != null) {
+										spotifyBottomSheetController.retryCurrentTrack();
+									}
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+								
+								@Override
+								public void onConnectionFailed(Throwable error) {
+									Log.e(TAG, "Connection failed after authorization callback", error);
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+								
+								@Override
+								public void onDisconnected() {
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+							});
+							
+							spotifyService.forceReconnect();
+						}
+					}
+				}, 1500); // Slightly longer delay to ensure authorization is processed
+			}
 		}
 	}
 

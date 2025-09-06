@@ -234,20 +234,19 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             retryButton.setOnClickListener(v -> {
                 Log.d(TAG, "Retry button clicked");
                 showRetryButton(false);
+                showLoadingState(true);
                 
                 // If we have authorization issues, try to launch Spotify first
                 if (context instanceof ListaPrzebojowDiscoPolo) {
                     ListaPrzebojowDiscoPolo activity = (ListaPrzebojowDiscoPolo) context;
                     activity.launchSpotifyForAuthorization();
                     
-                    // Delay the retry to give user time to authorize
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        if (currentTrackId != null) {
-                            playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
-                        }
-                    }, 3000); // 3 second delay
+                    // Don't automatically retry - let the onNewIntent/onResume handle it
+                    // This prevents double connection attempts
+                    Log.d(TAG, "Launched Spotify for authorization, waiting for user return...");
                 } else {
                     // Fallback - just retry immediately
+                    showLoadingState(false);
                     if (currentTrackId != null) {
                         playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
                     }
@@ -364,6 +363,9 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     Log.d(TAG, "Spotify connected callback - checking for pending track");
                     // Hide loading state
                     showLoadingState(false);
+                    
+                    // Restore playback controls
+                    restorePlaybackControls();
                     
                     // Play the pending track if we have one
                     if (hasPendingTrack && pendingTrackId != null) {
@@ -892,6 +894,35 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
     public void onDestroy() {
         stopProgressUpdate();
         spotifyService.disconnect();
+    }
+    
+    /**
+     * Retry playing the current track - useful after successful authorization
+     */
+    public void retryCurrentTrack() {
+        Log.d(TAG, "Retrying current track after authorization");
+        if (currentTrackId != null && currentTrackTitle != null && currentTrackArtist != null) {
+            // Hide any error states
+            showRetryButton(false);
+            showLoadingState(false);
+            
+            // Restore playback controls
+            restorePlaybackControls();
+            
+            // Update track info
+            updateTrackInfo(currentTrackTitle, currentTrackArtist);
+            
+            // Try to play the track again
+            if (spotifyService.isConnected()) {
+                Log.d(TAG, "Spotify connected, playing track immediately");
+                spotifyService.playTrack(currentTrackId);
+            } else {
+                Log.d(TAG, "Spotify not connected, setting up connection for retry");
+                playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
+            }
+        } else {
+            Log.w(TAG, "No current track to retry");
+        }
     }
 
     private void restorePlaybackControls() {
