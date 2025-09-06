@@ -173,6 +173,14 @@ public class SpotifyService {
     private void connectInternal() {
         Log.d(TAG, "Creating ConnectionParams with CLIENT_ID: " + Constants.SPOTIFY_CLIENT_ID + ", REDIRECT_URI: " + Constants.SPOTIFY_REDIRECT_URI);
         
+        // Check if we have proper authorization first
+        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+        if (!authManager.isAuthorized()) {
+            Log.w(TAG, "User not authorized, need to complete OAuth flow first");
+            handleAuthorizationRequired();
+            return;
+        }
+        
         ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
                 .setRedirectUri(Constants.SPOTIFY_REDIRECT_URI)
                 .showAuthView(true)
@@ -467,9 +475,8 @@ public class SpotifyService {
         isConnecting = false;
         connectionRetryCount = 0;
         
-        // Don't try to launch Spotify from background - this will be blocked by Android
-        // Instead, provide clear instructions to the user
-        Exception authException = new Exception("AUTHORIZATION_REQUIRED: Please login to Spotify, then return to this app and try again. The app will automatically request permission to control Spotify.");
+        // Signal that proper OAuth authorization is needed
+        Exception authException = new Exception("AUTHORIZATION_REQUIRED: User needs to complete OAuth authorization flow.");
         if (connectionListeners.size() > 0) {
             connectionListeners.forEach(listener -> listener.onConnectionFailed(authException));
         }
@@ -481,35 +488,51 @@ public class SpotifyService {
     }
     
     /**
-     * Attempts to launch Spotify app for user authorization.
-     * This should only be called from an active Activity to avoid background launch restrictions.
-     * @param activityContext The activity context to launch from
-     * @return true if Spotify was successfully launched, false otherwise
+     * Start OAuth authorization flow for Spotify.
+     * This should only be called from an active Activity.
+     * @param activity The activity to launch authorization from
+     * @param listener Callback for authorization result
+     * @return true if authorization flow was started, false otherwise
      */
-    public boolean launchSpotifyForAuthorization(Context activityContext) {
-        if (activityContext == null) {
-            Log.w(TAG, "Cannot launch Spotify - no activity context provided");
+    public boolean startAuthorization(android.app.Activity activity, SpotifyAuthManager.AuthorizationListener listener) {
+        if (activity == null) {
+            Log.w(TAG, "Cannot start authorization - no activity provided");
             return false;
         }
         
         try {
-            Intent spotifyIntent = activityContext.getPackageManager().getLaunchIntentForPackage("com.spotify.music");
-            if (spotifyIntent != null) {
-                // Only add NEW_TASK flag if we're not launching from an Activity
-                if (!(activityContext instanceof android.app.Activity)) {
-                    spotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-                activityContext.startActivity(spotifyIntent);
-                Log.d(TAG, "Successfully launched Spotify app for authorization");
-                return true;
-            } else {
-                Log.w(TAG, "Spotify app not found - cannot launch");
-                return false;
-            }
+            SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(activity);
+            authManager.startAuthorization(activity, listener);
+            Log.d(TAG, "Started Spotify OAuth authorization flow");
+            return true;
         } catch (Exception e) {
-            Log.e(TAG, "Failed to launch Spotify app: " + e.getMessage(), e);
+            Log.e(TAG, "Failed to start authorization flow: " + e.getMessage(), e);
             return false;
         }
+    }
+    
+    /**
+     * Handle authorization response from OAuth flow
+     */
+    public void handleAuthorizationResponse(int requestCode, int resultCode, Intent data) {
+        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+        authManager.handleAuthorizationResponse(requestCode, resultCode, data);
+    }
+    
+    /**
+     * Check if user is properly authorized
+     */
+    public boolean isUserAuthorized() {
+        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+        return authManager.isAuthorized();
+    }
+    
+    /**
+     * Clear stored authorization
+     */
+    public void clearAuthorization() {
+        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+        authManager.clearAuthorization();
     }
     
     /**

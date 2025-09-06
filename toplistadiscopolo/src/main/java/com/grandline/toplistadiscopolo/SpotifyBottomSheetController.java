@@ -236,16 +236,21 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                 showRetryButton(false);
                 showLoadingState(true);
                 
-                // If we have authorization issues, try to launch Spotify first
-                if (context instanceof ListaPrzebojowDiscoPolo) {
-                    ListaPrzebojowDiscoPolo activity = (ListaPrzebojowDiscoPolo) context;
-                    activity.launchSpotifyForAuthorization();
-                    
-                    // Don't automatically retry - let the onNewIntent/onResume handle it
-                    // This prevents double connection attempts
-                    Log.d(TAG, "Launched Spotify for authorization, waiting for user return...");
+                // Check if we need authorization or just retry
+                SpotifyService spotifyService = SpotifyService.getInstance(context);
+                if (!spotifyService.isUserAuthorized()) {
+                    // Need OAuth authorization
+                    if (context instanceof ListaPrzebojowDiscoPolo) {
+                        ListaPrzebojowDiscoPolo activity = (ListaPrzebojowDiscoPolo) context;
+                        activity.launchSpotifyForAuthorization();
+                        Log.d(TAG, "Started OAuth authorization flow");
+                    } else {
+                        Log.e(TAG, "Cannot start authorization - context is not an Activity");
+                        showLoadingState(false);
+                    }
                 } else {
-                    // Fallback - just retry immediately
+                    // Already authorized, just retry connection
+                    Log.d(TAG, "User already authorized, retrying connection");
                     showLoadingState(false);
                     if (currentTrackId != null) {
                         playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
@@ -397,10 +402,10 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         updateTrackInfo(context.getString(R.string.spotify_install_required), context.getString(R.string.spotify_install_instructions));
                         showRetryButton(true);
                     } else if (errorMessage.contains("AUTHORIZATION_REQUIRED")) {
-                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
+                        updateTrackInfo("Autoryzacja Spotify", "Dotknij Spróbuj ponownie aby autoryzować");
                         showRetryButton(true);
                     } else if (errorMessage.contains("AUTHORIZATION_ERROR")) {
-                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
+                        updateTrackInfo("Autoryzacja Spotify", "Dotknij Spróbuj ponownie aby autoryzować");
                         showRetryButton(true);
                     } else if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
                         updateTrackInfo("Zainstaluj Spotify", "Zainstaluj aplikację Spotify z Google Play Store");
@@ -409,7 +414,7 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("Please authorize") || errorMessage.contains("UserNotAuthorizedException") || errorMessage.contains("Explicit user authorization")) {
-                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
+                        updateTrackInfo("Autoryzacja Spotify", "Dotknij Spróbuj ponownie aby autoryzować");
                         showRetryButton(true);
                     } else if (errorMessage.contains("Connection timeout")) {
                         updateTrackInfo("Przekroczono czas", "Otwórz Spotify i spróbuj ponownie");

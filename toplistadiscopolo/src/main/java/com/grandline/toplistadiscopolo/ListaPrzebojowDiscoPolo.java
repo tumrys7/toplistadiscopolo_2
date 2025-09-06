@@ -596,10 +596,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			}
 		}
 	}
-
-	public void onActivityResult(int requestCode, int resultCode, Intent data)
-	{
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+		
+		// Handle Spotify OAuth authorization result
+		if (requestCode == SpotifyAuthManager.REQUEST_CODE) {
+			SpotifyService spotifyService = SpotifyService.getInstance(this);
+			spotifyService.handleAuthorizationResponse(requestCode, resultCode, data);
+			return;
+		}
 
 		boolean voted = data.getBooleanExtra("param_return",false);
 		if (voted){
@@ -2796,30 +2803,75 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 	
 	/**
-	 * Launch Spotify app for user authorization
+	 * Start Spotify OAuth authorization flow
 	 * This method should be called from the UI thread when user interaction is needed
 	 */
 	public void launchSpotifyForAuthorization() {
 		try {
 			SpotifyService spotifyService = SpotifyService.getInstance(this);
-			boolean launched = spotifyService.launchSpotifyForAuthorization(this);
-			if (launched) {
-				Toast.makeText(this, "Otwórz Spotify, zaloguj się i wróć tutaj", Toast.LENGTH_LONG).show();
-			} else {
-				Toast.makeText(this, "Zainstaluj aplikację Spotify z Google Play", Toast.LENGTH_LONG).show();
-				// Try to open Play Store
-				try {
-					Intent playStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.spotify.music"));
-					startActivity(playStoreIntent);
-				} catch (Exception e) {
-					// Fallback to web version
-					Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music"));
-					startActivity(webIntent);
+			
+			// Start the proper OAuth authorization flow
+			boolean started = spotifyService.startAuthorization(this, new SpotifyAuthManager.AuthorizationListener() {
+				@Override
+				public void onAuthorizationComplete(String accessToken) {
+					Log.d(TAG, "Spotify authorization completed successfully");
+					runOnUiThread(() -> {
+						Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja Spotify zakończona pomyślnie", Toast.LENGTH_SHORT).show();
+						
+						// Now try to connect to Spotify App Remote
+						if (spotifyBottomSheetController != null && spotifyBottomSheetController.isBottomSheetVisible()) {
+							// Add a connection listener to retry the track after successful connection
+							spotifyService.addConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+								@Override
+								public void onConnected() {
+									Log.d(TAG, "Connected after OAuth authorization, retrying track");
+									// Retry the current track
+									if (spotifyBottomSheetController != null) {
+										spotifyBottomSheetController.retryCurrentTrack();
+									}
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+								
+								@Override
+								public void onConnectionFailed(Throwable error) {
+									Log.e(TAG, "Connection failed after OAuth authorization", error);
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+								
+								@Override
+								public void onDisconnected() {
+									// Remove this listener
+									spotifyService.removeConnectionListener(this);
+								}
+							});
+							
+							// Force reconnect now that we have proper authorization
+							spotifyService.forceReconnect();
+						}
+					});
 				}
+				
+				@Override
+				public void onAuthorizationFailed(String error) {
+					Log.e(TAG, "Spotify authorization failed: " + error);
+					runOnUiThread(() -> {
+						if (error.contains("cancelled")) {
+							Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja została anulowana", Toast.LENGTH_SHORT).show();
+						} else {
+							Toast.makeText(ListaPrzebojowDiscoPolo.this, "Błąd autoryzacji Spotify: " + error, Toast.LENGTH_LONG).show();
+						}
+					});
+				}
+			});
+			
+			if (!started) {
+				Toast.makeText(this, "Nie można uruchomić autoryzacji Spotify", Toast.LENGTH_SHORT).show();
 			}
 		} catch (Exception e) {
-			Log.e(TAG, "Error launching Spotify for authorization", e);
-			Toast.makeText(this, "Błąd podczas otwierania Spotify", Toast.LENGTH_SHORT).show();
+			Log.e(TAG, "Error starting Spotify authorization", e);
+			Toast.makeText(this, "Błąd podczas uruchamiania autoryzacji Spotify", Toast.LENGTH_SHORT).show();
 		}
 	}
 

@@ -52,6 +52,9 @@ dependencies {
     implementation files('libs/spotify-app-remote-release-0.8.0.aar')
     implementation 'com.google.code.gson:gson:2.13.1'
     
+    // Spotify Authorization Library for proper OAuth flow
+    implementation 'com.spotify.android:auth:2.1.1'
+    
     // Glide for image loading (for Spotify album art)
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 }
