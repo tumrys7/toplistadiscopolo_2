@@ -12,6 +12,12 @@ android {
             useLibrary 'org.apache.http.legacy'
         }
         multiDexEnabled true
+        
+        // Manifest placeholders for redirect URI
+        manifestPlaceholders = [
+            redirectSchemeName: "com.grandline.toplistadiscopolo",
+            redirectHostName: "callback"
+        ]
     }
     buildTypes {
         release {

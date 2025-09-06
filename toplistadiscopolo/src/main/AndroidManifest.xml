@@ -68,8 +68,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 
                 <data 
-                    android:scheme="com.grandline.toplistadiscopolo"
-                    android:host="callback" />
+                    android:scheme="${redirectSchemeName}"
+                    android:host="${redirectHostName}" />
             </intent-filter>
         </activity>
         <activity
