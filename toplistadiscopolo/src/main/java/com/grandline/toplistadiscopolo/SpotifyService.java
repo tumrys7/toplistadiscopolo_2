@@ -181,9 +181,11 @@ public class SpotifyService {
             return;
         }
         
+        Log.d(TAG, "User is authorized, proceeding with App Remote connection");
+        
         ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
                 .setRedirectUri(Constants.SPOTIFY_REDIRECT_URI)
-                .showAuthView(true)
+                .showAuthView(false) // Don't show auth view since we handle OAuth separately
                 .build();
         
         Log.d(TAG, "Calling SpotifyAppRemote.connect()");
@@ -272,11 +274,25 @@ public class SpotifyService {
                                errorMessage.contains("not authorized") ||
                                errorMessage.contains("Explicit user authorization is required")) {
                         Log.e(TAG, "User not authorized - guiding user through authorization");
+                        
+                        // Check if we already have a valid token but connection still fails
+                        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+                        if (authManager.isAuthorized()) {
+                            Log.w(TAG, "User appears authorized but connection still fails - might be a temporary issue");
+                            // Still handle as authorization required to force re-auth if needed
+                        }
+                        
                         handleAuthorizationRequired();
                         return;
                     } else if (errorMessage.contains("OfflineException") ||
                                errorMessage.contains("offline")) {
                         Log.e(TAG, "Spotify is offline - will retry");
+                    } else if (errorMessage.contains("SpotifyDisconnectedException")) {
+                        Log.e(TAG, "Spotify disconnected - will retry");
+                    } else if (errorMessage.contains("AuthenticationFailedException")) {
+                        Log.e(TAG, "Authentication failed - need re-authorization");
+                        handleAuthorizationRequired();
+                        return;
                     }
                 }
                 
@@ -561,10 +577,40 @@ public class SpotifyService {
             mSpotifyAppRemote = null;
         }
         
+        // Check authorization status before reconnecting
+        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+        if (!authManager.isAuthorized()) {
+            Log.w(TAG, "User still not authorized after return from authorization flow");
+            handleAuthorizationRequired();
+            return;
+        }
+        
+        Log.d(TAG, "User is now authorized, proceeding with reconnection");
+        
         // Small delay to ensure cleanup is complete before reconnecting
         retryHandler.postDelayed(() -> {
             Log.d(TAG, "Starting fresh connection attempt after cleanup");
             connect();
         }, 500);
+    }
+    
+    /**
+     * Clear stored authorization and force re-authentication
+     */
+    public void clearAuthorizationAndReconnect() {
+        Log.d(TAG, "Clearing authorization and forcing re-authentication");
+        
+        // Clear stored authorization
+        clearAuthorization();
+        
+        // Disconnect if connected
+        disconnect();
+        
+        // Reset connection state
+        isConnecting = false;
+        connectionRetryCount = 0;
+        
+        // Signal that authorization is required
+        handleAuthorizationRequired();
     }
 }
