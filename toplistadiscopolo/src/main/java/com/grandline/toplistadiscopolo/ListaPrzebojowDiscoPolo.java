@@ -238,6 +238,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			} else {
 				// Fallback to a default value if ANDROID_ID is also null
 				androidId = "unknown_device";
+				androidId = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
 				prefs.edit().putString("user_id", androidId).apply();
 			}
 		}
@@ -2035,11 +2036,11 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			Log.w(TAG, "buildSafeUrl called with null baseUrl");
 			return "";
 		}
-		String safeLanguage = (language != null) ? language : "en";
+		String safeLanguage = (language != null) ? language : "pl";
 		String safeAndroidId = (androidId != null) ? androidId : "unknown_device";
 		
 		if (language == null) {
-			Log.w(TAG, "Language is null, using fallback: en");
+			Log.w(TAG, "Language is null, using fallback: pl");
 		}
 		if (androidId == null) {
 			Log.w(TAG, "AndroidId is null, using fallback: unknown_device");
@@ -2057,7 +2058,7 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (baseUrl == null) {
 			return "";
 		}
-		String safeLanguage = (language != null) ? language : "en";
+		String safeLanguage = (language != null) ? language : "pl";
 		return baseUrl.replace("LANG", safeLanguage);
 	}
 
