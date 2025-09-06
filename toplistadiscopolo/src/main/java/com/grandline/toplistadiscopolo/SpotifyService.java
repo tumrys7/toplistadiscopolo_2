@@ -210,9 +210,19 @@ public class SpotifyService {
         
         Log.d(TAG, "User is authorized, proceeding with App Remote connection");
         
+        // Get the access token for proper authentication
+        String accessToken = authManager.getValidAccessToken();
+        if (accessToken == null) {
+            Log.w(TAG, "No valid access token available, need to complete OAuth flow");
+            handleAuthorizationRequired();
+            return;
+        }
+        
+        Log.d(TAG, "Using OAuth access token for App Remote connection");
+        
         ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
                 .setRedirectUri(Constants.SPOTIFY_REDIRECT_URI)
-                .showAuthView(true) // Show auth view to handle authorization when needed
+                .showAuthView(false) // Don't show auth view since we handle OAuth separately
                 .build();
         
         Log.d(TAG, "Calling SpotifyAppRemote.connect()");
@@ -299,15 +309,15 @@ public class SpotifyService {
                         shouldRetry = false;
                     } else if (errorMessage.contains("UserNotAuthorizedException") ||
                                errorMessage.contains("not authorized") ||
-                               errorMessage.contains("Explicit user authorization is required")) {
-                        Log.e(TAG, "User not authorized - guiding user through authorization");
+                               errorMessage.contains("Explicit user authorization is required") ||
+                               errorMessage.contains("AuthenticationFailedException") ||
+                               errorMessage.contains("Invalid access token") ||
+                               errorMessage.contains("Token expired")) {
+                        Log.e(TAG, "User not authorized or token issues - clearing auth and requiring new authorization");
                         
-                        // Check if we already have a valid token but connection still fails
+                        // Clear any existing authorization that might be invalid
                         SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
-                        if (authManager.isAuthorized()) {
-                            Log.w(TAG, "User appears authorized but connection still fails - might be a temporary issue");
-                            // Still handle as authorization required to force re-auth if needed
-                        }
+                        authManager.clearAuthorization();
                         
                         handleAuthorizationRequired();
                         return;
@@ -316,10 +326,6 @@ public class SpotifyService {
                         Log.e(TAG, "Spotify is offline - will retry");
                     } else if (errorMessage.contains("SpotifyDisconnectedException")) {
                         Log.e(TAG, "Spotify disconnected - will retry");
-                    } else if (errorMessage.contains("AuthenticationFailedException")) {
-                        Log.e(TAG, "Authentication failed - need re-authorization");
-                        handleAuthorizationRequired();
-                        return;
                     } else if (errorMessage.contains("NETWORK_ERROR") || 
                                errorMessage.contains("NO_INTERNET_CONNECTION") ||
                                errorMessage.contains("Network error")) {
@@ -541,37 +547,6 @@ public class SpotifyService {
         handleAuthorizationRequired();
     }
     
-    /**
-     * Start OAuth authorization flow for Spotify.
-     * This should only be called from an active Activity.
-     * @param activity The activity to launch authorization from
-     * @param listener Callback for authorization result
-     * @return true if authorization flow was started, false otherwise
-     */
-    public boolean startAuthorization(android.app.Activity activity, SpotifyAuthManager.AuthorizationListener listener) {
-        if (activity == null) {
-            Log.w(TAG, "Cannot start authorization - no activity provided");
-            return false;
-        }
-        
-        try {
-            SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(activity);
-            authManager.startAuthorization(activity, listener);
-            Log.d(TAG, "Started Spotify OAuth authorization flow");
-            return true;
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to start authorization flow: " + e.getMessage(), e);
-            return false;
-        }
-    }
-    
-    /**
-     * Handle authorization response from OAuth flow
-     */
-    public void handleAuthorizationResponse(int requestCode, int resultCode, Intent data) {
-        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
-        authManager.handleAuthorizationResponse(requestCode, resultCode, data);
-    }
     
     /**
      * Check if user is properly authorized

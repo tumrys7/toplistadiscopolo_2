@@ -603,13 +603,14 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		
 		// Handle Spotify OAuth authorization result
 		if (requestCode == SpotifyAuthManager.REQUEST_CODE) {
-			Log.d(TAG, "Received Spotify authorization result - RequestCode: " + requestCode + ", ResultCode: " + resultCode);
-			SpotifyService spotifyService = SpotifyService.getInstance(this);
-			spotifyService.handleAuthorizationResponse(requestCode, resultCode, data);
+			Log.d(TAG, "Received Spotify OAuth PKCE authorization result - RequestCode: " + requestCode + ", ResultCode: " + resultCode);
 			
-			// Force reconnect after authorization attempt
-			Log.d(TAG, "User returned from Spotify, attempting to force reconnect...");
-			spotifyService.forceReconnect();
+			// Handle the authorization response through SpotifyAuthManager
+			SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(this);
+			authManager.handleAuthorizationResponse(requestCode, resultCode, data);
+			
+			// Note: The SpotifyAuthManager will handle the success/failure callbacks
+			// and the success callback will trigger the App Remote connection
 			return;
 		}
 
@@ -2808,18 +2809,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	}
 	
 	/**
-	 * Start Spotify OAuth authorization flow
+	 * Start Spotify OAuth authorization flow with PKCE
 	 * This method should be called from the UI thread when user interaction is needed
 	 */
 	public void launchSpotifyForAuthorization() {
 		try {
+			Log.d(TAG, "Starting Spotify OAuth PKCE authorization flow");
+			SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(this);
 			SpotifyService spotifyService = SpotifyService.getInstance(this);
 			
-			// Start the proper OAuth authorization flow
-			boolean started = spotifyService.startAuthorization(this, new SpotifyAuthManager.AuthorizationListener() {
+			// Start the proper OAuth PKCE authorization flow
+			authManager.startAuthorization(this, new SpotifyAuthManager.AuthorizationListener() {
 				@Override
 				public void onAuthorizationComplete(String accessToken) {
-					Log.d(TAG, "Spotify authorization completed successfully");
+					Log.d(TAG, "Spotify OAuth PKCE authorization completed successfully");
 					runOnUiThread(() -> {
 						Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja Spotify zakończona pomyślnie", Toast.LENGTH_SHORT).show();
 						
