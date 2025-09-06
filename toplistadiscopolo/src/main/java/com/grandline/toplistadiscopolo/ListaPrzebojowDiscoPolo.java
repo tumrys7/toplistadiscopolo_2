@@ -607,10 +607,81 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 			
 			// Handle the authorization response through SpotifyAuthManager
 			SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(this);
+			SpotifyService spotifyService = SpotifyService.getInstance(this);
+			
+			// Set up a listener to handle the authorization result
 			authManager.handleAuthorizationResponse(requestCode, resultCode, data);
 			
-			// Note: The SpotifyAuthManager will handle the success/failure callbacks
-			// and the success callback will trigger the App Remote connection
+			// Wait a moment for the authorization to complete, then check if we're authorized
+			Handler handler = new Handler(Looper.getMainLooper());
+			handler.postDelayed(() -> {
+				Log.d(TAG, "Checking authorization status after callback...");
+				Log.d(TAG, authManager.getAuthorizationStatusDebug());
+				
+				if (authManager.isAuthorized()) {
+					Log.d(TAG, "Authorization successful, attempting to reconnect to Spotify");
+					
+					// Add a connection listener to handle the reconnection result
+					spotifyService.addConnectionListener(new SpotifyService.SpotifyConnectionListener() {
+						@Override
+						public void onConnected() {
+							Log.d(TAG, "Successfully reconnected after authorization");
+							Toast.makeText(ListaPrzebojowDiscoPolo.this, "Spotify połączony pomyślnie", Toast.LENGTH_SHORT).show();
+							
+							// If bottom sheet is visible, retry the current track
+							if (spotifyBottomSheetController != null && spotifyBottomSheetController.isBottomSheetVisible()) {
+								spotifyBottomSheetController.retryCurrentTrack();
+							}
+							
+							// Remove this listener
+							spotifyService.removeConnectionListener(this);
+						}
+						
+						@Override
+						public void onConnectionFailed(Throwable error) {
+							Log.e(TAG, "Connection failed after authorization", error);
+							runOnUiThread(() -> {
+								Toast.makeText(ListaPrzebojowDiscoPolo.this, "Błąd połączenia ze Spotify", Toast.LENGTH_SHORT).show();
+							});
+							// Remove this listener
+							spotifyService.removeConnectionListener(this);
+						}
+						
+						@Override
+						public void onDisconnected() {
+							// Remove this listener
+							spotifyService.removeConnectionListener(this);
+						}
+					});
+					
+					// Force reconnect now that we have proper authorization
+					spotifyService.forceReconnect();
+				} else {
+					Log.w(TAG, "Authorization did not complete successfully");
+					
+					// Check if authorization is in progress or failed
+					if (authManager.isAuthorizationInProgress()) {
+						Log.w(TAG, "Authorization appears to be in progress, waiting longer...");
+						// Wait a bit more and check again
+						Handler delayedHandler = new Handler(Looper.getMainLooper());
+						delayedHandler.postDelayed(() -> {
+							Log.d(TAG, "Second check after extended delay...");
+							Log.d(TAG, authManager.getAuthorizationStatusDebug());
+							
+							if (authManager.isAuthorized()) {
+								Log.d(TAG, "Authorization completed on second check");
+								spotifyService.forceReconnect();
+							} else {
+								Log.e(TAG, "Authorization still not complete after extended delay");
+								Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja Spotify nie powiodła się - spróbuj ponownie", Toast.LENGTH_LONG).show();
+							}
+						}, 2000); // Wait additional 2 seconds
+					} else {
+						Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja Spotify nie powiodła się", Toast.LENGTH_SHORT).show();
+					}
+				}
+			}, 1000); // Wait 1 second for token exchange to complete
+			
 			return;
 		}
 
