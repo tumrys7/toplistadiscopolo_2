@@ -234,8 +234,23 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
             retryButton.setOnClickListener(v -> {
                 Log.d(TAG, "Retry button clicked");
                 showRetryButton(false);
-                if (currentTrackId != null) {
-                    playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
+                
+                // If we have authorization issues, try to launch Spotify first
+                if (context instanceof ListaPrzebojowDiscoPolo) {
+                    ListaPrzebojowDiscoPolo activity = (ListaPrzebojowDiscoPolo) context;
+                    activity.launchSpotifyForAuthorization();
+                    
+                    // Delay the retry to give user time to authorize
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        if (currentTrackId != null) {
+                            playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
+                        }
+                    }, 3000); // 3 second delay
+                } else {
+                    // Fallback - just retry immediately
+                    if (currentTrackId != null) {
+                        playTrack(currentTrackId, currentTrackTitle, currentTrackArtist);
+                    }
                 }
             });
         }
@@ -380,28 +395,28 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                         updateTrackInfo(context.getString(R.string.spotify_install_required), context.getString(R.string.spotify_install_instructions));
                         showRetryButton(true);
                     } else if (errorMessage.contains("AUTHORIZATION_REQUIRED")) {
-                        updateTrackInfo(context.getString(R.string.spotify_login_required), context.getString(R.string.spotify_login_instructions));
+                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("AUTHORIZATION_ERROR")) {
-                        updateTrackInfo(context.getString(R.string.spotify_setup_needed), context.getString(R.string.spotify_setup_instructions));
+                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
-                        updateTrackInfo("Spotify Not Installed", "Install Spotify app to play: " + (pendingTrackTitle != null ? pendingTrackTitle : "this track"));
+                        updateTrackInfo("Zainstaluj Spotify", "Zainstaluj aplikację Spotify z Google Play Store");
                         showRetryButton(true);
                     } else if (errorMessage.contains("Please login to Spotify")) {
-                        updateTrackInfo("Login Required", "Please login to Spotify and try again");
+                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("Please authorize") || errorMessage.contains("UserNotAuthorizedException") || errorMessage.contains("Explicit user authorization")) {
-                        updateTrackInfo(context.getString(R.string.spotify_authorization_needed), context.getString(R.string.spotify_authorization_instructions));
+                        updateTrackInfo("Zaloguj się do Spotify", "Otwórz Spotify → Zaloguj się → Wróć tutaj → Spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("Connection timeout")) {
-                        updateTrackInfo("Connection Timeout", "Please open Spotify app and try again");
+                        updateTrackInfo("Przekroczono czas", "Otwórz Spotify i spróbuj ponownie");
                         showRetryButton(true);
                     } else if (errorMessage.contains("OfflineException") || errorMessage.contains("offline")) {
-                        updateTrackInfo("Spotify Offline", "Please check your connection and try again");
+                        updateTrackInfo("Spotify Offline", "Sprawdź połączenie internetowe");
                         showRetryButton(true);
                     } else {
-                        updateTrackInfo("Connection Failed", "Unable to connect. Track: " + (pendingTrackTitle != null ? pendingTrackTitle : ""));
+                        updateTrackInfo("Błąd połączenia", "Nie można połączyć się ze Spotify");
                         showRetryButton(true);
                     }
                     

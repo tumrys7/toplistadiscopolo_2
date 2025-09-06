@@ -33,7 +33,7 @@ public class SpotifyService {
     private boolean isConnecting = false;
     private int connectionRetryCount = 0;
     private static final int MAX_CONNECTION_RETRIES = 3;
-    private static final long CONNECTION_TIMEOUT_MS = 10000; // 10 seconds timeout
+    private static final long CONNECTION_TIMEOUT_MS = 30000; // 30 seconds timeout for authorization
     private Handler retryHandler = new Handler(Looper.getMainLooper());
     private Runnable connectionTimeoutRunnable;
     
@@ -166,25 +166,8 @@ public class SpotifyService {
         Log.d(TAG, "Attempting to connect to Spotify (attempt " + (connectionRetryCount + 1) + " of " + MAX_CONNECTION_RETRIES + ")");
         Log.d(TAG, "Using context: " + context.getClass().getName() + ", Package: " + context.getPackageName());
         
-        // Try to open Spotify app first to ensure it's active
-        if (connectionRetryCount == 0) {
-            try {
-                Intent intent = context.getPackageManager().getLaunchIntentForPackage("com.spotify.music");
-                if (intent != null) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                    Log.d(TAG, "Launched Spotify app to ensure it's active");
-                    
-                    // Wait a bit for Spotify to start before connecting
-                    retryHandler.postDelayed(() -> {
-                        connectInternal();
-                    }, 1500); // 1.5 second delay
-                    return;
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Could not launch Spotify app: " + e.getMessage());
-            }
-        }
+        // Don't try to launch Spotify from background - Android will block this
+        // Just proceed with the connection attempt directly
         
         // Connect directly if we couldn't launch Spotify or on retry attempts
         connectInternal();
@@ -487,36 +470,72 @@ public class SpotifyService {
         isConnecting = false;
         connectionRetryCount = 0;
         
-        try {
-            // First try to open the Spotify app directly for user to login
-            Intent spotifyIntent = context.getPackageManager().getLaunchIntentForPackage("com.spotify.music");
-            if (spotifyIntent != null) {
-                spotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(spotifyIntent);
-                Log.d(TAG, "Opened Spotify app - user needs to login and authorize");
-                
-                // Provide clear instructions to user
-                Exception authException = new Exception("AUTHORIZATION_REQUIRED: Please login to Spotify, then return to this app and try again. The app will automatically request permission to control Spotify.");
-                if (connectionListeners.size() > 0) {
-                    connectionListeners.forEach(listener -> listener.onConnectionFailed(authException));
-                }
-            } else {
-                // Spotify app not installed - direct user to install it
-                Exception installException = new Exception("SPOTIFY_NOT_INSTALLED: Please install Spotify from Google Play Store, login to your account, then try again.");
-                if (connectionListeners.size() > 0) {
-                    connectionListeners.forEach(listener -> listener.onConnectionFailed(installException));
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to handle authorization: " + e.getMessage(), e);
-            if (connectionListeners.size() > 0) {
-                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("AUTHORIZATION_ERROR: Unable to open Spotify. Please install Spotify app, login, and try again.")));
-            }
+        // Don't try to launch Spotify from background - this will be blocked by Android
+        // Instead, provide clear instructions to the user
+        Exception authException = new Exception("AUTHORIZATION_REQUIRED: Please login to Spotify, then return to this app and try again. The app will automatically request permission to control Spotify.");
+        if (connectionListeners.size() > 0) {
+            connectionListeners.forEach(listener -> listener.onConnectionFailed(authException));
         }
     }
     
     private void tryBrowserAuthorization() {
         // This method is kept for backward compatibility but now calls the new handler
         handleAuthorizationRequired();
+    }
+    
+    /**
+     * Attempts to launch Spotify app for user authorization.
+     * This should only be called from an active Activity to avoid background launch restrictions.
+     * @param activityContext The activity context to launch from
+     * @return true if Spotify was successfully launched, false otherwise
+     */
+    public boolean launchSpotifyForAuthorization(Context activityContext) {
+        if (activityContext == null) {
+            Log.w(TAG, "Cannot launch Spotify - no activity context provided");
+            return false;
+        }
+        
+        try {
+            Intent spotifyIntent = activityContext.getPackageManager().getLaunchIntentForPackage("com.spotify.music");
+            if (spotifyIntent != null) {
+                // Only add NEW_TASK flag if we're not launching from an Activity
+                if (!(activityContext instanceof android.app.Activity)) {
+                    spotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                }
+                activityContext.startActivity(spotifyIntent);
+                Log.d(TAG, "Successfully launched Spotify app for authorization");
+                return true;
+            } else {
+                Log.w(TAG, "Spotify app not found - cannot launch");
+                return false;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to launch Spotify app: " + e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * Force a reconnection attempt - useful when user returns from authorization
+     */
+    public void forceReconnect() {
+        Log.d(TAG, "Force reconnect requested");
+        
+        // Reset connection state
+        isConnecting = false;
+        connectionRetryCount = 0;
+        
+        // Clear any existing connection
+        if (mSpotifyAppRemote != null) {
+            try {
+                SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+            } catch (Exception e) {
+                Log.w(TAG, "Error disconnecting existing connection: " + e.getMessage());
+            }
+            mSpotifyAppRemote = null;
+        }
+        
+        // Attempt new connection
+        connect();
     }
 }

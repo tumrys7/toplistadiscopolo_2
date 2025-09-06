@@ -416,6 +416,21 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		if (youTubeBottomSheetController != null) {
 			youTubeBottomSheetController.onResume();
 		}
+		
+		// Check if user returned from Spotify and try to reconnect if needed
+		if (spotifyBottomSheetController != null) {
+			SpotifyService spotifyService = SpotifyService.getInstance(this);
+			// If user was trying to play something and Spotify is not connected, try to reconnect
+			if (!spotifyService.isConnected() && !spotifyService.isConnecting()) {
+				// Small delay to ensure app is fully resumed
+				new Handler(Looper.getMainLooper()).postDelayed(() -> {
+					if (spotifyBottomSheetController.isBottomSheetVisible()) {
+						Log.d(TAG, "User returned from Spotify, attempting to force reconnect...");
+						spotifyService.forceReconnect();
+					}
+				}, 1000);
+			}
+		}
 
 		// Resume ads safely
 		try {
@@ -2691,6 +2706,34 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 	// Get Spotify Bottom Sheet Controller
 	public SpotifyBottomSheetController getSpotifyBottomSheetController() {
 		return spotifyBottomSheetController;
+	}
+	
+	/**
+	 * Launch Spotify app for user authorization
+	 * This method should be called from the UI thread when user interaction is needed
+	 */
+	public void launchSpotifyForAuthorization() {
+		try {
+			SpotifyService spotifyService = SpotifyService.getInstance(this);
+			boolean launched = spotifyService.launchSpotifyForAuthorization(this);
+			if (launched) {
+				Toast.makeText(this, "Otwórz Spotify, zaloguj się i wróć tutaj", Toast.LENGTH_LONG).show();
+			} else {
+				Toast.makeText(this, "Zainstaluj aplikację Spotify z Google Play", Toast.LENGTH_LONG).show();
+				// Try to open Play Store
+				try {
+					Intent playStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.spotify.music"));
+					startActivity(playStoreIntent);
+				} catch (Exception e) {
+					// Fallback to web version
+					Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music"));
+					startActivity(webIntent);
+				}
+			}
+		} catch (Exception e) {
+			Log.e(TAG, "Error launching Spotify for authorization", e);
+			Toast.makeText(this, "Błąd podczas otwierania Spotify", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 
