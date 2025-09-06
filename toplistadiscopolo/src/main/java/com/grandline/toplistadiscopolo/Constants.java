@@ -22,7 +22,7 @@ public interface Constants {
 	String VALUE_START_NOTOWANIE_ID = "START_NOTOWANIE_ID";
 
 	String SPOTIFY_CLIENT_ID = "1ef55d5630814a3dafc946ef58e266b5";
-	String SPOTIFY_CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; // TODO: Replace with actual client secret from Spotify Dashboard
+	String SPOTIFY_CLIENT_SECRET = "3edfcc5aa1e4485d81bcefa7cc65beee";
 	String SPOTIFY_REDIRECT_URI = "com.grandline.toplistadiscopolo://callback";
 	// XML node keys
 	String KEY_INFO = "info";
