@@ -407,6 +407,9 @@ public class SpotifyBottomSheetController implements SpotifyService.SpotifyPlaye
                     } else if (errorMessage.contains("AUTHORIZATION_ERROR")) {
                         updateTrackInfo("Autoryzacja Spotify", "Dotknij Spróbuj ponownie aby autoryzować");
                         showRetryButton(true);
+                    } else if (errorMessage.contains("Network error") || errorMessage.contains("NO_INTERNET_CONNECTION")) {
+                        updateTrackInfo("Błąd sieci", "Sprawdź połączenie internetowe i spróbuj ponownie");
+                        showRetryButton(true);
                     } else if (errorMessage.contains("not installed") || errorMessage.contains("CouldNotFindSpotifyApp")) {
                         updateTrackInfo("Zainstaluj Spotify", "Zainstaluj aplikację Spotify z Google Play Store");
                         showRetryButton(true);

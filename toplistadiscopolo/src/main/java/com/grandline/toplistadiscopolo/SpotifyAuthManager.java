@@ -90,12 +90,15 @@ public class SpotifyAuthManager {
         }
         
         AuthorizationResponse response = AuthorizationClient.getResponse(resultCode, data);
+        Log.d(TAG, "Authorization response received - Type: " + response.getType() + ", ResultCode: " + resultCode);
         
         switch (response.getType()) {
             case TOKEN:
                 Log.d(TAG, "Authorization successful");
                 String accessToken = response.getAccessToken();
                 int expiresIn = response.getExpiresIn();
+                
+                Log.d(TAG, "Access token received, expires in: " + expiresIn + " seconds");
                 
                 // Store the token
                 storeAccessToken(accessToken, expiresIn);
@@ -106,14 +109,35 @@ public class SpotifyAuthManager {
                 break;
                 
             case ERROR:
-                Log.e(TAG, "Authorization error: " + response.getError());
-                if (authorizationListener != null) {
-                    authorizationListener.onAuthorizationFailed("Authorization error: " + response.getError());
+                String errorMsg = response.getError();
+                Log.e(TAG, "Authorization error: " + errorMsg);
+                
+                // Handle specific error cases
+                if (errorMsg != null) {
+                    if (errorMsg.equals("NO_INTERNET_CONNECTION")) {
+                        Log.e(TAG, "Network connection issue during authorization");
+                        if (authorizationListener != null) {
+                            authorizationListener.onAuthorizationFailed("Network error. Please check your internet connection and try again.");
+                        }
+                    } else if (errorMsg.equals("USER_CANCELLED")) {
+                        Log.w(TAG, "User cancelled authorization");
+                        if (authorizationListener != null) {
+                            authorizationListener.onAuthorizationFailed("Authorization cancelled by user");
+                        }
+                    } else {
+                        if (authorizationListener != null) {
+                            authorizationListener.onAuthorizationFailed("Authorization error: " + errorMsg);
+                        }
+                    }
+                } else {
+                    if (authorizationListener != null) {
+                        authorizationListener.onAuthorizationFailed("Unknown authorization error");
+                    }
                 }
                 break;
                 
             case EMPTY:
-                Log.w(TAG, "Authorization cancelled by user");
+                Log.w(TAG, "Authorization cancelled by user or empty response");
                 if (authorizationListener != null) {
                     authorizationListener.onAuthorizationFailed("Authorization cancelled by user");
                 }
@@ -122,7 +146,7 @@ public class SpotifyAuthManager {
             default:
                 Log.w(TAG, "Unknown authorization response type: " + response.getType());
                 if (authorizationListener != null) {
-                    authorizationListener.onAuthorizationFailed("Unknown response type");
+                    authorizationListener.onAuthorizationFailed("Unknown response type: " + response.getType());
                 }
                 break;
         }
@@ -146,7 +170,20 @@ public class SpotifyAuthManager {
      * Check if the user is authorized (has a valid token)
      */
     public boolean isAuthorized() {
-        return getValidAccessToken() != null;
+        String token = getValidAccessToken();
+        boolean authorized = token != null;
+        Log.d(TAG, "Authorization check: " + (authorized ? "AUTHORIZED" : "NOT AUTHORIZED"));
+        if (authorized) {
+            Log.d(TAG, "Valid token available");
+        } else {
+            String storedToken = getStoredAccessToken();
+            if (storedToken != null) {
+                Log.d(TAG, "Token exists but expired");
+            } else {
+                Log.d(TAG, "No token stored");
+            }
+        }
+        return authorized;
     }
     
     /**

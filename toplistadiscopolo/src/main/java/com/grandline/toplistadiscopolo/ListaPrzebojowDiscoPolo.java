@@ -603,8 +603,13 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 		
 		// Handle Spotify OAuth authorization result
 		if (requestCode == SpotifyAuthManager.REQUEST_CODE) {
+			Log.d(TAG, "Received Spotify authorization result - RequestCode: " + requestCode + ", ResultCode: " + resultCode);
 			SpotifyService spotifyService = SpotifyService.getInstance(this);
 			spotifyService.handleAuthorizationResponse(requestCode, resultCode, data);
+			
+			// Force reconnect after authorization attempt
+			Log.d(TAG, "User returned from Spotify, attempting to force reconnect...");
+			spotifyService.forceReconnect();
 			return;
 		}
 
@@ -2857,10 +2862,20 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				public void onAuthorizationFailed(String error) {
 					Log.e(TAG, "Spotify authorization failed: " + error);
 					runOnUiThread(() -> {
-						if (error.contains("cancelled")) {
-							Toast.makeText(ListaPrzebojowDiscoPolo.this, "Autoryzacja została anulowana", Toast.LENGTH_SHORT).show();
+						String userMessage;
+						if (error != null && error.contains("Network error")) {
+							userMessage = "Błąd sieci. Sprawdź połączenie internetowe i spróbuj ponownie.";
+						} else if (error != null && error.contains("cancelled")) {
+							userMessage = "Autoryzacja została anulowana";
 						} else {
-							Toast.makeText(ListaPrzebojowDiscoPolo.this, "Błąd autoryzacji Spotify: " + error, Toast.LENGTH_LONG).show();
+							userMessage = "Błąd autoryzacji Spotify. Spróbuj ponownie.";
+						}
+						Toast.makeText(ListaPrzebojowDiscoPolo.this, userMessage, Toast.LENGTH_LONG).show();
+						
+						// If authorization failed, ensure bottom sheet shows retry option
+						if (spotifyBottomSheetController != null && spotifyBottomSheetController.isBottomSheetVisible()) {
+							// Let the bottom sheet handle the error display
+							Log.d(TAG, "Authorization failed, bottom sheet should show retry option");
 						}
 					});
 				}
