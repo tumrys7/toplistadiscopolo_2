@@ -2884,9 +2884,6 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				}
 			});
 			
-			if (!started) {
-				Toast.makeText(this, "Nie można uruchomić autoryzacji Spotify", Toast.LENGTH_SHORT).show();
-			}
 		} catch (Exception e) {
 			Log.e(TAG, "Error starting Spotify authorization", e);
 			Toast.makeText(this, "Błąd podczas uruchamiania autoryzacji Spotify", Toast.LENGTH_SHORT).show();
