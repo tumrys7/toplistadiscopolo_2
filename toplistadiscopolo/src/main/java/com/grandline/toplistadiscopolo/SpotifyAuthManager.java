@@ -225,9 +225,9 @@ public class SpotifyAuthManager {
     /**
      * Exchange authorization code for access token using PKCE
      * 
-     * IMPORTANT: This method implements the Authorization Code with PKCE flow.
-     * In PKCE flow, NO client_secret should be sent. The security is provided
-     * by the code_verifier/code_challenge pair instead.
+     * This method implements the Authorization Code with PKCE flow.
+     * For Mobile App configuration: Uses only code_verifier/code_challenge (no client_secret)
+     * For Web App configuration: Uses both PKCE and client_secret for compatibility
      */
     private void exchangeCodeForToken(String authorizationCode) {
         Log.d(TAG, "Exchanging authorization code for access token using PKCE");
@@ -248,8 +248,8 @@ public class SpotifyAuthManager {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
         
-        // Build form body for PKCE token exchange (NO client_secret required)
-        // Using explicit parameter construction to ensure no client_secret is accidentally added
+        // Build form body for token exchange
+        // For Web App configuration, client_secret is required even with PKCE
         FormBody.Builder formBuilder = new FormBody.Builder();
         formBuilder.add("grant_type", "authorization_code");
         formBuilder.add("code", authorizationCode);
@@ -257,18 +257,24 @@ public class SpotifyAuthManager {
         formBuilder.add("client_id", Constants.SPOTIFY_CLIENT_ID);
         formBuilder.add("code_verifier", codeVerifier);
         
-        // DO NOT ADD client_secret - PKCE flow doesn't use it
+        // Add client_secret for Web App configuration compatibility
+        if (Constants.SPOTIFY_CLIENT_SECRET != null && !Constants.SPOTIFY_CLIENT_SECRET.equals("YOUR_CLIENT_SECRET_HERE")) {
+            formBuilder.add("client_secret", Constants.SPOTIFY_CLIENT_SECRET);
+        }
+        
         FormBody formBody = formBuilder.build();
         
         // Additional verification: log the actual form body content
         Log.d(TAG, "Form body size: " + formBody.size() + " parameters");
         
-        Log.d(TAG, "PKCE token exchange request parameters:");
+        Log.d(TAG, "Token exchange request parameters:");
         Log.d(TAG, "- grant_type: authorization_code");
         Log.d(TAG, "- client_id: " + Constants.SPOTIFY_CLIENT_ID);
         Log.d(TAG, "- redirect_uri: " + Constants.SPOTIFY_REDIRECT_URI);
         Log.d(TAG, "- code_verifier: [PRESENT]");
-        Log.d(TAG, "- client_secret: [NOT INCLUDED - PKCE FLOW]");
+        
+        boolean hasClientSecret = Constants.SPOTIFY_CLIENT_SECRET != null && !Constants.SPOTIFY_CLIENT_SECRET.equals("YOUR_CLIENT_SECRET_HERE");
+        Log.d(TAG, "- client_secret: " + (hasClientSecret ? "[INCLUDED - WEB APP CONFIG]" : "[NOT INCLUDED - MOBILE APP CONFIG]"));
         
         Request request = new Request.Builder()
             .url("https://accounts.spotify.com/api/token")
@@ -514,7 +520,8 @@ public class SpotifyAuthManager {
     /**
      * Refresh the access token using the refresh token
      * 
-     * IMPORTANT: For PKCE apps, NO client_secret should be sent during token refresh.
+     * For Mobile App configuration: Uses only refresh_token (no client_secret)
+     * For Web App configuration: Uses both refresh_token and client_secret
      */
     private void refreshAccessToken(String refreshToken, AuthorizationListener listener) {
         Log.d(TAG, "Refreshing access token");
@@ -525,17 +532,24 @@ public class SpotifyAuthManager {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
         
-        // Build form body for token refresh (NO client_secret required for PKCE apps)
-        FormBody formBody = new FormBody.Builder()
+        // Build form body for token refresh
+        FormBody.Builder formBuilder = new FormBody.Builder()
             .add("grant_type", "refresh_token")
             .add("refresh_token", refreshToken)
-            .add("client_id", Constants.SPOTIFY_CLIENT_ID)
-            .build();
+            .add("client_id", Constants.SPOTIFY_CLIENT_ID);
+            
+        // Add client_secret for Web App configuration compatibility
+        boolean hasClientSecret = Constants.SPOTIFY_CLIENT_SECRET != null && !Constants.SPOTIFY_CLIENT_SECRET.equals("YOUR_CLIENT_SECRET_HERE");
+        if (hasClientSecret) {
+            formBuilder.add("client_secret", Constants.SPOTIFY_CLIENT_SECRET);
+        }
+        
+        FormBody formBody = formBuilder.build();
         
         Log.d(TAG, "Token refresh request parameters:");
         Log.d(TAG, "- grant_type: refresh_token");
         Log.d(TAG, "- client_id: " + Constants.SPOTIFY_CLIENT_ID);
-        Log.d(TAG, "- client_secret: [NOT INCLUDED - PKCE FLOW]");
+        Log.d(TAG, "- client_secret: " + (hasClientSecret ? "[INCLUDED - WEB APP CONFIG]" : "[NOT INCLUDED - MOBILE APP CONFIG]"));
         
         Request request = new Request.Builder()
             .url("https://accounts.spotify.com/api/token")
