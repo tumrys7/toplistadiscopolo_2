@@ -37,3 +37,30 @@
 # Keep Intent and Uri classes for video launching
 -keep class android.content.Intent { *; }
 -keep class android.net.Uri { *; }
+
+# Spotify SDK ProGuard rules
+# Keep all Spotify SDK classes and annotations
+-keep class com.spotify.** { *; }
+-keep class com.spotify.protocol.types.** { *; }
+-keep class com.spotify.protocol.client.** { *; }
+-keep class com.spotify.android.appremote.** { *; }
+
+# Keep Spotify protocol annotations specifically
+-keep @interface com.spotify.protocol.types.**
+-keepattributes *Annotation*
+
+# Suppress warnings for Spotify SDK classes
+-dontwarn com.spotify.**
+-dontwarn com.spotify.protocol.**
+
+# Keep annotation classes that are causing the warnings
+-keep class com.spotify.protocol.types.ImageIdentifier { *; }
+-keep class com.spotify.protocol.types.Image { *; }
+-keep class com.spotify.protocol.types.Track { *; }
+-keep class com.spotify.protocol.types.PlayerState { *; }
+-keep class com.spotify.protocol.types.ImageUri { *; }
+
+# Keep all annotation-related attributes
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeInvisibleAnnotations
+-keepattributes AnnotationDefault

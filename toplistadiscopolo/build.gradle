@@ -25,6 +25,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 	    multiDexEnabled true
         }
+        debug {
+            minifyEnabled false
+            multiDexEnabled true
+            // Apply ProGuard rules to debug builds as well to suppress SDK warnings
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
     }
 
 namespace "com.grandline.toplistadiscopolo"
@@ -54,9 +60,12 @@ dependencies {
     implementation 'androidx.activity:activity:1.10.1'
     implementation 'androidx.multidex:multidex:2.0.1'
     
-    // Spotify App Remote SDK
-    implementation files('libs/spotify-app-remote-release-0.8.0.aar')
+    // Spotify App Remote SDK - using official Maven dependency for better annotation support
+    implementation 'com.spotify.android:spotify-app-remote:0.8.0'
     implementation 'com.google.code.gson:gson:2.13.1'
+    
+    // Keep the local AAR as fallback (commented out)
+    // implementation files('libs/spotify-app-remote-release-0.8.0.aar')
     
     // Spotify Authorization Library for proper OAuth flow
     // Updated to latest version to fix potential PKCE issues
