@@ -3,6 +3,8 @@ package com.grandline.toplistadiscopolo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.spotify.sdk.android.auth.AuthorizationClient;
@@ -42,6 +44,22 @@ public class SpotifyAuthManager {
         return instance;
     }
     
+    // Check if device has internet connectivity
+    private boolean hasInternetConnection() {
+        try {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
+                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+                boolean hasConnection = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+                Log.d(TAG, "Internet connection available: " + hasConnection);
+                return hasConnection;
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error checking internet connection: " + e.getMessage());
+        }
+        return true; // Assume connection is available if we can't check
+    }
+    
     /**
      * Start the authorization process
      */
@@ -54,6 +72,15 @@ public class SpotifyAuthManager {
             Log.d(TAG, "Using existing valid access token");
             if (listener != null) {
                 listener.onAuthorizationComplete(existingToken);
+            }
+            return;
+        }
+        
+        // Check internet connectivity before starting authorization
+        if (!hasInternetConnection()) {
+            Log.e(TAG, "No internet connection available for authorization");
+            if (listener != null) {
+                listener.onAuthorizationFailed("NETWORK_ERROR: No internet connection. Please check your network settings and try again.");
             }
             return;
         }
@@ -117,7 +144,7 @@ public class SpotifyAuthManager {
                     if (errorMsg.equals("NO_INTERNET_CONNECTION")) {
                         Log.e(TAG, "Network connection issue during authorization");
                         if (authorizationListener != null) {
-                            authorizationListener.onAuthorizationFailed("Network error. Please check your internet connection and try again.");
+                            authorizationListener.onAuthorizationFailed("NETWORK_ERROR: Please check your internet connection and try again.");
                         }
                     } else if (errorMsg.equals("USER_CANCELLED")) {
                         Log.w(TAG, "User cancelled authorization");
