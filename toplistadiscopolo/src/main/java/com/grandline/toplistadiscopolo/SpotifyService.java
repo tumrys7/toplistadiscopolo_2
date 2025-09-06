@@ -3,7 +3,6 @@ package com.grandline.toplistadiscopolo;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -12,29 +11,27 @@ import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.client.CallResult;
-import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.Image;
 import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SpotifyService {
     private static final String TAG = "SpotifyService";
-    private static final String CLIENT_ID = "1ef55d5630814a3dafc946ef58e266b5";
-    private static final String REDIRECT_URI = "com.grandline.toplistadiscopolo://callback";
+ //   private static final String CLIENT_ID = "1ef55d5630814a3dafc946ef58e266b5";
+ //   private static final String REDIRECT_URI = "com.grandline.toplistadiscopolo://callback";
     
     private static SpotifyService instance;
     private SpotifyAppRemote mSpotifyAppRemote;
-    private Context context;
+    private final Context context;
     private boolean isConnecting = false;
     private int connectionRetryCount = 0;
     private static final int MAX_CONNECTION_RETRIES = 3;
     private static final long CONNECTION_TIMEOUT_MS = 30000; // 30 seconds timeout for authorization
-    private Handler retryHandler = new Handler(Looper.getMainLooper());
+    private final Handler retryHandler = new Handler(Looper.getMainLooper());
     private Runnable connectionTimeoutRunnable;
     
     // Listeners - Changed to support multiple listeners
@@ -174,10 +171,10 @@ public class SpotifyService {
     }
     
     private void connectInternal() {
-        Log.d(TAG, "Creating ConnectionParams with CLIENT_ID: " + CLIENT_ID + ", REDIRECT_URI: " + REDIRECT_URI);
+        Log.d(TAG, "Creating ConnectionParams with CLIENT_ID: " + Constants.SPOTIFY_CLIENT_ID + ", REDIRECT_URI: " + Constants.SPOTIFY_REDIRECT_URI);
         
-        ConnectionParams connectionParams = new ConnectionParams.Builder(CLIENT_ID)
-                .setRedirectUri(REDIRECT_URI)
+        ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
+                .setRedirectUri(Constants.SPOTIFY_REDIRECT_URI)
                 .showAuthView(true)
                 .build();
         

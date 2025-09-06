@@ -21,7 +21,8 @@ public interface Constants {
 
 	String VALUE_START_NOTOWANIE_ID = "START_NOTOWANIE_ID";
 
-	
+	String SPOTIFY_CLIENT_ID = "1ef55d5630814a3dafc946ef58e266b5";
+	String SPOTIFY_REDIRECT_URI = "com.grandline.toplistadiscopolo://callback";
 	// XML node keys
 	String KEY_INFO = "info";
 	String KEY_LISTA = "lista";

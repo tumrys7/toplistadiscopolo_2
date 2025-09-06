@@ -160,8 +160,8 @@ Android (especially API 29+) blocks background apps from launching activities to
 The connection parameters remain unchanged as they were already correct:
 
 ```java
-ConnectionParams connectionParams = new ConnectionParams.Builder(CLIENT_ID)
-    .setRedirectUri(REDIRECT_URI)
+ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
+    .setRedirectUri(Contants.SPOTIFY_REDIRECT_URI)
     .showAuthView(true)
     .build();
 ```
