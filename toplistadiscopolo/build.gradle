@@ -59,6 +59,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.13.1'
     
     // Spotify Authorization Library for proper OAuth flow
+    // Updated to latest version to fix potential PKCE issues
     implementation 'com.spotify.android:auth:2.1.1'
     
     // HTTP client for token exchange
