@@ -6,6 +6,16 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.spotify.sdk.android.auth.AuthorizationClient;
 import com.spotify.sdk.android.auth.AuthorizationRequest;
@@ -89,12 +99,15 @@ public class SpotifyAuthManager {
         
         AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
             Constants.SPOTIFY_CLIENT_ID,
-            AuthorizationResponse.Type.TOKEN,
+            AuthorizationResponse.Type.CODE,
             Constants.SPOTIFY_REDIRECT_URI
         );
         
         // Request the app-remote-control scope which is required for App Remote SDK
         builder.setScopes(new String[]{"app-remote-control", "streaming"});
+        
+        // Enable PKCE for Authorization Code Flow
+        builder.setShowDialog(false);
         
         AuthorizationRequest request = builder.build();
         
@@ -120,19 +133,14 @@ public class SpotifyAuthManager {
         Log.d(TAG, "Authorization response received - Type: " + response.getType() + ", ResultCode: " + resultCode);
         
         switch (response.getType()) {
-            case TOKEN:
-                Log.d(TAG, "Authorization successful");
-                String accessToken = response.getAccessToken();
-                int expiresIn = response.getExpiresIn();
+            case CODE:
+                Log.d(TAG, "Authorization code received");
+                String authorizationCode = response.getCode();
                 
-                Log.d(TAG, "Access token received, expires in: " + expiresIn + " seconds");
+                Log.d(TAG, "Authorization code received, exchanging for access token");
                 
-                // Store the token
-                storeAccessToken(accessToken, expiresIn);
-                
-                if (authorizationListener != null) {
-                    authorizationListener.onAuthorizationComplete(accessToken);
-                }
+                // Exchange authorization code for access token
+                exchangeCodeForToken(authorizationCode);
                 break;
                 
             case ERROR:
@@ -178,8 +186,105 @@ public class SpotifyAuthManager {
                 break;
         }
         
-        // Clear the listener after handling the response
-        authorizationListener = null;
+        // Clear the listener after handling the response (except for CODE case, cleared in exchangeCodeForToken)
+        if (response.getType() != AuthorizationResponse.Type.CODE) {
+            authorizationListener = null;
+        }
+    }
+    
+    /**
+     * Exchange authorization code for access token using Spotify's token endpoint
+     */
+    private void exchangeCodeForToken(String authorizationCode) {
+        Log.d(TAG, "Exchanging authorization code for access token");
+        
+        OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
+        
+        FormBody formBody = new FormBody.Builder()
+            .add("grant_type", "authorization_code")
+            .add("code", authorizationCode)
+            .add("redirect_uri", Constants.SPOTIFY_REDIRECT_URI)
+            .add("client_id", Constants.SPOTIFY_CLIENT_ID)
+            .build();
+        
+        Request request = new Request.Builder()
+            .url("https://accounts.spotify.com/api/token")
+            .post(formBody)
+            .addHeader("Content-Type", "application/x-www-form-urlencoded")
+            .build();
+        
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Failed to exchange code for token", e);
+                if (authorizationListener != null) {
+                    authorizationListener.onAuthorizationFailed("Token exchange failed: " + e.getMessage());
+                    authorizationListener = null;
+                }
+            }
+            
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    String responseBody = response.body().string();
+                    Log.d(TAG, "Token exchange response code: " + response.code());
+                    
+                    if (response.isSuccessful()) {
+                        try {
+                            JSONObject jsonResponse = new JSONObject(responseBody);
+                            String accessToken = jsonResponse.getString("access_token");
+                            int expiresIn = jsonResponse.getInt("expires_in");
+                            
+                            Log.d(TAG, "Access token received successfully, expires in: " + expiresIn + " seconds");
+                            
+                            // Store the token
+                            storeAccessToken(accessToken, expiresIn);
+                            
+                            if (authorizationListener != null) {
+                                authorizationListener.onAuthorizationComplete(accessToken);
+                                authorizationListener = null;
+                            }
+                            
+                        } catch (JSONException e) {
+                            Log.e(TAG, "Failed to parse token response", e);
+                            if (authorizationListener != null) {
+                                authorizationListener.onAuthorizationFailed("Failed to parse token response: " + e.getMessage());
+                                authorizationListener = null;
+                            }
+                        }
+                    } else {
+                        Log.e(TAG, "Token exchange failed with response: " + responseBody);
+                        
+                        String errorMessage = "Token exchange failed";
+                        try {
+                            JSONObject errorJson = new JSONObject(responseBody);
+                            if (errorJson.has("error_description")) {
+                                errorMessage = errorJson.getString("error_description");
+                            } else if (errorJson.has("error")) {
+                                errorMessage = errorJson.getString("error");
+                            }
+                        } catch (JSONException e) {
+                            Log.w(TAG, "Could not parse error response", e);
+                        }
+                        
+                        if (authorizationListener != null) {
+                            authorizationListener.onAuthorizationFailed(errorMessage);
+                            authorizationListener = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Unexpected error during token exchange", e);
+                    if (authorizationListener != null) {
+                        authorizationListener.onAuthorizationFailed("Unexpected error: " + e.getMessage());
+                        authorizationListener = null;
+                    }
+                }
+            }
+        });
     }
     
     /**
