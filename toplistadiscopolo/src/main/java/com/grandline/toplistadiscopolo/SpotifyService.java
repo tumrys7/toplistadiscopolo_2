@@ -3,6 +3,8 @@ package com.grandline.toplistadiscopolo;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -131,6 +133,22 @@ public class SpotifyService {
         }
     }
     
+    // Check if device has internet connectivity
+    private boolean hasInternetConnection() {
+        try {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
+                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+                boolean hasConnection = activeNetworkInfo != null && activeNetworkInfo.isConnected();
+                Log.d(TAG, "Internet connection available: " + hasConnection);
+                return hasConnection;
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error checking internet connection: " + e.getMessage());
+        }
+        return true; // Assume connection is available if we can't check
+    }
+    
     // Connect to Spotify
     public void connect() {
         // Check if Spotify is installed first
@@ -138,6 +156,15 @@ public class SpotifyService {
             Log.e(TAG, "Spotify app is not installed on this device");
             if (connectionListeners.size() > 0) {
                 connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("Spotify app is not installed. Please install Spotify from the Play Store.")));
+            }
+            return;
+        }
+        
+        // Check internet connectivity before attempting connection
+        if (!hasInternetConnection()) {
+            Log.e(TAG, "No internet connection available");
+            if (connectionListeners.size() > 0) {
+                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("NETWORK_ERROR: No internet connection. Please check your network settings and try again.")));
             }
             return;
         }
@@ -185,7 +212,7 @@ public class SpotifyService {
         
         ConnectionParams connectionParams = new ConnectionParams.Builder(Constants.SPOTIFY_CLIENT_ID)
                 .setRedirectUri(Constants.SPOTIFY_REDIRECT_URI)
-                .showAuthView(false) // Don't show auth view since we handle OAuth separately
+                .showAuthView(true) // Show auth view to handle authorization when needed
                 .build();
         
         Log.d(TAG, "Calling SpotifyAppRemote.connect()");
@@ -293,6 +320,17 @@ public class SpotifyService {
                         Log.e(TAG, "Authentication failed - need re-authorization");
                         handleAuthorizationRequired();
                         return;
+                    } else if (errorMessage.contains("NETWORK_ERROR") || 
+                               errorMessage.contains("NO_INTERNET_CONNECTION") ||
+                               errorMessage.contains("Network error")) {
+                        Log.e(TAG, "Network error during authorization - will retry");
+                        // For network errors, we should retry but also handle auth if needed
+                        SpotifyAuthManager authManager = SpotifyAuthManager.getInstance(context);
+                        if (!authManager.isAuthorized()) {
+                            Log.w(TAG, "Network error and not authorized - need authorization");
+                            handleAuthorizationRequired();
+                            return;
+                        }
                     }
                 }
                 
@@ -575,6 +613,15 @@ public class SpotifyService {
                 Log.w(TAG, "Error disconnecting existing connection: " + e.getMessage());
             }
             mSpotifyAppRemote = null;
+        }
+        
+        // Check internet connectivity first
+        if (!hasInternetConnection()) {
+            Log.e(TAG, "No internet connection available for reconnection");
+            if (connectionListeners.size() > 0) {
+                connectionListeners.forEach(listener -> listener.onConnectionFailed(new Exception("NETWORK_ERROR: No internet connection. Please check your network settings and try again.")));
+            }
+            return;
         }
         
         // Check authorization status before reconnecting
