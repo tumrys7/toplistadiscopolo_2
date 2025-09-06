@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
@@ -31,6 +32,7 @@ import androidx.core.view.ViewCompat;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.lang.ref.WeakReference;
 import java.util.regex.Matcher;

@@ -1456,6 +1456,19 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						// Use YouTube Bottom Sheet instead of browser
 						if (youTubeBottomSheetController != null) {
 							youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+
+							// [START image_view_event]
+							if (mFirebaseAnalytics != null) {
+								Bundle bundle = new Bundle();
+								bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, artist);
+								bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, teledysk);
+								bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, title);
+								bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_youtube_video");
+								mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+							}
+							// [END image_view_event]
+
+
 						} else {
 							Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 						}
@@ -1479,6 +1492,17 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 						// Use YouTube Bottom Sheet instead of browser
 					if (youTubeBottomSheetController != null) {
 						youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+
+						// [START image_view_event]
+						if (mFirebaseAnalytics != null) {
+							Bundle bundle = new Bundle();
+							bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, artist);
+							bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, teledysk);
+							bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, title);
+							bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_youtube_video");
+							mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+						}
+						// [END image_view_event]
 					} else {
 						Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 						}
@@ -1508,6 +1532,16 @@ public class ListaPrzebojowDiscoPolo extends AppCompatActivity  {
 				// Use YouTube Bottom Sheet instead of browser
 				if (youTubeBottomSheetController != null) {
 					youTubeBottomSheetController.showYouTubeVideo(teledysk, title, artist);
+					// [START image_view_event]
+					if (mFirebaseAnalytics != null) {
+						Bundle bundle = new Bundle();
+						bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, artist);
+						bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_ID, teledysk);
+						bundle.putString(FirebaseAnalytics.Param.ITEM_LIST_NAME, title);
+						bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "play_youtube_video");
+						mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+					}
+					// [END image_view_event]
 				} else {
 					Log.e("YouTubeDebug", "YouTubeBottomSheetController is null");
 				}

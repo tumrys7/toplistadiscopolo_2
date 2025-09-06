@@ -61,7 +61,7 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     
     // Spotify App Remote SDK - using official Maven dependency for better annotation support
-    implementation 'com.spotify.android:spotify-app-remote:0.8.0'
+    implementation files('libs/spotify-app-remote-release-0.8.0.aar')
     implementation 'com.google.code.gson:gson:2.13.1'
     
     // Keep the local AAR as fallback (commented out)
